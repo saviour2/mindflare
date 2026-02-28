@@ -3,9 +3,13 @@ from urllib.request import urlopen
 from functools import wraps
 from flask import request, jsonify, _request_ctx_stack
 import jwt
+import os
+from dotenv import load_dotenv
 
-AUTH0_DOMAIN = 'YOUR_AUTH0_DOMAIN'
-API_AUDIENCE = 'YOUR_API_AUDIENCE'
+load_dotenv()
+
+AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN', 'YOUR_AUTH0_DOMAIN')
+API_AUDIENCE = os.getenv('API_AUDIENCE', 'YOUR_API_AUDIENCE')
 ALGORITHMS = ["RS256"]
 
 class AuthError(Exception):
