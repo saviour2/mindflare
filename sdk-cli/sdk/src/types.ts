@@ -4,8 +4,20 @@
 
 /** Configuration options for the Mindflare client. */
 export interface MindflareConfig {
-    /** Your application API key (begins with `mf_`). */
+    /** Your Application ID (begins with `mf_app_`). */
+    appId: string;
+
+    /** Your application API key (begins with `mf_secret_`). */
     apiKey: string;
+
+    /** Global Client Secret (User ID) from your dashboard. Required for backend authentication. */
+    clientSecret: string;
+
+    /** Architect Identity Email. Required for SDK programmatic authentication. */
+    email: string;
+
+    /** Architect Identity Password. Required for SDK programmatic authentication. */
+    password: string;
 
     /**
      * Base URL of the Mindflare API.

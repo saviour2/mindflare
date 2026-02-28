@@ -4,13 +4,13 @@
   "private": true,
   "workspaces": [
     "frontend",
-    "sdk",
-    "cli"
+    "sdk-cli/sdk",
+    "sdk-cli/cli"
   ],
   "scripts": {
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "cd backend && flask run",
-    "build:sdk": "npm run build --workspace=sdk",
-    "build:cli": "npm run build --workspace=cli"
+    "build:sdk": "npm run build --workspace=sdk-cli/sdk",
+    "build:cli": "npm run build --workspace=sdk-cli/cli"
   }
 }

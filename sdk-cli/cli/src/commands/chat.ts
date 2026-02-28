@@ -27,6 +27,10 @@ export function registerChatCommands(program: Command) {
         .option("-m, --message <msg>", "Send a single message (non-interactive)")
         .option("-i, --interactive", "Start an interactive chat session", false)
         .action(async (opts) => {
+            requireToken(); // Enforce email/password login requirement first!
+            const clientSecret = config.get("clientSecret");
+            if (!clientSecret) fatal("Missing Client Secret mapping. Please run `mindflare login` again.");
+
             let apiKey = opts.apiKey;
 
             if (!apiKey) {
@@ -62,10 +66,18 @@ async function sendMessage(
     const spinner = ora("Thinking...").start();
 
     try {
+        const token = requireToken();
+        const clientSecret = config.get("clientSecret");
+        if (!clientSecret) throw new Error("Missing client secret. Please `mindflare login` again.");
+
         const data = await api<ChatRes>({
             method: "POST",
             url: `${getBaseUrl()}/api/chat/`,
-            token: apiKey,
+            token, // passes JWT bearer
+            headers: {
+                "X-Mindflare-Api-Key": apiKey,
+                "X-Mindflare-Client-Secret": clientSecret as string
+            },
             body: { messages },
         });
 
@@ -142,10 +154,17 @@ async function interactiveChat(apiKey: string) {
         const spinner = ora({ text: "Thinking...", indent: 2 }).start();
 
         try {
+            const token = requireToken();
+            const clientSecret = config.get("clientSecret") as string;
+
             const data = await api<ChatRes>({
                 method: "POST",
                 url: `${getBaseUrl()}/api/chat/`,
-                token: apiKey,
+                token,
+                headers: {
+                    "X-Mindflare-Api-Key": apiKey,
+                    "X-Mindflare-Client-Secret": clientSecret
+                },
                 body: { messages: history },
             });
 

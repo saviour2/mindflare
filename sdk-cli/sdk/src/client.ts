@@ -32,22 +32,49 @@ interface RequestOpts {
 
 export class Mindflare {
     private readonly apiKey: string;
-    private readonly appId?: string;
+    private readonly appId: string;
+    private readonly clientSecret: string;
+    private readonly email: string;
+    private readonly password: string;
     private readonly baseUrl: string;
     private readonly timeout: number;
     private readonly maxRetries: number;
 
-    constructor(config: MindflareConfig & { appId?: string }) {
-        if (!config.apiKey) {
+    private jwtToken?: string;
+
+    constructor(config: MindflareConfig) {
+        if (!config.apiKey || !config.appId || !config.clientSecret || !config.email || !config.password) {
             throw new Error(
-                "Mindflare: apiKey (client secret) is required. Get yours at https://app.mindflare.ai"
+                "Mindflare: Strict authentication requires appId, apiKey, clientSecret, email, and password. Get yours at the dashboard."
             );
         }
         this.apiKey = config.apiKey;
         this.appId = config.appId;
+        this.clientSecret = config.clientSecret;
+        this.email = config.email;
+        this.password = config.password;
         this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
         this.timeout = config.timeout ?? DEFAULT_TIMEOUT;
         this.maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
+    }
+
+    /** Authenticate the SDK via Identity login to fetch temporal JWT. */
+    async connect(): Promise<void> {
+        if (this.jwtToken) return;
+
+        const res = await fetch(`${this.baseUrl}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: this.email, password: this.password })
+        });
+
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(`Mindflare SDK Authentication Failed: ${errBody.error || res.statusText}`);
+        }
+
+        const data = await res.json();
+        this.jwtToken = data.token;
     }
 
     /**
@@ -156,9 +183,14 @@ export class Mindflare {
     // ─────────────────────────────────────────────────────────
 
     private async _request<T>(opts: RequestOpts): Promise<T> {
+        await this.connect(); // Ensure JWT is present
+
         const url = `${this.baseUrl}${opts.path}`;
         const headers: Record<string, string> = {
-            Authorization: `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this.jwtToken}`,
+            "X-Mindflare-App-Id": this.appId,
+            "X-Mindflare-Api-Key": this.apiKey,
+            "X-Mindflare-Client-Secret": this.clientSecret,
             "Content-Type": "application/json",
             "User-Agent": `mindflare-sdk/${SDK_VERSION}`,
             Accept: "application/json",

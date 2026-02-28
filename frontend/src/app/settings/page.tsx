@@ -20,6 +20,10 @@ export default function SettingsPage() {
         setUser(JSON.parse(storedUser));
     }, []);
 
+    const [keys, setKeys] = useState<Record<string, string> | null>(null);
+    const [revealError, setRevealError] = useState('');
+    const [isRevealing, setIsRevealing] = useState(false);
+
     if (!user) return null;
 
     const handlePurge = async () => {
@@ -37,6 +41,35 @@ export default function SettingsPage() {
                 router.push('/signup');
             }
         } catch { }
+    };
+
+    const handleRevealKeys = async () => {
+        const password = prompt("Enter your account password to reveal Global API Keys:");
+        if (!password) return;
+
+        setIsRevealing(true);
+        setRevealError('');
+        try {
+            const res = await fetch('http://localhost:5000/api/applications/reveal-keys', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setKeys(data.keys);
+            } else {
+                setRevealError(data.error || 'Failed to authorize.');
+                alert('Authorization failed: ' + (data.error || 'Incorrect password'));
+            }
+        } catch (err) {
+            alert('Failed to connect to security server.');
+        } finally {
+            setIsRevealing(false);
+        }
     };
 
     return (
@@ -115,17 +148,61 @@ export default function SettingsPage() {
                             <div className="p-8 md:p-10">
                                 <h3 className="text-xl font-serif font-medium mb-8">Access Infrastructure</h3>
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 flex items-center justify-center border border-accent-cyan/20">
-                                                <Key className="w-5 h-5 text-accent-cyan" />
+                                    <div
+                                        onClick={keys ? undefined : handleRevealKeys}
+                                        className="flex flex-col p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 flex items-center justify-center border border-accent-cyan/20">
+                                                    <Key className="w-5 h-5 text-accent-cyan" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">Manage Global API Keys</p>
+                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">Protected Vault</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-medium">Manage Global API Keys</p>
-                                                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">3 active keys</p>
-                                            </div>
+                                            {!keys && (
+                                                <div className="flex items-center gap-2">
+                                                    {isRevealing ? <p className="text-xs text-gold-base">Verifying...</p> : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />}
+                                                </div>
+                                            )}
                                         </div>
-                                        <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />
+
+                                        {keys && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="mt-6 pt-6 border-t border-white/10 space-y-4 cursor-default"
+                                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                            >
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <p className="text-xs text-zinc-400 font-sans">For strict-security APIs, provide your App ID and API Key pair.</p>
+                                                    <Button variant="outline" size="sm" onClick={() => setKeys(null)} className="h-8 text-xs border-white/10">Lock Vault</Button>
+                                                </div>
+                                                {Object.entries(keys).map(([appId, secret]) => (
+                                                    <div key={appId} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3">
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <div className="flex-1">
+                                                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">App ID</p>
+                                                                <code className="text-xs text-zinc-300 font-mono select-all bg-white/5 px-2 py-1 rounded inline-block">{appId}</code>
+                                                            </div>
+                                                            <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(appId)} className="h-8 hover:bg-white/5">Copy ID</Button>
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <div className="flex-1">
+                                                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">API Key</p>
+                                                                <code className="text-xs text-emerald-400 font-mono select-all bg-emerald-400/10 px-2 py-1 rounded inline-block">{secret}</code>
+                                                            </div>
+                                                            <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(secret)} className="h-8 hover:bg-white/5">Copy Key</Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {Object.keys(keys).length === 0 && (
+                                                    <p className="text-center text-sm text-zinc-500 py-4">No applications registered yet.</p>
+                                                )}
+                                            </motion.div>
+                                        )}
                                     </div>
                                     <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer">
                                         <div className="flex items-center gap-4">

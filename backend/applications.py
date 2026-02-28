@@ -2,20 +2,51 @@ import uuid
 from datetime import datetime
 from flask import Blueprint, request, jsonify, g
 from auth import requires_auth
-from database import applications_collection
+from database import applications_collection, users_collection
 import secrets
 import hashlib
+from werkzeug.security import check_password_hash
+from encryption import encrypt_symmetric, decrypt_symmetric
 
 applications_bp = Blueprint('applications', __name__)
 
 def encrypt_api_key(api_key):
-    # In a real scenario, use a symmetric encryption (KMS or cryptography Fernet)
-    # For now, we hash it to store securely if we only verify, but if we need to show it:
-    # the requirements state "API keys must be encrypted before storing".
-    # Since an API key is essentially a bearer token, hashing is standard.
-    # However, if we need to retrieve the key to show the user, we'd need two-way encryption.
-    # We will use hashlib.sha256 for secure verification.
+    # One-way hashing used for fast authorization lookups
     return hashlib.sha256(api_key.encode()).hexdigest()
+
+@applications_bp.route('/reveal-keys', methods=['POST'])
+@requires_auth
+def reveal_keys():
+    user_payload = g.current_user
+    user_id = user_payload['sub']
+    
+    data = request.json
+    password = data.get('password')
+    
+    if not password:
+        return jsonify({"error": "Password is required to reveal API keys."}), 400
+        
+    user_doc = users_collection.find_one({"user_id": user_id})
+    if not user_doc or not check_password_hash(user_doc.get('password', ''), password):
+        return jsonify({"error": "Incorrect password."}), 401
+        
+    apps = list(applications_collection.find({"user_id": user_id}))
+    keys = {}
+    
+    for app in apps:
+        app_id = app.get("app_id")
+        encrypted_key = app.get("api_key_encrypted")
+        
+        if encrypted_key:
+            try:
+                decrypted = decrypt_symmetric(encrypted_key)
+                keys[app_id] = decrypted
+            except Exception:
+                keys[app_id] = "HIDDEN (Legacy Key)"
+        else:
+            keys[app_id] = "HIDDEN (Legacy Key)"
+            
+    return jsonify({"keys": keys}), 200
 
 @applications_bp.route('/', methods=['POST'])
 @requires_auth
@@ -31,15 +62,17 @@ def create_app():
         return jsonify({"error": "app_name is required"}), 400
         
     api_key_plain = secrets.token_urlsafe(32)
-    api_key_encrypted = encrypt_api_key(api_key_plain)
+    # One-way hash for auth middleware matching
+    api_key_hash = encrypt_api_key(api_key_plain)
+    # Two-way encryption for displaying in dashboard settings
+    api_key_encrypted = encrypt_symmetric(api_key_plain)
     
     app_doc = {
         "app_id": str(uuid.uuid4()),
         "user_id": user_id,
         "app_name": app_name,
-        "api_key_hash": api_key_encrypted, 
-        # Requirement says "encrypted before storing". 
-        # If we need to send it back, we just return the plain key once upon creation.
+        "api_key_hash": api_key_hash, 
+        "api_key_encrypted": api_key_encrypted,
         "model_name": model_name,
         "knowledge_base_ids": [],
         "created_at": datetime.utcnow()

@@ -420,12 +420,22 @@ export default function ApplicationsPage() {
                                         </div>
                                         <div className="relative group">
                                             <pre className="bg-black/60 p-5 rounded-2xl border border-white/10 text-xs text-zinc-400 font-mono overflow-x-auto leading-6">
-                                                <span className="text-gold-dark/70">{"import Mindflare from 'mindflare-sdk';"}</span><br />
+                                                <span className="text-blue-400">{"import { Mindflare } from 'mindflare-sdk';"}</span><br />
                                                 <br />
-                                                <span className="text-zinc-500">{"const mf = new Mindflare('YOUR_API_KEY');"}</span><br />
-                                                <span className="text-zinc-500">{"const res = await mf.chat('Hello!');"}</span>
+                                                <span className="text-zinc-500">{"const mf = new Mindflare({"}</span><br />
+                                                <span className="text-zinc-500">{"  email: 'YOUR_EMAIL',"}</span><br />
+                                                <span className="text-zinc-500">{"  password: 'YOUR_PASSWORD',"}</span><br />
+                                                <span className="text-zinc-500">{"  clientSecret: 'YOUR_GLOBAL_USER_ID',"}</span><br />
+                                                <span className="text-zinc-500">{"  appId: '"}<span className="text-emerald-400">{selectedSdkApp.app_id}</span>'</span><br />
+                                                <span className="text-zinc-500">{"  apiKey: 'YOUR_API_KEY'"}</span><br />
+                                                <span className="text-zinc-500">{"});"}</span><br />
+                                                <br />
+                                                <span className="text-zinc-500">{"const res = await mf.ask('Hello!');"}</span>
                                             </pre>
-                                            <button className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/5 rounded-lg">
+                                            <button
+                                                onClick={() => navigator.clipboard.writeText(`import { Mindflare } from 'mindflare-sdk';\n\nconst mf = new Mindflare({\n  email: 'YOUR_EMAIL',\n  password: 'YOUR_PASSWORD',\n  clientSecret: 'YOUR_GLOBAL_USER_ID',\n  appId: '${selectedSdkApp.app_id}',\n  apiKey: 'YOUR_API_KEY'\n});\n\nconst res = await mf.ask('Hello!');`)}
+                                                className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/5 rounded-lg"
+                                            >
                                                 <Copy className="w-3.5 h-3.5 text-zinc-500" />
                                             </button>
                                         </div>

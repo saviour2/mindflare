@@ -45,7 +45,7 @@ export function registerAuthCommands(program: Command) {
             try {
                 const data = await api<{
                     token: string;
-                    user: { name: string; email: string };
+                    user: { id: string; name: string; email: string };
                 }>({
                     method: "POST",
                     url: `${baseUrl}/api/auth/login`,
@@ -53,6 +53,7 @@ export function registerAuthCommands(program: Command) {
                 });
 
                 config.set("token", data.token);
+                config.set("clientSecret", data.user.id);
                 success(`Logged in as ${chalk.bold(data.user.name)} (${data.user.email})`);
             } catch (e) {
                 fatal((e as Error).message);

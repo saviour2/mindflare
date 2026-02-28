@@ -63,6 +63,7 @@ export default function Navbar() {
                     {!user ? (
                         <>
                             <a href="#features" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Features</a>
+                            <Link href="/docs" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Docs</Link>
                             <a href="#how-it-works" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">How It Works</a>
                             <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors ml-4">
                                 Log in
@@ -77,6 +78,7 @@ export default function Navbar() {
                         <>
                             <div className="flex items-center gap-8 mr-6">
                                 <Link href="/dashboard" className={cn("text-sm font-medium transition-colors", pathname === '/dashboard' ? "text-white" : "text-zinc-400 hover:text-white")}>Dashboard</Link>
+                                <Link href="/docs" className={cn("text-sm font-medium transition-colors", pathname === '/docs' ? "text-white" : "text-zinc-400 hover:text-white")}>Docs</Link>
                                 <Link href="/applications" className={cn("text-sm font-medium transition-colors", pathname === '/applications' ? "text-white" : "text-zinc-400 hover:text-white")}>Apps</Link>
                                 <Link href="/knowledge-base" className={cn("text-sm font-medium transition-colors", pathname === '/knowledge-base' ? "text-white" : "text-zinc-400 hover:text-white")}>Knowledge Base</Link>
                                 <Link href="/analytics" className={cn("text-sm font-medium transition-colors", pathname === '/analytics' ? "text-white" : "text-zinc-400 hover:text-white")}>Analytics</Link>
@@ -151,9 +153,11 @@ export default function Navbar() {
                             ) : (
                                 <>
                                     <Link href="/dashboard" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+                                    <Link href="/docs" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Docs</Link>
                                     <Link href="/applications" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Apps</Link>
                                     <Link href="/knowledge-base" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Knowledge Base</Link>
                                     <Link href="/analytics" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Analytics</Link>
+
                                     <Button variant="outline" className="w-full text-red-400 border-red-500/20" onClick={logout}>Logout</Button>
                                 </>
                             )}
@@ -161,6 +165,6 @@ export default function Navbar() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.header>
+        </motion.header >
     );
 }

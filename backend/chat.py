@@ -160,32 +160,42 @@ def _validate_messages(messages) -> tuple[bool, str]:
 def chat():
     start_time = time.time()
 
-    # ── Auth: Try multiple headers for flexibility ──
-    # Format 1: Standard Bearer (just the secret)
-    # Format 2: Professional X-Mindflare-App-Id + X-Mindflare-Secret
-    api_key_plain = None
-    app_id_header = request.headers.get("X-Mindflare-App-Id")
-    secret_header = request.headers.get("X-Mindflare-Secret")
+    # ── Auth Phase 1: Verify JWT (Login Requirement) ──
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Authentication required. Please login with your email and password."}), 401
+    
+    token_str = auth_header[7:].strip()
+    try:
+        from auth_routes import JWT_SECRET
+        import jwt
+        payload = jwt.decode(token_str, JWT_SECRET, algorithms=["HS256"])
+        user_id_from_token = payload['sub']
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Session expired. Please login again."}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid authentication token."}), 401
 
-    if app_id_header and secret_header:
-        api_key_plain = secret_header
-    else:
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            api_key_plain = auth_header[7:].strip()
+    # ── Auth Phase 2: Verify Client Secret & API Key ──
+    client_secret = request.headers.get("X-Mindflare-Client-Secret")
+    api_key_plain = request.headers.get("X-Mindflare-Api-Key")
 
-    if not api_key_plain:
-        return jsonify({"error": "Unauthorized"}), 401
+    if not client_secret or not api_key_plain:
+        return jsonify({"error": "Client Secret and API Key are required to interface with the engine."}), 401
+
+    if user_id_from_token != client_secret:
+        return jsonify({"error": "Client Secret does not match the authenticated identity."}), 403
 
     api_key_hash = encrypt_api_key(api_key_plain)
     
-    query = {"api_key_hash": api_key_hash}
-    if app_id_header:
-        query["app_id"] = app_id_header
+    query = {
+        "api_key_hash": api_key_hash,
+        "user_id": client_secret
+    }
 
     app_doc = applications_collection.find_one(query)
     if not app_doc:
-        return jsonify({"error": "Invalid API key or App ID"}), 401
+        return jsonify({"error": "Invalid Client Secret or API Key for this application."}), 401
 
     # ── Parse & validate request ─────────────────
     data = request.get_json(silent=True)

@@ -115,12 +115,14 @@ export default function DashboardPage() {
                                     <Zap className="w-10 h-10 text-black fill-current" />
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
-                                    <h3 className="text-2xl font-serif font-medium mb-2">Mindflare SDK v1.0</h3>
+                                    <h3 className="text-2xl font-serif font-medium mb-2">Mindflare SDK v0.2.0</h3>
                                     <p className="text-zinc-400 mb-6 max-w-md">Our production-ready Node.js client is now available for enterprise integration.</p>
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                                        <Button className="rounded-full bg-gold-base text-white hover:bg-gold-light px-8">
-                                            Documentation
-                                        </Button>
+                                        <Link href="/docs">
+                                            <Button className="rounded-full bg-gold-base text-white hover:bg-gold-light px-8">
+                                                Documentation
+                                            </Button>
+                                        </Link>
                                         <a href="https://www.npmjs.com/package/mindflare-sdk" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gold-light hover:text-white transition-colors">
                                             NPM Package <ExternalLink className="w-3.5 h-3.5" />
                                         </a>

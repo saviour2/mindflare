@@ -11,12 +11,14 @@ interface ReqOpts {
     url: string;
     body?: unknown;
     token?: string;
+    headers?: Record<string, string>;
 }
 
 export async function api<T>(opts: ReqOpts): Promise<T> {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...opts.headers,
     };
     if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
 

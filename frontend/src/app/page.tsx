@@ -7,6 +7,7 @@ import { ArrowRight, BookOpen, Blocks, Share2, LineChart, Terminal, Cpu, Zap, Bo
 import { motion, AnimatePresence, useScroll, useMotionValueEvent, useTransform } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import Navbar from '@/components/Navbar';
+import { cn } from '@/lib/utils';
 
 const DocumentToParticles = () => {
   return (
@@ -41,9 +42,15 @@ const DocumentToParticles = () => {
 };
 
 const DeployStatusIndicators = () => {
+  const platforms = [
+    { name: 'Web Client', status: 'LIVE' },
+    { name: 'Node.js SDK', status: 'LIVE' },
+    { name: 'WhatsApp', status: 'BETA' },
+    { name: 'Telegram', status: 'BETA' },
+  ];
   return (
     <div className="w-full h-full flex flex-col gap-3 justify-center">
-      {['Web Client', 'WhatsApp', 'Telegram'].map((platform, i) => (
+      {platforms.map((p, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, x: -10 }}
@@ -52,10 +59,16 @@ const DeployStatusIndicators = () => {
           transition={{ delay: i * 0.2 }}
           className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
         >
-          <span className="text-sm font-sans text-zinc-300">{platform}</span>
+          <span className="text-sm font-sans text-zinc-300">{p.name}</span>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gold-light tracking-widest font-mono">LIVE</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-gold-base animate-pulse shadow-[0_0_8px_rgba(212,175,55,1)]" />
+            <span className={cn(
+              "text-[10px] tracking-widest font-mono",
+              p.status === 'LIVE' ? "text-gold-light" : "text-zinc-500"
+            )}>{p.status}</span>
+            <div className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              p.status === 'LIVE' ? "bg-gold-base animate-pulse shadow-[0_0_8px_rgba(212,175,55,1)]" : "bg-zinc-700"
+            )} />
           </div>
         </motion.div>
       ))}
