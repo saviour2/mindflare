@@ -24,23 +24,22 @@ export function registerAuthCommands(program: Command) {
             let password = opts.password;
 
             if (!email || !password) {
-                const answers = await inquirer.prompt([
-                    ...(!email
-                        ? [{ type: "input", name: "email", message: "Email:" }]
-                        : []),
-                    ...(!password
-                        ? [
-                            {
-                                type: "password",
-                                name: "password",
-                                message: "Password:",
-                                mask: "*",
-                            },
-                        ]
-                        : []),
-                ]);
-                email = email || answers.email;
-                password = password || answers.password;
+                const questions: any[] = [];
+                if (!email) {
+                    questions.push({ type: "input", name: "email", message: "Email:" });
+                }
+                if (!password) {
+                    questions.push({
+                        type: "password",
+                        name: "password",
+                        message: "Password:",
+                        mask: "*",
+                    });
+                }
+
+                const answers = await inquirer.prompt(questions);
+                email = email || (answers as any).email;
+                password = password || (answers as any).password;
             }
 
             try {
@@ -74,27 +73,26 @@ export function registerAuthCommands(program: Command) {
             let { email, password, name } = opts;
 
             if (!email || !password || !name) {
-                const answers = await inquirer.prompt([
-                    ...(!name
-                        ? [{ type: "input", name: "name", message: "Your name:" }]
-                        : []),
-                    ...(!email
-                        ? [{ type: "input", name: "email", message: "Email:" }]
-                        : []),
-                    ...(!password
-                        ? [
-                            {
-                                type: "password",
-                                name: "password",
-                                message: "Password (min 8 chars):",
-                                mask: "*",
-                            },
-                        ]
-                        : []),
-                ]);
-                name = name || answers.name;
-                email = email || answers.email;
-                password = password || answers.password;
+                const questions: any[] = [];
+                if (!name) {
+                    questions.push({ type: "input", name: "name", message: "Your name:" });
+                }
+                if (!email) {
+                    questions.push({ type: "input", name: "email", message: "Email:" });
+                }
+                if (!password) {
+                    questions.push({
+                        type: "password",
+                        name: "password",
+                        message: "Password (min 8 chars):",
+                        mask: "*",
+                    });
+                }
+
+                const answers = await inquirer.prompt(questions);
+                name = name || (answers as any).name;
+                email = email || (answers as any).email;
+                password = password || (answers as any).password;
             }
 
             try {

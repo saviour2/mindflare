@@ -39,7 +39,7 @@ export function registerChatCommands(program: Command) {
                         mask: "*",
                     },
                 ]);
-                apiKey = answers.apiKey;
+                apiKey = (answers as any).apiKey;
             }
 
             if (!apiKey) fatal("API key is required. Use --api-key or set it interactively.");
