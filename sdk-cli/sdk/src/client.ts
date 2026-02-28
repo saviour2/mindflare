@@ -32,20 +32,61 @@ interface RequestOpts {
 
 export class Mindflare {
     private readonly apiKey: string;
+    private readonly appId?: string;
     private readonly baseUrl: string;
     private readonly timeout: number;
     private readonly maxRetries: number;
 
-    constructor(config: MindflareConfig) {
+    constructor(config: MindflareConfig & { appId?: string }) {
         if (!config.apiKey) {
             throw new Error(
-                "Mindflare: apiKey is required. Get yours at https://app.mindflare.ai"
+                "Mindflare: apiKey (client secret) is required. Get yours at https://app.mindflare.ai"
             );
         }
         this.apiKey = config.apiKey;
+        this.appId = config.appId;
         this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
         this.timeout = config.timeout ?? DEFAULT_TIMEOUT;
         this.maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
+    }
+
+    /**
+     * Integrate a pre-built Chat Widget into your website with one line of code.
+     * 
+     * @example
+     * ```ts
+     * mf.mountChat("#chat-container");
+     * ```
+     */
+    mountChat(containerSelector: string, options: {
+        width?: string;
+        height?: string;
+        appId?: string; // Optional override
+    } = {}) {
+        if (typeof window === 'undefined') {
+            throw new Error("mountChat can only be used in browser environments.");
+        }
+
+        const targetAppId = options.appId || this.appId;
+        if (!targetAppId) {
+            throw new Error("appId is required to mount the chat widget. Provide it in constructor or options.");
+        }
+
+        const container = document.querySelector(containerSelector);
+        if (!container) throw new Error(`Container ${containerSelector} not found`);
+
+        const iframe = document.createElement('iframe');
+        const widgetBaseUrl = this.baseUrl.replace(/\/api$/, "").replace(":5000", ":3000"); // Map backend to frontend for dev
+
+        iframe.src = `${widgetBaseUrl}/widget/${targetAppId}?secret=${this.apiKey}`;
+        iframe.style.width = options.width || "100%";
+        iframe.style.height = options.height || "600px";
+        iframe.style.border = "none";
+        iframe.style.borderRadius = "12px";
+        iframe.style.boxShadow = "0 20px 50px rgba(0,0,0,0.3)";
+        iframe.style.backgroundColor = "transparent";
+
+        container.appendChild(iframe);
     }
 
     // ─────────────────────────────────────────────────────────

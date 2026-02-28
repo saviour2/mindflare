@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import uuid
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 from applications import encrypt_api_key
@@ -116,6 +117,25 @@ def _log_interaction(user_id, app_id, model_name, provider, usage, latency, is_p
         logger.error(f"Failed to write analytics log: {e}")
 
 
+def _save_conversation(app_id, conversation_id, messages):
+    """Persist conversation history in MongoDB."""
+    if conversations_collection is None:
+        return
+    try:
+        conversations_collection.update_one(
+            {"conversation_id": conversation_id},
+            {
+                "$set": {
+                    "app_id": app_id,
+                    "updated_at": datetime.utcnow(),
+                    "messages": messages[-100:] # Keep last 100 per thread
+                }
+            },
+            upsert=True
+        )
+    except Exception as e:
+        logger.error(f"Failed to save conversation: {e}")
+
 def _validate_messages(messages) -> tuple[bool, str]:
     """Validate the messages array structure."""
     if not isinstance(messages, list) or len(messages) == 0:
@@ -140,19 +160,32 @@ def _validate_messages(messages) -> tuple[bool, str]:
 def chat():
     start_time = time.time()
 
-    # ── Auth: API key ────────────────────────────
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
+    # ── Auth: Try multiple headers for flexibility ──
+    # Format 1: Standard Bearer (just the secret)
+    # Format 2: Professional X-Mindflare-App-Id + X-Mindflare-Secret
+    api_key_plain = None
+    app_id_header = request.headers.get("X-Mindflare-App-Id")
+    secret_header = request.headers.get("X-Mindflare-Secret")
 
-    api_key_plain = auth_header[7:].strip()
+    if app_id_header and secret_header:
+        api_key_plain = secret_header
+    else:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            api_key_plain = auth_header[7:].strip()
+
     if not api_key_plain:
         return jsonify({"error": "Unauthorized"}), 401
 
     api_key_hash = encrypt_api_key(api_key_plain)
-    app_doc = applications_collection.find_one({"api_key_hash": api_key_hash})
+    
+    query = {"api_key_hash": api_key_hash}
+    if app_id_header:
+        query["app_id"] = app_id_header
+
+    app_doc = applications_collection.find_one(query)
     if not app_doc:
-        return jsonify({"error": "Invalid API key"}), 401
+        return jsonify({"error": "Invalid API key or App ID"}), 401
 
     # ── Parse & validate request ─────────────────
     data = request.get_json(silent=True)
@@ -160,6 +193,8 @@ def chat():
         return jsonify({"error": "Invalid JSON body"}), 400
 
     messages = data.get("messages", [])
+    conv_id  = data.get("conversation_id") or str(uuid.uuid4())
+    
     valid, err = _validate_messages(messages)
     if not valid:
         return jsonify({"error": err}), 400
@@ -181,22 +216,26 @@ def chat():
         return jsonify({"error": "The AI model is temporarily unavailable. Please try again."}), 503
 
     latency = time.time() - start_time
+    full_history = messages + [{"role": "assistant", "content": content}]
 
-    # ── Update app last_active ───────────────────
-    applications_collection.update_one(
-        {"app_id": app_doc["app_id"]},
-        {"$set": {"last_active": datetime.utcnow(), "status": "active"}}
-    )
-
-    # ── Log ──────────────────────────────────────
+    # ── Persistence ─────────────────────────────
+    # Standard analytics log
     _log_interaction(
         user_id=app_doc["user_id"],
         app_id=app_doc["app_id"],
         model_name=model_name,
         provider=provider,
         usage=usage,
-        latency=latency,
-        is_playground=False
+        latency=latency
+    )
+    
+    # NEW: Full conversation persistence
+    _save_conversation(app_doc["app_id"], conv_id, full_history)
+
+    # Update app last_active
+    applications_collection.update_one(
+        {"app_id": app_doc["app_id"]},
+        {"$set": {"last_active": datetime.utcnow(), "status": "active"}}
     )
 
     return jsonify({
@@ -234,6 +273,8 @@ def playground_chat(app_id):
             return jsonify({"error": "Invalid JSON body"}), 400
 
         messages = data.get("messages", [])
+        conv_id  = data.get("conversation_id") or f"playground-{app_id}"
+        
         valid, err = _validate_messages(messages)
         if not valid:
             return jsonify({"error": err}), 400
@@ -255,8 +296,9 @@ def playground_chat(app_id):
             return jsonify({"error": "The AI model is temporarily unavailable. Please try again."}), 503
 
         latency = time.time() - start_time
+        full_history = messages + [{"role": "assistant", "content": content}]
 
-        # ── Log ──────────────────────────────────
+        # ── Persistence ──────────────────────────
         _log_interaction(
             user_id=user_id,
             app_id=app_id,
@@ -266,6 +308,9 @@ def playground_chat(app_id):
             latency=latency,
             is_playground=True
         )
+        
+        # Save history for owner review
+        _save_conversation(app_id, conv_id, full_history)
 
         return jsonify({
             "response": content,

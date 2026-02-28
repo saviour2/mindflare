@@ -24,6 +24,7 @@ if db is not None:
     knowledge_base_collection = db["knowledge_bases"]
     logs_collection          = db["logs"]
     users_collection         = db["users"]
+    conversations_collection = db["conversations"]
 
     # ── Indexes (idempotent — safe to run multiple times) ─────
     try:
@@ -50,6 +51,13 @@ if db is not None:
             [("app_id", ASCENDING), ("timestamp", ASCENDING)],
             name="idx_logs_app_time"
         )
+        conversations_collection.create_index(
+            [("conversation_id", ASCENDING)], unique=False, name="idx_conv_id"
+        )
+        conversations_collection.create_index(
+            [("app_id", ASCENDING), ("updated_at", ASCENDING)],
+            name="idx_conv_app_time"
+        )
         logger.info("MongoDB indexes ensured")
     except Exception as e:
         logger.warning(f"Index creation warning: {e}")
@@ -58,6 +66,7 @@ else:
     knowledge_base_collection = None
     logs_collection          = None
     users_collection         = None
+    conversations_collection = None
 
 
 def get_db():
