@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { AppWindow, Database, Plus, Copy, Check, ExternalLink, ArrowRight, Zap, Shield, Layout, Sparkles, Activity } from 'lucide-react';
@@ -12,20 +13,22 @@ import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const { user, isLoading } = useAuth();
     const [copied, setCopied] = useState(false);
     const [appCount, setAppCount] = useState(0);
     const [kbCount, setKbCount] = useState(0);
     const [logs, setLogs] = useState<any[]>([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        if (!token || !storedUser) {
-            router.push('/login');
+        if (!isLoading && !user) {
+            router.push('/');
             return;
         }
-        setUser(JSON.parse(storedUser));
+
+        if (!user) return;
+
+        // In a real app we would get a token from Auth0 using getAccessTokenSilently
+        const token = localStorage.getItem('token') || 'temp';
 
         // Fetch counts
         fetch('http://localhost:5000/api/applications/', {
@@ -52,14 +55,14 @@ export default function DashboardPage() {
     }, [router]);
 
     const copyId = () => {
-        if (user?.id) {
-            navigator.clipboard.writeText(user.id);
+        if (user?.sub) {
+            navigator.clipboard.writeText(user.sub);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
     };
 
-    if (!user) return null;
+    if (isLoading || !user) return null;
 
     return (
         <div className="min-h-screen bg-[#050505] text-white">
@@ -88,7 +91,7 @@ export default function DashboardPage() {
                             animate={{ opacity: 1, x: 0 }}
                             className="text-4xl md:text-5xl font-serif font-medium mb-3"
                         >
-                            Welcome back, <span className="text-gold-light italic">{user.email?.split('@')[0]}</span>
+                            Welcome back, <span className="text-gold-light italic">{user.name || user.email?.split('@')[0]}</span>
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, x: -20 }}
@@ -152,7 +155,7 @@ export default function DashboardPage() {
                                 <CardContent>
                                     <div className="flex items-center gap-4">
                                         <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-mono text-sm text-gold-light break-all flex items-center">
-                                            {user.id || 'mf_user_********************'}
+                                            {user.sub || 'mf_user_********************'}
                                         </div>
                                         <Button
                                             variant="outline"

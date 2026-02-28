@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter, usePathname } from 'next/navigation';
 import { Zap, LogOut, User, ChevronDown, Terminal, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,30 +12,18 @@ import { Button } from '@/components/ui/button';
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+    const { user, isLoading, logout, login } = useAuth();
     const [showDropdown, setShowDropdown] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
-
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        router.push('/');
-    };
 
     const isLanding = pathname === '/';
 
@@ -65,14 +54,14 @@ export default function Navbar() {
                             <a href="#features" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Features</a>
                             <Link href="/docs" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Docs</Link>
                             <a href="#how-it-works" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">How It Works</a>
-                            <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors ml-4">
+                            <button onClick={login} className="text-sm font-medium text-zinc-400 hover:text-white transition-colors ml-4">
                                 Log in
-                            </Link>
-                            <Link href="/signup">
+                            </button>
+                            <button onClick={login}>
                                 <Button variant="default" className="rounded-full bg-gold-base text-black hover:bg-gold-light shadow-lg shadow-gold-base/20 border-none px-6 font-bold">
                                     Sign up Free
                                 </Button>
-                            </Link>
+                            </button>
                         </>
                     ) : (
                         <>
@@ -145,10 +134,10 @@ export default function Navbar() {
                                 <>
                                     <a href="#features" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Features</a>
                                     <a href="#how-it-works" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
-                                    <Link href="/login" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-                                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                                    <button onClick={login} className="text-lg font-medium text-left">Login</button>
+                                    <button onClick={login}>
                                         <Button className="w-full">Get Started</Button>
-                                    </Link>
+                                    </button>
                                 </>
                             ) : (
                                 <>

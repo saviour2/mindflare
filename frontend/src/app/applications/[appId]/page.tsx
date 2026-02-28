@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ModelDoc {
     id: string;
@@ -83,10 +84,14 @@ export default function AppDetailsPage() {
     const [selectedVoiceId, setSelectedVoiceId] = useState('21m00Tcm4TlvDq8ikWAM'); // Rachel default
     const [currentlyPlayingAudio, setCurrentlyPlayingAudio] = useState<HTMLAudioElement | null>(null);
 
+    const { user, isLoading } = useAuth();
+
+    // Still need token if backend relies on it
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     useEffect(() => {
-        if (!token) { router.push('/login'); return; }
+        if (!isLoading && !user) { router.push('/'); return; }
+        if (!token) return;
 
         // Fetch app config
         fetch(`http://localhost:5000/api/applications/${appId}`, {
@@ -114,8 +119,11 @@ export default function AppDetailsPage() {
         }).then(r => r.json()).then(d => {
             setModels(d.models || []);
             setModelsLoading(false);
+            setModelsLoading(false);
         }).catch(() => setModelsLoading(false));
-    }, [appId, token, router]);
+    }, [appId, token, router, user, isLoading]);
+
+    if (isLoading || !user) return null;
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

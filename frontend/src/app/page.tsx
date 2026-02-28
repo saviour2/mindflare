@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, BookOpen, Blocks, Share2, LineChart, Terminal, Cpu, Zap, Bot, Database, Code, Shield } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent, useTransform } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 
@@ -86,14 +87,7 @@ export default function Home() {
   const WORDS = ["Chatbots", "Agents", "Pipelines"];
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [activeFeature, setActiveFeature] = useState(0);
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+  const { user, login } = useAuth();
 
   // Timeline Scroll Logic
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -314,11 +308,19 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.3 }}
                 className="flex flex-col sm:flex-row items-center gap-6 w-full sm:w-auto"
               >
-                <Link href={user ? "/dashboard" : "/signup"} className="w-full sm:w-auto group relative">
-                  <Button size="lg" className="relative w-full sm:w-auto h-14 px-10 rounded-full bg-white text-black hover:bg-zinc-200 font-sans font-medium tracking-wide">
-                    {user ? "Go to Dashboard" : "Start Building Free"}
-                  </Button>
-                </Link>
+                {user ? (
+                  <Link href="/dashboard" className="w-full sm:w-auto group relative">
+                    <Button size="lg" className="relative w-full sm:w-auto h-14 px-10 rounded-full bg-white text-black hover:bg-zinc-200 font-sans font-medium tracking-wide">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <button onClick={login} className="w-full sm:w-auto group relative">
+                    <Button size="lg" className="relative w-full sm:w-auto h-14 px-10 rounded-full bg-white text-black hover:bg-zinc-200 font-sans font-medium tracking-wide">
+                      Start Building Free
+                    </Button>
+                  </button>
+                )}
                 <Link href="#features" className="w-full sm:w-auto group font-medium">
                   <Button variant="ghost" size="lg" className="h-14 px-8 rounded-full text-zinc-400 hover:text-white">
                     Explore Features <ArrowRight className="ml-2 h-4 w-4" />
@@ -462,7 +464,9 @@ export default function Home() {
                     <li key={i} className="flex items-center gap-3 text-sm text-zinc-300"><CheckIcon /> {f}</li>
                   ))}
                 </ul>
-                <Link href="/signup"><Button className="w-full rounded-full h-14 bg-white text-black font-semibold">Start Building</Button></Link>
+                <button onClick={login} className="w-full text-left">
+                  <Button className="w-full rounded-full h-14 bg-white text-black font-semibold">Start Building</Button>
+                </button>
               </div>
               <div className="lg:col-span-3 bg-gradient-to-br from-gold-dark/20 to-black/80 border border-gold-base/20 rounded-3xl p-12 relative overflow-hidden group hover:border-gold-base/40 transition-all">
                 <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-all"><Cpu className="w-32 h-32 text-gold-base rotate-12" /></div>

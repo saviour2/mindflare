@@ -8,23 +8,20 @@ import { User, Key, Trash2, Shield, Heart, Fingerprint, ChevronRight } from 'luc
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SettingsPage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        if (!token || !storedUser) { router.push('/login'); return; }
-        setUser(JSON.parse(storedUser));
-    }, []);
-
+    const { user, isLoading } = useAuth();
     const [keys, setKeys] = useState<Record<string, string> | null>(null);
     const [revealError, setRevealError] = useState('');
     const [isRevealing, setIsRevealing] = useState(false);
 
-    if (!user) return null;
+    useEffect(() => {
+        if (!isLoading && !user) { router.push('/'); return; }
+    }, [user, isLoading, router]);
+
+    if (isLoading || !user) return null;
 
     const handlePurge = async () => {
         if (!confirm("CRITICAL WARNING: This will permanently delete your identity and all neural assets. Proceed?")) return;

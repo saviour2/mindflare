@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-
+import { useAuth } from '@/hooks/useAuth';
 interface KBDoc {
     kb_id: string;
     kb_name: string;
@@ -34,6 +34,7 @@ export default function KnowledgeBasePage() {
     const [sourceUrl, setSourceUrl] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
+    const { user, isLoading } = useAuth();
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const kbsRef = useRef<KBDoc[]>([]);
@@ -52,7 +53,9 @@ export default function KnowledgeBasePage() {
     };
 
     useEffect(() => {
-        if (!token) { router.push('/login'); return; }
+        if (!isLoading && !user) { router.push('/'); return; }
+        if (!token) return;
+
         fetchKBs();
 
         // Poll every 2 seconds when something is processing for snappy progress updates
@@ -65,7 +68,9 @@ export default function KnowledgeBasePage() {
 
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]);
+    }, [token, user, isLoading]);
+
+    if (isLoading || !user) return null;
 
     const deleteKB = async (kbId: string) => {
         toast(

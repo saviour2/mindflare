@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ModelDoc {
     id: string;
@@ -54,6 +55,10 @@ export default function ApplicationsPage() {
     const [prLoading, setPrLoading] = useState(false);
     const [prResult, setPrResult] = useState<{ url: string, stack: string } | null>(null);
 
+    const { user, isLoading } = useAuth();
+
+    // Since our backend might still rely on tokens for now, let's keep it checking 'token' from localStorage 
+    // but protect the page with `useAuth`.
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     const fetchApps = async () => {
@@ -68,7 +73,9 @@ export default function ApplicationsPage() {
     };
 
     useEffect(() => {
-        if (!token) { router.push('/login'); return; }
+        if (!isLoading && !user) { router.push('/'); return; }
+        if (!token) return;
+
         fetchApps();
         // Fetch live models
         fetch('http://localhost:5000/api/models/', {
@@ -95,7 +102,9 @@ export default function ApplicationsPage() {
         const ghLoginParam = searchParams.get('login');
         if (ghStatus === 'connected') toast.success(`GitHub connected as @${ghLoginParam}!`);
         if (ghStatus === 'error') toast.error('GitHub connection failed. Try again.');
-    }, []);
+    }, [user, isLoading, router, token]);
+
+    if (isLoading || !user) return null;
 
     const fetchGhRepos = async () => {
         const tk = localStorage.getItem('token');
