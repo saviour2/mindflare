@@ -11,16 +11,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
-const MODELS = [
-    { value: 'google/gemini-3.1-pro-preview-custom-tools', label: 'Google: Gemini 3.1 Pro Preview Custom Tools' },
-    { value: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B Instruct' },
-    { value: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B Instruct' },
-    { value: 'mistralai/mixtral-8x7b-instruct', label: 'Mixtral 8x7B Instruct' },
-    { value: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku' },
-    { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' },
-    { value: 'llama3-70b-8192', label: 'Groq: Llama 3 70B' },
-];
+interface ModelDoc {
+    id: string;
+    name: string;
+    provider: 'openrouter' | 'groq';
+    context_length: number;
+    free: boolean;
+}
 
 interface AppDoc {
     app_id: string;
@@ -35,10 +32,11 @@ interface AppDoc {
 export default function ApplicationsPage() {
     const router = useRouter();
     const [apps, setApps] = useState<AppDoc[]>([]);
+    const [models, setModels] = useState<ModelDoc[]>([]);
     const [search, setSearch] = useState('');
     const [showCreate, setShowCreate] = useState(false);
     const [newAppName, setNewAppName] = useState('');
-    const [newModel, setNewModel] = useState(MODELS[0].value);
+    const [newModel, setNewModel] = useState('llama-3.1-8b-instant');
     const [loading, setLoading] = useState(false);
     const [createdKey, setCreatedKey] = useState('');
     const [copiedKey, setCopiedKey] = useState(false);
@@ -60,6 +58,16 @@ export default function ApplicationsPage() {
     useEffect(() => {
         if (!token) { router.push('/login'); return; }
         fetchApps();
+        // Fetch live models
+        fetch('http://localhost:5000/api/models/', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(d => {
+            const list: ModelDoc[] = d.models || [];
+            setModels(list);
+            if (list.length > 0 && !list.find(m => m.id === newModel)) {
+                setNewModel(list[0].id);
+            }
+        }).catch(() => { });
     }, []);
 
     const createApp = async () => {
@@ -311,7 +319,22 @@ export default function ApplicationsPage() {
                                                     onChange={(e) => setNewModel(e.target.value)}
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 focus:outline-none appearance-none font-sans text-sm"
                                                 >
-                                                    {MODELS.map(m => <option key={m.value} value={m.value} className="bg-zinc-950">{m.label}</option>)}
+                                                    {models.length === 0 ? (
+                                                        <option value="llama-3.1-8b-instant" className="bg-zinc-950">⚡ Groq: Llama 3.1 8B (default)</option>
+                                                    ) : (
+                                                        <>
+                                                            <optgroup label="⚡ Groq — Ultra Fast">
+                                                                {models.filter((m: ModelDoc) => m.provider === 'groq').map((m: ModelDoc) => (
+                                                                    <option key={m.id} value={m.id} className="bg-zinc-950">{m.name}</option>
+                                                                ))}
+                                                            </optgroup>
+                                                            <optgroup label="🔮 OpenRouter — Free">
+                                                                {models.filter((m: ModelDoc) => m.provider === 'openrouter').map((m: ModelDoc) => (
+                                                                    <option key={m.id} value={m.id} className="bg-zinc-950">{m.name}</option>
+                                                                ))}
+                                                            </optgroup>
+                                                        </>
+                                                    )}
                                                 </select>
                                                 <ChevronDown className="w-4 h-4 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                                             </div>

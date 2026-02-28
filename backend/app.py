@@ -8,6 +8,7 @@ from knowledge_base import knowledge_base_bp
 from chat import chat_bp
 from auth_routes import auth_bp
 from analytics_routes import analytics_bp
+from models_routes import models_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -18,6 +19,7 @@ app.register_blueprint(knowledge_base_bp, url_prefix='/api/knowledge_base')
 app.register_blueprint(chat_bp, url_prefix='/api/chat')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
+app.register_blueprint(models_bp, url_prefix='/api/models')
 
 @app.route("/")
 def home():

@@ -14,16 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
-const MODELS = [
-    { value: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B Instruct', badge: 'Fast' },
-    { value: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B Instruct', badge: 'Powerful' },
-    { value: 'mistralai/mixtral-8x7b-instruct', label: 'Mixtral 8x7B MoE', badge: 'Balanced' },
-    { value: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku', badge: 'Efficient' },
-    { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', badge: 'Smart' },
-    { value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat', badge: 'Value' },
-    { value: 'llama3-70b-8192', label: 'Groq: Llama 3 70B', badge: 'Groq 🚀' },
-    { value: 'google/gemini-flash-1.5', label: 'Gemini Flash 1.5', badge: 'Google' },
-];
+interface ModelDoc {
+    id: string;
+    name: string;
+    provider: 'openrouter' | 'groq';
+    context_length: number;
+    free: boolean;
+}
 
 interface KBDoc {
     kb_id: string;
@@ -58,6 +55,8 @@ export default function AppDetailsPage() {
 
     const [app, setApp] = useState<AppDoc | null>(null);
     const [kbs, setKbs] = useState<KBDoc[]>([]);
+    const [models, setModels] = useState<ModelDoc[]>([]);
+    const [modelsLoading, setModelsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('configure');
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -79,7 +78,7 @@ export default function AppDetailsPage() {
     useEffect(() => {
         if (!token) { router.push('/login'); return; }
 
-        // Fetch app
+        // Fetch app config
         fetch(`http://localhost:5000/api/applications/${appId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         }).then(r => r.json()).then(d => {
@@ -87,16 +86,25 @@ export default function AppDetailsPage() {
                 const a = d.app;
                 setApp(a);
                 setSelectedKbIds(a.knowledge_base_ids || []);
-                setSelectedModel(a.model_name || 'meta-llama/llama-3-8b-instruct');
+                setSelectedModel(a.model_name || 'meta-llama/llama-3.2-3b-instruct:free');
                 setSystemPrompt(a.system_prompt || 'You are a helpful assistant.');
                 setChatbotName(a.chatbot_name || a.app_name);
             }
         }).catch(() => router.push('/applications'));
 
-        // Fetch user's knowledge bases
+        // Fetch knowledge bases
         fetch('http://localhost:5000/api/knowledge_base/', {
             headers: { 'Authorization': `Bearer ${token}` }
         }).then(r => r.json()).then(d => setKbs(d.knowledge_bases || []));
+
+        // Fetch live models from backend
+        setModelsLoading(true);
+        fetch('http://localhost:5000/api/models/', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(d => {
+            setModels(d.models || []);
+            setModelsLoading(false);
+        }).catch(() => setModelsLoading(false));
     }, [appId, token, router]);
 
     useEffect(() => {
@@ -315,42 +323,80 @@ export default function AppDetailsPage() {
                                 {/* AI Model */}
                                 <Card className="rounded-[2rem]">
                                     <CardHeader className="pb-2">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 border border-accent-cyan/20 flex items-center justify-center">
-                                                <Cpu className="w-5 h-5 text-accent-cyan" />
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 border border-accent-cyan/20 flex items-center justify-center">
+                                                    <Cpu className="w-5 h-5 text-accent-cyan" />
+                                                </div>
+                                                <div>
+                                                    <CardTitle className="text-xl font-serif">Language Model</CardTitle>
+                                                    <CardDescription>
+                                                        {modelsLoading ? 'Fetching live models...' : `${models.length} free models available`}
+                                                    </CardDescription>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <CardTitle className="text-xl font-serif">Language Model</CardTitle>
-                                                <CardDescription>Choose the AI engine for your chatbot</CardDescription>
-                                            </div>
+                                            <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-widest">All Free</span>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="pt-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {MODELS.map(model => (
-                                                <button
-                                                    key={model.value}
-                                                    onClick={() => setSelectedModel(model.value)}
-                                                    className={cn(
-                                                        "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 text-left",
-                                                        selectedModel === model.value
-                                                            ? "bg-accent-cyan/10 border-accent-cyan/40"
-                                                            : "bg-white/[0.02] border-white/10 hover:border-white/20"
-                                                    )}
-                                                >
-                                                    <span className={cn(
-                                                        "text-sm font-medium",
-                                                        selectedModel === model.value ? "text-accent-cyan" : "text-zinc-300"
-                                                    )}>{model.label}</span>
-                                                    <span className={cn(
-                                                        "text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest",
-                                                        selectedModel === model.value
-                                                            ? "bg-accent-cyan/20 text-accent-cyan"
-                                                            : "bg-white/5 text-zinc-600"
-                                                    )}>{model.badge}</span>
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {modelsLoading ? (
+                                            <div className="flex flex-col gap-3">
+                                                {[...Array(6)].map((_, i) => (
+                                                    <div key={i} className="h-14 rounded-2xl bg-white/5 animate-pulse" />
+                                                ))}
+                                            </div>
+                                        ) : models.length === 0 ? (
+                                            <p className="text-zinc-500 text-sm text-center py-8">Could not load models. Check backend connection.</p>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                {(['groq', 'openrouter'] as const).map(provider => {
+                                                    const group = models.filter(m => m.provider === provider);
+                                                    if (group.length === 0) return null;
+                                                    return (
+                                                        <div key={provider}>
+                                                            <div className="flex items-center gap-2 mb-3">
+                                                                <div className={cn("w-1.5 h-1.5 rounded-full", provider === 'groq' ? "bg-orange-400" : "bg-purple-400")} />
+                                                                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                                                                    {provider === 'groq' ? '⚡ Groq — Ultra Fast' : '🔮 OpenRouter — Free Tier'}
+                                                                </span>
+                                                                <span className="text-[10px] text-zinc-700">({group.length})</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                {group.map((model: ModelDoc) => (
+                                                                    <button
+                                                                        key={model.id}
+                                                                        onClick={() => setSelectedModel(model.id)}
+                                                                        className={cn(
+                                                                            "flex items-start justify-between p-3.5 rounded-2xl border transition-all duration-200 text-left gap-2",
+                                                                            selectedModel === model.id
+                                                                                ? provider === 'groq'
+                                                                                    ? "bg-orange-500/10 border-orange-500/40"
+                                                                                    : "bg-accent-cyan/10 border-accent-cyan/40"
+                                                                                : "bg-white/[0.02] border-white/10 hover:border-white/20"
+                                                                        )}
+                                                                    >
+                                                                        <div className="min-w-0">
+                                                                            <p className={cn(
+                                                                                "text-xs font-medium truncate leading-tight",
+                                                                                selectedModel === model.id
+                                                                                    ? provider === 'groq' ? "text-orange-300" : "text-accent-cyan"
+                                                                                    : "text-zinc-300"
+                                                                            )}>{model.name}</p>
+                                                                            <p className="text-[9px] text-zinc-600 font-mono mt-0.5">{(model.context_length / 1000).toFixed(0)}k ctx</p>
+                                                                        </div>
+                                                                        {selectedModel === model.id && (
+                                                                            <div className={cn("w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5", provider === 'groq' ? "bg-orange-400" : "bg-accent-cyan")}>
+                                                                                <Check className="w-2.5 h-2.5 text-black" />
+                                                                            </div>
+                                                                        )}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             </div>
