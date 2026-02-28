@@ -7,14 +7,14 @@ from datetime import datetime
 from applications import encrypt_api_key
 from database import applications_collection, knowledge_base_collection, logs_collection, conversations_collection
 from models import generate_response
-from langchain_huggingface import HuggingFaceEmbeddings
+from openrouter_embeddings import OpenRouterEmbeddings
 from langchain_community.vectorstores import FAISS
 
 logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
 
-# Loaded once at module level — expensive operation
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# Loaded once at module level
+embeddings = OpenRouterEmbeddings()
 
 MAX_CONTEXT_CHUNKS = 5          # Max retrieved chunks per query
 MAX_CONTEXT_CHARS  = 8000       # Hard cap on total context injected

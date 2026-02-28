@@ -62,6 +62,7 @@ export default function AppDetailsPage() {
     const [activeTab, setActiveTab] = useState<Tab>('configure');
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [generatingPrompt, setGeneratingPrompt] = useState(false);
 
     // Config state
     const [selectedKbIds, setSelectedKbIds] = useState<string[]>([]);
@@ -560,18 +561,59 @@ export default function AppDetailsPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">System Prompt</label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">System Prompt</label>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!systemPrompt.trim() || generatingPrompt) return;
+                                                        setGeneratingPrompt(true);
+                                                        try {
+                                                            const res = await fetch('http://localhost:5000/api/applications/generate-prompt', {
+                                                                method: 'POST',
+                                                                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ description: systemPrompt })
+                                                            });
+                                                            const data = await res.json();
+                                                            if (res.ok && data.prompt) {
+                                                                setSystemPrompt(data.prompt);
+                                                                toast.success('System prompt generated!');
+                                                            } else {
+                                                                toast.error(data.error || 'Failed to generate prompt');
+                                                            }
+                                                        } catch {
+                                                            toast.error('Network error');
+                                                        }
+                                                        setGeneratingPrompt(false);
+                                                    }}
+                                                    disabled={generatingPrompt || !systemPrompt.trim()}
+                                                    className={cn(
+                                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all duration-300",
+                                                        generatingPrompt
+                                                            ? "bg-purple-500/10 border-purple-500/30 text-purple-400 cursor-wait"
+                                                            : "bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/40"
+                                                    )}
+                                                >
+                                                    {generatingPrompt ? (
+                                                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                                            <RefreshCw className="w-3 h-3" />
+                                                        </motion.div>
+                                                    ) : (
+                                                        <Sparkles className="w-3 h-3" />
+                                                    )}
+                                                    {generatingPrompt ? 'Generating...' : 'AI Assist'}
+                                                </button>
+                                            </div>
                                             <textarea
                                                 value={systemPrompt}
                                                 onChange={e => setSystemPrompt(e.target.value)}
                                                 rows={6}
-                                                placeholder="You are a helpful assistant specializing in..."
+                                                placeholder="Type a short description like 'customer support bot for an e-commerce store' then click AI Assist..."
                                                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-base/50 transition-all font-sans text-sm resize-none leading-relaxed"
                                             />
                                         </div>
-                                        <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10">
-                                            <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                                            <p className="text-xs text-zinc-500 leading-relaxed">The system prompt guides your chatbot's personality and behavior. Be specific about its role and context.</p>
+                                        <div className="flex items-start gap-3 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10">
+                                            <Sparkles className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-zinc-500 leading-relaxed">Type a short description of your chatbot, then click <span className="text-purple-400 font-semibold">AI Assist</span> to auto-generate a detailed system prompt.</p>
                                         </div>
                                     </CardContent>
                                 </Card>

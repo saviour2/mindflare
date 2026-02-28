@@ -193,3 +193,39 @@ def update_config(app_id):
     if res.matched_count == 1:
         return jsonify({"message": "Config updated"}), 200
     return jsonify({"error": "App not found"}), 404
+
+
+@applications_bp.route('/generate-prompt', methods=['POST'])
+@requires_auth
+def generate_prompt():
+    """AI Assist — expand a short description into a full system prompt."""
+    data = request.get_json(silent=True) or {}
+    description = data.get('description', '').strip()
+
+    if not description:
+        return jsonify({"error": "description is required"}), 400
+
+    from models import generate_response
+
+    meta_prompt = [
+        {
+            "role": "system",
+            "content": (
+                "You are an expert AI prompt engineer. The user will give you a short description "
+                "of what their chatbot should do. Generate a detailed, professional system prompt "
+                "that defines the chatbot's role, personality, behavior guidelines, and response style. "
+                "Output ONLY the system prompt text — no explanations, no markdown, no quotes. "
+                "Keep it under 300 words. Make it sound professional and specific."
+            )
+        },
+        {
+            "role": "user",
+            "content": f"Create a system prompt for a chatbot described as: {description}"
+        }
+    ]
+
+    try:
+        content, usage, provider = generate_response("llama-3.1-8b-instant", meta_prompt)
+        return jsonify({"prompt": content.strip()}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to generate prompt: {str(e)}"}), 500

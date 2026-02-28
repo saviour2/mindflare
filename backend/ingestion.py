@@ -8,7 +8,7 @@ from git import Repo
 from celery import Celery
 from database import knowledge_base_collection
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from openrouter_embeddings import OpenRouterEmbeddings
 from langchain_community.vectorstores import FAISS
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -31,7 +31,7 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
     separators=["\n\n", "\n", ". ", " ", ""]
 )
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embeddings = OpenRouterEmbeddings()
 
 # ─────────────────────────────────────────────
 # PDF Extraction — PyMuPDF primary, OCR fallback
