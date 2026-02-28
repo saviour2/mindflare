@@ -1,5 +1,5 @@
 {
-  "name": "@mindflare/sdk",
+  "name": "mindflare-sdk",
   "version": "0.1.0",
   "description": "Official TypeScript/JavaScript SDK for the Mindflare AI platform",
   "main": "dist/index.js",

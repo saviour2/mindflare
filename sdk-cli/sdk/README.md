@@ -1,4 +1,4 @@
-# @mindflare/sdk
+# mindflare-sdk
 
 > Official TypeScript/JavaScript SDK for the **Mindflare AI** platform.
 
@@ -7,7 +7,7 @@ Build AI-powered chatbots with RAG (Retrieval Augmented Generation) in minutes. 
 ## Installation
 
 ```bash
-npm install @mindflare/sdk
+npm install mindflare-sdk
 ```
 
 ## Quick Start
@@ -17,7 +17,7 @@ npm install @mindflare/sdk
 Use the `Mindflare` client to send messages to your chatbot. Authenticate with the API key from your application.
 
 ```typescript
-import { Mindflare } from "@mindflare/sdk";
+import { Mindflare } from "mindflare-sdk";
 
 const mf = new Mindflare({
   apiKey: "your-api-key-here",
@@ -45,7 +45,7 @@ const answer = await mf.ask("What is quantum computing?");
 Use `MindflareAdmin` to manage applications, knowledge bases, and models.
 
 ```typescript
-import { MindflareAdmin } from "@mindflare/sdk";
+import { MindflareAdmin } from "mindflare-sdk";
 
 const admin = new MindflareAdmin({
   baseUrl: "http://localhost:5000",

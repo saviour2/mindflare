@@ -1,4 +1,4 @@
-# @mindflare/cli
+# mindflare-cli
 
 > Official CLI for the **Mindflare AI** platform.
 
@@ -7,13 +7,13 @@ Manage your AI applications, knowledge bases, and chat sessions directly from th
 ## Installation
 
 ```bash
-npm install -g @mindflare/cli
+npm install -g mindflare-cli
 ```
 
 Or run directly with npx:
 
 ```bash
-npx @mindflare/cli --help
+npx mindflare-cli --help
 ```
 
 ## Quick Start
