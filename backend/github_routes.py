@@ -13,13 +13,21 @@ from flask import Blueprint, request, jsonify, g, redirect
 from auth import requires_auth
 from database import users_collection
 from encryption import encrypt_symmetric, decrypt_symmetric
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 github_bp = Blueprint('github', __name__)
 
-GITHUB_CLIENT_ID     = os.getenv("GITHUB_CLIENT_ID", "")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET", "")
-FRONTEND_URL         = os.getenv("FRONTEND_URL", "http://localhost:3000")
+def get_github_client_id():
+    return os.getenv("GITHUB_CLIENT_ID", "")
+
+def get_github_client_secret():
+    return os.getenv("GITHUB_CLIENT_SECRET", "")
+
+def get_frontend_url():
+    return os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
 # ─────────────────────────────────────────────
@@ -36,10 +44,10 @@ def github_auth():
     
     oauth_url = (
         f"https://github.com/login/oauth/authorize"
-        f"?client_id={GITHUB_CLIENT_ID}"
+        f"?client_id={get_github_client_id()}"
         f"&scope={scope}"
         f"&state={state}"
-        f"&redirect_uri={FRONTEND_URL}/github/callback"
+        f"&redirect_uri={get_frontend_url()}/github/callback"
     )
     return jsonify({"url": oauth_url}), 200
 
@@ -59,8 +67,8 @@ def github_callback():
     resp = requests.post(
         "https://github.com/login/oauth/access_token",
         data={
-            "client_id":     GITHUB_CLIENT_ID,
-            "client_secret": GITHUB_CLIENT_SECRET,
+            "client_id":     get_github_client_id(),
+            "client_secret": get_github_client_secret(),
             "code":          code,
         },
         headers={"Accept": "application/json"},
