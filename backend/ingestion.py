@@ -70,7 +70,7 @@ def extract_from_github(repo_url):
             if "node_modules" in dirs: dirs.remove("node_modules")
             if "venv" in dirs: dirs.remove("venv")
             for file in files:
-                ext = os.path.splitext(file)[[1]](https://github.com/Srizdebnath/mindflare.ai/pull/1)
+                ext = os.path.splitext(file)[1]
                 if ext in valid_extensions:
                     filepath = os.path.join(root, file)
                     try:
