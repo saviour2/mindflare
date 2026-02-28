@@ -18,6 +18,7 @@ from chat import chat_bp
 from auth_routes import auth_bp
 from analytics_routes import analytics_bp
 from models_routes import models_bp
+from github_routes import github_bp
 
 app = Flask(__name__)
 
@@ -41,6 +42,7 @@ app.register_blueprint(chat_bp,            url_prefix='/api/chat')
 app.register_blueprint(auth_bp,            url_prefix='/api/auth')
 app.register_blueprint(analytics_bp,       url_prefix='/api/analytics')
 app.register_blueprint(models_bp,          url_prefix='/api/models')
+app.register_blueprint(github_bp,          url_prefix='/api/github')
 
 # ── Global error handlers ────────────────────────────────────
 @app.errorhandler(413)

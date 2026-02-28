@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Plus, AppWindow, Trash2, Copy, Check, X, Search, Code, Cpu, Activity, Clock, ChevronDown, Shield } from 'lucide-react';
+import { Plus, AppWindow, Trash2, Copy, Check, X, Search, Code, Cpu, Activity, Clock, ChevronDown, Shield, Github, GitPullRequest, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +31,7 @@ interface AppDoc {
 
 export default function ApplicationsPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [apps, setApps] = useState<AppDoc[]>([]);
     const [models, setModels] = useState<ModelDoc[]>([]);
     const [search, setSearch] = useState('');
@@ -41,6 +42,16 @@ export default function ApplicationsPage() {
     const [createdKey, setCreatedKey] = useState('');
     const [copiedKey, setCopiedKey] = useState(false);
     const [selectedSdkApp, setSelectedSdkApp] = useState<AppDoc | null>(null);
+
+    // GitHub / Auto-PR state
+    const [ghConnected, setGhConnected] = useState(false);
+    const [ghLogin, setGhLogin] = useState('');
+    const [ghRepos, setGhRepos] = useState<any[]>([]);
+    const [ghLoading, setGhLoading] = useState(false);
+    const [showAutoPR, setShowAutoPR] = useState<AppDoc | null>(null);
+    const [selectedRepo, setSelectedRepo] = useState('');
+    const [prLoading, setPrLoading] = useState(false);
+    const [prResult, setPrResult] = useState<{ url: string, stack: string } | null>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
@@ -68,7 +79,81 @@ export default function ApplicationsPage() {
                 setNewModel(list[0].id);
             }
         }).catch(() => { });
+
+        // Check GitHub connection status
+        fetch('http://localhost:5000/api/github/status', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(d => {
+            setGhConnected(d.connected);
+            setGhLogin(d.github_login || '');
+            if (d.connected) fetchGhRepos();
+        }).catch(() => { });
+
+        // Handle GitHub OAuth callback toast
+        const ghStatus = searchParams.get('gh');
+        const ghLoginParam = searchParams.get('login');
+        if (ghStatus === 'connected') toast.success(`GitHub connected as @${ghLoginParam}!`);
+        if (ghStatus === 'error') toast.error('GitHub connection failed. Try again.');
     }, []);
+
+    const fetchGhRepos = async () => {
+        const tk = localStorage.getItem('token');
+        if (!tk) return;
+        try {
+            const res = await fetch('http://localhost:5000/api/github/repos', {
+                headers: { 'Authorization': `Bearer ${tk}` }
+            });
+            const d = await res.json();
+            setGhRepos(d.repos || []);
+        } catch { }
+    };
+
+    const connectGitHub = async () => {
+        setGhLoading(true);
+        try {
+            const res = await fetch('http://localhost:5000/api/github/auth', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const d = await res.json();
+            if (d.url) window.location.href = d.url;
+            else toast.error('Failed to initiate GitHub OAuth');
+        } catch { toast.error('Failed to connect GitHub'); }
+        setGhLoading(false);
+    };
+
+    const fireAutoPR = async () => {
+        if (!selectedRepo || !showAutoPR) return;
+        const repo = ghRepos.find(r => r.full_name === selectedRepo);
+        if (!repo) return;
+
+        setPrLoading(true);
+        setPrResult(null);
+        const loadingT = toast.loading('Generating integration code and opening PR...');
+        try {
+            const res = await fetch('http://localhost:5000/api/github/auto-pr', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    repo_full_name: repo.full_name,
+                    default_branch: repo.default_branch,
+                    app_id: showAutoPR.app_id,
+                    api_key: '(retrieve from settings vault)',
+                })
+            });
+            const d = await res.json();
+            toast.dismiss(loadingT);
+            if (d.pr_url) {
+                setPrResult({ url: d.pr_url, stack: d.stack });
+                toast.success('Pull Request created!');
+            } else {
+                toast.error(d.error || 'Failed to create PR');
+            }
+        } catch {
+            toast.dismiss(loadingT);
+            toast.error('Network error');
+        }
+        setPrLoading(false);
+    };
 
     const createApp = async () => {
         if (!newAppName.trim()) return;
@@ -184,6 +269,137 @@ export default function ApplicationsPage() {
                     </motion.div>
                 </div>
 
+                {/* GitHub Integration Banner */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="mb-8 p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center border",
+                            ghConnected ? "bg-green-500/10 border-green-500/20" : "bg-white/5 border-white/10"
+                        )}>
+                            <Github className={cn("w-5 h-5", ghConnected ? "text-green-400" : "text-zinc-500")} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium">
+                                {ghConnected ? `GitHub Connected — @${ghLogin}` : "Connect GitHub for Auto-PR"}
+                            </p>
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                                {ghConnected
+                                    ? "Click 'Auto PR' on any app to inject the chatbot into your repo via a Pull Request."
+                                    : "Authorize Mindflare to generate integration code and open PRs automatically."}
+                            </p>
+                        </div>
+                    </div>
+                    {!ghConnected ? (
+                        <Button onClick={connectGitHub} disabled={ghLoading} variant="outline" className="rounded-full h-10 px-6 border-white/10 whitespace-nowrap shrink-0">
+                            {ghLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Github className="w-4 h-4 mr-2" />}
+                            {ghLoading ? "Redirecting…" : "Connect GitHub"}
+                        </Button>
+                    ) : (
+                        <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1.5">
+                            <Wifi className="w-3 h-3" /> Connected
+                        </div>
+                    )}
+                </motion.div>
+
+                {/* Auto-PR Modal */}
+                <AnimatePresence>
+                    {showAutoPR && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+                            onClick={() => { setShowAutoPR(null); setPrResult(null); setSelectedRepo(''); }}
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden"
+                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            >
+                                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                                            <GitPullRequest className="w-5 h-5 text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-sm">Auto Pull Request</h3>
+                                            <p className="text-xs text-zinc-500">{showAutoPR.app_name}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => { setShowAutoPR(null); setPrResult(null); setSelectedRepo(''); }} className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="p-6 space-y-5">
+                                    {!prResult ? (
+                                        <>
+                                            <p className="text-sm text-zinc-400 font-sans">
+                                                Mindflare detects your stack, generates integration code, and opens a PR automatically.
+                                            </p>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Select Repository</label>
+                                                <select
+                                                    value={selectedRepo}
+                                                    onChange={e => setSelectedRepo(e.target.value)}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white font-sans focus:outline-none focus:border-white/20"
+                                                >
+                                                    <option value="">— choose a repo —</option>
+                                                    {ghRepos.map(r => (
+                                                        <option key={r.full_name} value={r.full_name}>
+                                                            {r.full_name}{r.language ? ` (${r.language})` : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs text-zinc-400 font-sans">
+                                                <p className="font-bold text-zinc-300 text-xs uppercase tracking-widest mb-2">What gets created</p>
+                                                <p>✦ New branch: <code className="text-purple-300">mindflare/chatbot-integration</code></p>
+                                                <p>✦ Stack auto-detected (Next.js / React / HTML)</p>
+                                                <p>✦ Integration files committed with credentials pre-filled</p>
+                                                <p>✦ Pull Request opened on <code className="text-purple-300">{selectedRepo || 'your repo'}</code></p>
+                                            </div>
+                                            <Button
+                                                onClick={fireAutoPR}
+                                                disabled={!selectedRepo || prLoading}
+                                                className="w-full h-12 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold"
+                                            >
+                                                {prLoading
+                                                    ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Generating PR…</>
+                                                    : <><GitPullRequest className="w-4 h-4 mr-2" />Generate & Open PR</>
+                                                }
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4">
+                                            <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto">
+                                                <Check className="w-8 h-8 text-green-400" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold mb-1">Pull Request Created!</h4>
+                                                <p className="text-xs text-zinc-400">Stack: <span className="text-purple-300 font-mono">{prResult.stack}</span></p>
+                                            </div>
+                                            <a href={prResult.url} target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-colors">
+                                                <Github className="w-4 h-4" /> View Pull Request on GitHub
+                                            </a>
+                                            <button onClick={() => { setPrResult(null); setSelectedRepo(''); }} className="text-xs text-zinc-500 hover:text-white transition-colors">
+                                                Create another PR
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {filteredApps.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -253,6 +469,16 @@ export default function ApplicationsPage() {
                                                 </Button>
                                             </Link>
                                             <div className="flex gap-1">
+                                                {ghConnected && (
+                                                    <Button
+                                                        onClick={() => { setShowAutoPR(app); setPrResult(null); setSelectedRepo(''); }}
+                                                        variant="ghost" size="sm"
+                                                        className="rounded-full text-purple-400/70 hover:text-purple-400 hover:bg-purple-400/10"
+                                                        title="Auto-PR: Inject chatbot into GitHub repo"
+                                                    >
+                                                        <GitPullRequest className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                )}
                                                 <Button onClick={() => setSelectedSdkApp(app)} variant="ghost" size="sm" className="rounded-full text-zinc-500 hover:text-white">
                                                     <Code className="w-3.5 h-3.5" />
                                                 </Button>
