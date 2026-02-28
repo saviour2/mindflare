@@ -50,8 +50,8 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center transition-transform group-hover:scale-110">
-                        <Terminal className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold-base to-gold-dark text-black flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                        <Terminal className="w-4 h-4 fill-current" />
                     </div>
                     <span className="text-xl font-bold tracking-tight text-white font-serif">
                         Mindflare<span className="text-gold-base">AI</span>
@@ -69,7 +69,7 @@ export default function Navbar() {
                                 Log in
                             </Link>
                             <Link href="/signup">
-                                <Button variant="default" className="rounded-full shadow-lg shadow-white/5">
+                                <Button variant="default" className="rounded-full bg-gold-base text-black hover:bg-gold-light shadow-lg shadow-gold-base/20 border-none px-6 font-bold">
                                     Sign up Free
                                 </Button>
                             </Link>

@@ -649,40 +649,48 @@ export default function AppDetailsPage() {
 
                                             {/* Voice Picker */}
                                             {voiceEnabled && (
-                                                <div className="pt-2 border-t border-white/5 space-y-2">
+                                                <div className="pt-2 border-t border-white/5 space-y-3">
                                                     <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest flex items-center gap-1.5">
-                                                        <Mic className="w-3 h-3 text-gold-base" /> Voice
+                                                        <Mic className="w-3 h-3 text-gold-base" /> Intelligence Profile
                                                     </span>
-                                                    <div className="space-y-1.5">
+                                                    <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                                         {([
-                                                            { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Calm, American Female', emoji: '👩' },
-                                                            { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', desc: 'Strong, American Female', emoji: '💪' },
-                                                            { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', desc: 'Soft, American Female', emoji: '🌸' },
-                                                            { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', desc: 'Warm, American Male', emoji: '🎙️' },
-                                                            { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', desc: 'Expressive, American Female', emoji: '✨' },
-                                                            { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', desc: 'Deep, American Male', emoji: '🔊' },
-                                                            { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', desc: 'Crisp, American Male', emoji: '🎯' },
-                                                            { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', desc: 'Narration, American Male', emoji: '📖' },
-                                                            { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', desc: 'Raspy, American Male', emoji: '🎤' },
-                                                            { id: 'jBpfuIE2acCO8z3wKNLl', name: 'Freya', desc: 'British Female', emoji: '🇬🇧' },
-                                                        ] as { id: string; name: string; desc: string; emoji: string }[]).map(v => (
+                                                            { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Calm Narrative', color: 'bg-rose-500/20 text-rose-300' },
+                                                            { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', desc: 'Action/Strong', color: 'bg-orange-500/20 text-orange-300' },
+                                                            { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', desc: 'Professional/Soft', color: 'bg-emerald-500/20 text-emerald-300' },
+                                                            { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', desc: 'Enterprise Male', color: 'bg-blue-500/20 text-blue-300' },
+                                                            { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', desc: 'Expressive/Clear', color: 'bg-amber-500/20 text-amber-300' },
+                                                            { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', desc: 'Deep/Authoritative', color: 'bg-indigo-500/20 text-indigo-300' },
+                                                            { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', desc: 'Crisp/American', color: 'bg-cyan-500/20 text-cyan-300' },
+                                                            { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', desc: 'Deep Narration', color: 'bg-zinc-500/20 text-zinc-300' },
+                                                            { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', desc: 'Raspy/Character', color: 'bg-orange-600/20 text-orange-400' },
+                                                            { id: 'jBpfuIE2acCO8z3wKNLl', name: 'Freya', desc: 'British Narrative', color: 'bg-purple-500/20 text-purple-300' },
+                                                        ] as { id: string; name: string; desc: string; color: string }[]).map(v => (
                                                             <button
                                                                 key={v.id}
                                                                 onClick={() => setSelectedVoiceId(v.id)}
                                                                 className={cn(
-                                                                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-200",
+                                                                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left transition-all duration-300 relative group",
                                                                     selectedVoiceId === v.id
-                                                                        ? "bg-gold-base/15 border border-gold-base/30"
+                                                                        ? "bg-gold-base/10 border border-gold-base/30 shadow-inner"
                                                                         : "hover:bg-white/5 border border-transparent"
                                                                 )}
                                                             >
-                                                                <span className="text-base leading-none">{v.emoji}</span>
-                                                                <div>
-                                                                    <p className={cn("text-xs font-semibold", selectedVoiceId === v.id ? "text-gold-light" : "text-white")}>{v.name}</p>
-                                                                    <p className="text-[10px] text-zinc-500">{v.desc}</p>
+                                                                <div className={cn(
+                                                                    "w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-bold border border-white/5",
+                                                                    v.color
+                                                                )}>
+                                                                    {v.name[0]}
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <p className={cn("text-[11px] font-bold", selectedVoiceId === v.id ? "text-gold-light" : "text-zinc-200")}>{v.name}</p>
+                                                                        {selectedVoiceId === v.id && <Sparkles className="w-2.5 h-2.5 text-gold-base animate-pulse" />}
+                                                                    </div>
+                                                                    <p className="text-[9px] text-zinc-500 font-medium tracking-tight">{v.desc}</p>
                                                                 </div>
                                                                 {selectedVoiceId === v.id && (
-                                                                    <Check className="w-3 h-3 text-gold-base ml-auto shrink-0" />
+                                                                    <motion.div layoutId="voiceActive" className="absolute left-1 w-1 h-4 bg-gold-base rounded-full" />
                                                                 )}
                                                             </button>
                                                         ))}
