@@ -44,6 +44,9 @@ app.register_blueprint(analytics_bp,       url_prefix='/api/analytics')
 app.register_blueprint(models_bp,          url_prefix='/api/models')
 app.register_blueprint(github_bp,          url_prefix='/api/github')
 
+from voice_routes import voice_bp
+app.register_blueprint(voice_bp,           url_prefix='/api/voice')
+
 # ── Global error handlers ────────────────────────────────────
 @app.errorhandler(413)
 def too_large(e):

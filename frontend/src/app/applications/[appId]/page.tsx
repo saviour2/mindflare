@@ -6,7 +6,8 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import {
     ArrowLeft, Bot, Database, Settings2, Wand2, Send, Sparkles,
-    Check, RefreshCw, ChevronRight, Cpu, MessageSquare, Zap, Info, Layers
+    Check, RefreshCw, ChevronRight, Cpu, MessageSquare, Zap, Info, Layers,
+    Mic, MicOff, Volume2, VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,12 @@ export default function AppDetailsPage() {
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const recognitionRef = useRef<any>(null);
+
+    // Voice State
+    const [isListening, setIsListening] = useState(false);
+    const [voiceEnabled, setVoiceEnabled] = useState(true);
+    const [currentlyPlayingAudio, setCurrentlyPlayingAudio] = useState<HTMLAudioElement | null>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
@@ -109,7 +116,81 @@ export default function AppDetailsPage() {
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, isTyping]);
+
+    // Initialize Speech Recognition
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+
+                recognition.onresult = (event: any) => {
+                    let text = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        text += event.results[i][0].transcript;
+                    }
+                    setInputValue(text);
+                };
+
+                recognition.onend = () => {
+                    setIsListening(false);
+                    // Optionally auto-send when they stop speaking:
+                    // if (inputValue.trim().length > 0) sendMessage(); 
+                };
+
+                recognitionRef.current = recognition;
+            }
+        }
+    }, []);
+
+    const toggleListening = () => {
+        if (isListening) {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+        } else {
+            setInputValue(''); // clear before new speech
+            recognitionRef.current?.start();
+            setIsListening(true);
+        }
+    };
+
+    const toggleVoice = () => {
+        if (voiceEnabled && currentlyPlayingAudio) {
+            currentlyPlayingAudio.pause();
+            setCurrentlyPlayingAudio(null);
+        }
+        setVoiceEnabled(!voiceEnabled);
+    };
+
+    const playVoiceAudio = async (text: string) => {
+        if (!token || !voiceEnabled) return;
+
+        try {
+            const res = await fetch('http://localhost:5000/api/voice/synthesize', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                setCurrentlyPlayingAudio(audio);
+                audio.play();
+                audio.onended = () => {
+                    URL.revokeObjectURL(url);
+                    if (currentlyPlayingAudio === audio) setCurrentlyPlayingAudio(null);
+                };
+            }
+        } catch (err) {
+            console.error("Failed to fetch TTS audio", err);
+        }
+    };
+
 
     const toggleKb = (kbId: string) => {
         setSelectedKbIds(prev =>
@@ -157,6 +238,12 @@ export default function AppDetailsPage() {
         setIsTyping(true);
 
         try {
+            // Stop any currently playing audio so it doesn't talk over the new response
+            if (currentlyPlayingAudio) {
+                currentlyPlayingAudio.pause();
+                setCurrentlyPlayingAudio(null);
+            }
+
             const res = await fetch(`http://localhost:5000/api/chat/playground/${appId}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -168,6 +255,11 @@ export default function AppDetailsPage() {
                 setMessages(prev => [...prev, { role: 'assistant', content: 'Error: ' + data.error }]);
             } else {
                 setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+
+                // Trigger Voice Playing on Assistant Response
+                if (voiceEnabled) {
+                    playVoiceAudio(data.response);
+                }
             }
         } catch {
             toast.error('Connection error. Check your backend.');
@@ -504,6 +596,23 @@ export default function AppDetailsPage() {
                                                 <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest">Knowledge</span>
                                                 <span className="text-xs text-zinc-400">{selectedKbIds.length} bases</span>
                                             </div>
+                                            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                                <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest flex items-center gap-1.5">
+                                                    Voice Responding <Volume2 className="w-3 h-3 text-gold-base" />
+                                                </span>
+                                                <button
+                                                    onClick={toggleVoice}
+                                                    className={cn(
+                                                        "w-10 h-5 rounded-full relative transition-colors duration-300",
+                                                        voiceEnabled ? "bg-gold-base" : "bg-white/10"
+                                                    )}
+                                                >
+                                                    <div className={cn(
+                                                        "w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all duration-300",
+                                                        voiceEnabled ? "left-5.5 translate-x-[22px]" : "left-0.5"
+                                                    )} />
+                                                </button>
+                                            </div>
                                         </div>
                                         <Button
                                             onClick={() => setMessages([])}
@@ -642,17 +751,38 @@ export default function AppDetailsPage() {
                                         )}
                                     </div>
 
-                                    {/* Input */}
                                     <div className="px-8 py-5 border-t border-white/5 bg-white/[0.01]">
-                                        <div className="flex gap-3 items-center">
-                                            <input
-                                                type="text"
-                                                value={inputValue}
-                                                onChange={e => setInputValue(e.target.value)}
-                                                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                                                placeholder={`Message ${chatbotName || app.app_name}...`}
-                                                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm"
-                                            />
+                                        <div className="flex gap-3 items-center relative">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={inputValue}
+                                                    onChange={e => setInputValue(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                                                    placeholder={isListening ? "Listening..." : `Message ${chatbotName || app.app_name}...`}
+                                                    className={cn(
+                                                        "w-full bg-white/5 border rounded-2xl pl-6 pr-14 py-4 focus:outline-none transition-all font-sans text-sm",
+                                                        isListening ? "border-red-500/50 bg-red-500/5" : "border-white/10 focus:border-gold-base/50"
+                                                    )}
+                                                />
+                                                {/* Microphone Button */}
+                                                <button
+                                                    onClick={toggleListening}
+                                                    className={cn(
+                                                        "absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                                                        isListening ? "text-red-400 bg-red-400/10" : "text-zinc-500 hover:text-white hover:bg-white/5"
+                                                    )}
+                                                >
+                                                    {isListening ? (
+                                                        <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity }}>
+                                                            <Mic className="w-4 h-4" />
+                                                        </motion.div>
+                                                    ) : (
+                                                        <Mic className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+
                                             <motion.button
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
