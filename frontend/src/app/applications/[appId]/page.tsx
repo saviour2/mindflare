@@ -124,7 +124,7 @@ export default function AppDetailsPage() {
             const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
-                recognition.continuous = false;
+                recognition.continuous = true; // Use continuous mode to prevent auto-stopping
                 recognition.interimResults = true;
 
                 recognition.onresult = (event: any) => {
@@ -132,13 +132,25 @@ export default function AppDetailsPage() {
                     for (let i = event.resultIndex; i < event.results.length; i++) {
                         text += event.results[i][0].transcript;
                     }
-                    setInputValue(text);
+                    // It's possible the user is still speaking; append correctly or just replace.
+                    // To keep it simple, we replace inputValue with the live transcript blob:
+                    setInputValue(prev => {
+                        // In continuous mode, the results array grows. We might want to just dump the whole transcript
+                        let fullText = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            fullText += event.results[i][0].transcript;
+                        }
+                        return fullText;
+                    });
+                };
+
+                recognition.onerror = (event: any) => {
+                    console.error("Speech Recognition Error:", event.error);
                 };
 
                 recognition.onend = () => {
+                    // Check if we manually intentionally stopped it
                     setIsListening(false);
-                    // Tell the component that speech has ended, to trigger auto-send via useEffect
-                    setTriggerAutoSend(true);
                 };
 
                 recognitionRef.current = recognition;
@@ -158,13 +170,25 @@ export default function AppDetailsPage() {
     }, [triggerAutoSend, inputValue]);
 
     const toggleListening = () => {
+        if (!recognitionRef.current) return;
+
         if (isListening) {
-            recognitionRef.current?.stop();
+            recognitionRef.current.stop();
             setIsListening(false);
+
+            // Auto-send when the user toggles microphone off
+            setTimeout(() => {
+                setTriggerAutoSend(true);
+            }, 300); // small delay to allow final transcript to settle
         } else {
-            setInputValue(''); // clear before new speech
-            recognitionRef.current?.start();
-            setIsListening(true);
+            // clear before new speech and start listening
+            setInputValue('');
+            try {
+                recognitionRef.current.start();
+                setIsListening(true);
+            } catch (err) {
+                console.error("Already listening or failed to start", err);
+            }
         }
     };
 
