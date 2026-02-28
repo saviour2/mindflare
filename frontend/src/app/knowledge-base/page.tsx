@@ -163,7 +163,7 @@ export default function KnowledgeBasePage() {
             <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-gold-base/5 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-blue-base/5 rounded-full blur-[100px]" />
             </div>
 
             <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
@@ -261,7 +261,7 @@ export default function KnowledgeBasePage() {
                                             </div>
 
                                             {/* Name */}
-                                            <h3 className="text-xl font-medium mb-3 group-hover:text-gold-light transition-colors">{kb.kb_name}</h3>
+                                            <h3 className="text-xl font-medium mb-3 group-hover:text-blue-light transition-colors">{kb.kb_name}</h3>
 
                                             {/* Progress bar — shown while processing */}
                                             {isProcessing && (
@@ -365,7 +365,7 @@ export default function KnowledgeBasePage() {
                                             value={kbName}
                                             onChange={(e) => setKbName(e.target.value)}
                                             placeholder="e.g. Project Archive"
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-gold-base/50 transition-all font-sans"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-blue-base/50 transition-all font-sans"
                                         />
                                     </div>
 
@@ -382,7 +382,7 @@ export default function KnowledgeBasePage() {
                                                     onClick={() => setSourceType(s.val)}
                                                     className={cn(
                                                         "flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all duration-300",
-                                                        sourceType === s.val ? "bg-gold-base/10 border-gold-base/40 text-gold-light" : "bg-white/5 border-white/5 text-zinc-500 hover:bg-white/[0.07]"
+                                                        sourceType === s.val ? "bg-blue-base/10 border-blue-base/40 text-blue-light" : "bg-white/5 border-white/5 text-zinc-500 hover:bg-white/[0.07]"
                                                     )}
                                                 >
                                                     {s.ic}
@@ -402,7 +402,7 @@ export default function KnowledgeBasePage() {
                                                     value={sourceUrl}
                                                     onChange={(e) => setSourceUrl(e.target.value)}
                                                     placeholder={sourceType === 'website' ? 'https://docs.myproduct.com' : 'https://github.com/org/repo'}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm"
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-blue-base/50 transition-all font-sans text-sm"
                                                 />
                                             </div>
                                         </div>
@@ -411,7 +411,7 @@ export default function KnowledgeBasePage() {
                                     {sourceType === 'pdf' && (
                                         <div className="relative">
                                             <div className="border-2 border-dashed border-white/10 rounded-[1.5rem] p-10 text-center hover:bg-white/[0.02] transition-colors cursor-pointer group">
-                                                <Upload className="w-8 h-8 text-zinc-600 mx-auto mb-4 group-hover:text-gold-light transition-colors" />
+                                                <Upload className="w-8 h-8 text-zinc-600 mx-auto mb-4 group-hover:text-blue-light transition-colors" />
                                                 <p className="text-sm text-zinc-400 font-medium mb-1 truncate px-4">{file ? file.name : 'Drop architectural PDF here'}</p>
                                                 <p className="text-[10px] text-zinc-600 uppercase tracking-widest">Supports up to 50MB</p>
                                                 <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
@@ -419,7 +419,7 @@ export default function KnowledgeBasePage() {
                                         </div>
                                     )}
 
-                                    <Button onClick={createKB} disabled={loading || !kbName.trim()} className="w-full h-14 rounded-2xl bg-gold-base text-black hover:bg-gold-light mt-4 shadow-lg shadow-gold-base/20 transition-all">
+                                    <Button onClick={createKB} disabled={loading || !kbName.trim()} className="w-full h-14 rounded-2xl bg-blue-base text-black hover:bg-blue-light mt-4 shadow-lg shadow-blue-base/20 transition-all">
                                         {loading ? 'Ingesting Pipeline...' : 'Initialize Ingestion'}
                                     </Button>
                                 </div>

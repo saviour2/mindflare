@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
             <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-gold-base/5 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-blue-base/5 rounded-full blur-[100px]" />
             </div>
 
             <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
                             >
                                 Operations Analytics
                             </motion.h1>
-                            <div className="px-2 py-0.5 rounded-full bg-gold-base/10 border border-gold-base/20 text-[10px] uppercase font-bold tracking-widest text-gold-light">Live</div>
+                            <div className="px-2 py-0.5 rounded-full bg-blue-base/10 border border-blue-base/20 text-[10px] uppercase font-bold tracking-widest text-blue-light">Live</div>
                         </div>
                         <motion.p
                             initial={{ opacity: 0, x: -20 }}
@@ -102,7 +102,7 @@ export default function AnalyticsPage() {
                     {[
                         { icon: <Activity className="w-5 h-5" />, label: 'Neural Requests', value: stats.totalRequests.toLocaleString(), trend: '+12%', color: 'blue' },
                         { icon: <Zap className="w-5 h-5" />, label: 'Token Throughput', value: stats.totalTokens.toLocaleString(), trend: '+8.4%', color: 'purple' },
-                        { icon: <DollarSign className="w-5 h-5" />, label: 'Ecological Cost', value: `$${stats.totalCost.toFixed(2)}`, trend: '-2.1%', color: 'gold' },
+                        { icon: <DollarSign className="w-5 h-5" />, label: 'Ecological Cost', value: `$${stats.totalCost.toFixed(2)}`, trend: '-2.1%', color: 'blue' },
                         { icon: <Clock className="w-5 h-5" />, label: 'Avg Latency', value: `${stats.avgResponse}ms`, trend: '-14ms', color: 'cyan' },
                     ].map((s, i) => (
                         <motion.div
@@ -118,7 +118,7 @@ export default function AnalyticsPage() {
                                             "w-10 h-10 rounded-xl flex items-center justify-center",
                                             s.color === 'blue' ? "bg-blue-500/10 text-blue-400" :
                                                 s.color === 'purple' ? "bg-purple-500/10 text-purple-400" :
-                                                    s.color === 'gold' ? "bg-gold-base/10 text-gold-base" :
+                                                    s.color === 'gold' ? "bg-blue-base/10 text-blue-base" :
                                                         "bg-cyan-500/10 text-cyan-400"
                                         )}>
                                             {s.icon}
@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
                                     <CardTitle className="text-xl font-serif">Neural Traffic</CardTitle>
                                     <CardDescription>Requests and token consumption over time</CardDescription>
                                 </div>
-                                <TrendingUp className="w-5 h-5 text-gold-base opacity-50" />
+                                <TrendingUp className="w-5 h-5 text-blue-base opacity-50" />
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[300px] w-full">

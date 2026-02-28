@@ -15,9 +15,9 @@
   --text-secondary: #a1a1aa;
   --text-muted: #71717a;
 
-  --gold-light: #f7e7ce;
-  --gold-base: #d4af37;
-  --gold-dark: #aa8a2e;
+  --blue-light: #60a5fa;
+  --blue-base: #3b82f6;
+  --blue-dark: #1d4ed8;
 
   --accent-cyan: #00f0ff;
   --accent-blue: #3b82f6;
@@ -77,7 +77,7 @@ a, button, [role="button"], input, select, textarea {
   }
 
   .gradient-text {
-    background: linear-gradient(to right, var(--gold-light), var(--gold-base), var(--gold-dark));
+    background: linear-gradient(to right, var(--blue-light), var(--blue-base), var(--blue-dark));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

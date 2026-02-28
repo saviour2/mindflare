@@ -57,8 +57,8 @@ const TerminalWindow = ({ title, children, className }: { title: string; childre
 
 const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
     <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
-            <Icon className="w-6 h-6 text-gold-base" />
+        <div className="w-12 h-12 rounded-2xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center">
+            <Icon className="w-6 h-6 text-blue-base" />
         </div>
         <h2 className="text-3xl font-bold tracking-tight text-white">{title}</h2>
     </div>
@@ -68,7 +68,7 @@ export default function DocsPage() {
     const [activeTab, setActiveTab] = useState<'cli' | 'sdk'>('cli');
 
     return (
-        <div className="min-h-screen bg-black text-white selection:bg-gold-base/30">
+        <div className="min-h-screen bg-black text-white selection:bg-blue-base/30">
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-6 pt-32 pb-24 relative z-10">
@@ -78,11 +78,11 @@ export default function DocsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-base/10 border border-gold-base/20 text-gold-base text-xs font-bold uppercase tracking-widest mb-6">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-base/10 border border-blue-base/20 text-blue-base text-xs font-bold uppercase tracking-widest mb-6">
                             <Zap className="w-3 h-3" /> Developer Documentation
                         </div>
                         <h1 className="text-5xl md:text-6xl font-serif font-bold mb-6">
-                            Build with <span className="bg-gradient-to-r from-gold-base to-gold-light bg-clip-text text-transparent italic">Mindflare</span>
+                            Build with <span className="bg-gradient-to-r from-blue-base to-blue-light bg-clip-text text-transparent italic">Mindflare</span>
                         </h1>
                         <p className="text-xl text-zinc-400 max-w-2xl leading-relaxed">
                             Integrate world-class RAG-powered AI into your applications in minutes using our professional CLI and TypeScript SDK.
@@ -132,9 +132,9 @@ export default function DocsPage() {
                                         </p>
                                         <TerminalWindow title="bash">
                                             <span className="text-zinc-500"># Install the CLI globally</span><br />
-                                            <span className="text-gold-base">npm</span> install -g mindflare-cli<br /><br />
+                                            <span className="text-blue-base">npm</span> install -g mindflare-cli<br /><br />
                                             <span className="text-zinc-500"># Or run directly with npx</span><br />
-                                            <span className="text-gold-base">npx</span> mindflare-cli --help
+                                            <span className="text-blue-base">npx</span> mindflare-cli --help
                                         </TerminalWindow>
                                     </section>
 
@@ -159,7 +159,7 @@ export default function DocsPage() {
                                                 { cmd: 'mindflare whoami', desc: 'Check active session status' }
                                             ].map((item, i) => (
                                                 <div key={i} className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors group">
-                                                    <code className="text-gold-base text-xs font-bold block mb-2">{item.cmd}</code>
+                                                    <code className="text-blue-base text-xs font-bold block mb-2">{item.cmd}</code>
                                                     <p className="text-xs text-zinc-500">{item.desc}</p>
                                                 </div>
                                             ))}
@@ -181,7 +181,7 @@ export default function DocsPage() {
                                             It handles retries, type safety, and conversational state automatically.
                                         </p>
                                         <TerminalWindow title="bash">
-                                            <span className="text-gold-base">npm</span> install mindflare-sdk
+                                            <span className="text-blue-base">npm</span> install mindflare-sdk
                                         </TerminalWindow>
                                     </section>
 
@@ -267,10 +267,10 @@ export default function DocsPage() {
                             </ul>
                         </div>
 
-                        <div className="p-6 rounded-2xl border border-gold-base/20 bg-gold-base/[0.02]">
+                        <div className="p-6 rounded-2xl border border-blue-base/20 bg-blue-base/[0.02]">
                             <h3 className="text-lg font-bold mb-2">Need help?</h3>
                             <p className="text-sm text-zinc-500 mb-4">Our developer success team is here to help you scale your AI infra.</p>
-                            <button className="w-full py-2.5 rounded-xl bg-gold-base text-black font-bold text-sm tracking-tight hover:scale-105 transition-transform">
+                            <button className="w-full py-2.5 rounded-xl bg-blue-base text-black font-bold text-sm tracking-tight hover:scale-105 transition-transform">
                                 Join Developer Discord
                             </button>
                         </div>
@@ -280,7 +280,7 @@ export default function DocsPage() {
 
             {/* Background Decor */}
             <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-                <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-gold-base/5 rounded-full blur-[120px]" />
+                <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-blue-base/5 rounded-full blur-[120px]" />
                 <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-blue-500/5 rounded-full blur-[120px]" />
             </div>
         </div>

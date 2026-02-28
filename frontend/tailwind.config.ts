@@ -11,10 +11,10 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        gold: {
-          light: "#f7e7ce",
-          base: "#d4af37",
-          dark: "#aa8a2e",
+        blue: {
+          light: "#60a5fa", // tailwind blue-400
+          base: "#3b82f6",  // tailwind blue-500
+          dark: "#1d4ed8",  // tailwind blue-700
         },
         accent: {
           cyan: "#00f0ff",

@@ -98,7 +98,7 @@ export default function CustomCursor() {
                     opacity: isVisible ? 0.4 : 0,
                     scale: isPointer ? 2 : 1,
                 }}
-                className="w-2 h-2 rounded-full bg-gold-base absolute blur-[2px]"
+                className="w-2 h-2 rounded-full bg-blue-base absolute blur-[2px]"
             />
 
             {/* Main Cursor Triangle / Tip - Zero lag for precision */}
@@ -147,7 +147,7 @@ export default function CustomCursor() {
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 6, opacity: 0.1 }}
                         exit={{ scale: 0, opacity: 0 }}
-                        className="w-0.5 h-0.5 rounded-full bg-gold-light absolute"
+                        className="w-0.5 h-0.5 rounded-full bg-blue-light absolute"
                     />
                 )}
             </AnimatePresence>

@@ -74,8 +74,8 @@ export default function ChatWidget() {
         <div className="flex flex-col h-screen bg-zinc-950 text-zinc-100 overflow-hidden border border-white/5 rounded-2xl shadow-2xl">
             {/* Header */}
             <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-white/[0.02]">
-                <div className="w-8 h-8 rounded-lg bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-gold-base" />
+                <div className="w-8 h-8 rounded-lg bg-blue-base/10 border border-blue-base/20 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-blue-base" />
                 </div>
                 <div className="flex-1">
                     <h3 className="text-sm font-medium">Assistant</h3>
@@ -100,7 +100,7 @@ export default function ChatWidget() {
                     >
                         <div className={cn(
                             "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border",
-                            m.role === 'user' ? "bg-zinc-800 border-white/10" : "bg-gold-base border-gold-base/20"
+                            m.role === 'user' ? "bg-zinc-800 border-white/10" : "bg-blue-base border-blue-base/20"
                         )}>
                             {m.role === 'user' ? <User className="w-4 h-4 text-zinc-400" /> : <Sparkles className="w-4 h-4 text-black" />}
                         </div>
@@ -116,7 +116,7 @@ export default function ChatWidget() {
                 ))}
                 {isTyping && (
                     <div className="flex gap-3 max-w-[85%]">
-                        <div className="w-8 h-8 rounded-full bg-gold-base flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-blue-base flex items-center justify-center">
                             <RefreshCw className="w-4 h-4 text-black animate-spin" />
                         </div>
                         <div className="p-3 rounded-2xl bg-white/5 text-zinc-400 text-sm animate-pulse">
@@ -138,18 +138,18 @@ export default function ChatWidget() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Type your message..."
-                        className="w-full bg-zinc-900/50 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:border-gold-base/50 transition-colors"
+                        className="w-full bg-zinc-900/50 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:border-blue-base/50 transition-colors"
                     />
                     <button
                         type="submit"
                         disabled={!input.trim() || isTyping}
-                        className="absolute right-2 p-1.5 rounded-lg bg-gold-base text-black disabled:opacity-30 disabled:grayscale transition-all"
+                        className="absolute right-2 p-1.5 rounded-lg bg-blue-base text-black disabled:opacity-30 disabled:grayscale transition-all"
                     >
                         <Send className="w-4 h-4" />
                     </button>
                 </form>
                 <p className="text-[10px] text-center mt-3 text-zinc-600 font-medium tracking-tight">
-                    Powered by <span className="text-gold-base/80">Mindflare AI</span>
+                    Powered by <span className="text-blue-base/80">Mindflare AI</span>
                 </p>
             </div>
         </div>

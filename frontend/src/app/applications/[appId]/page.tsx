@@ -313,7 +313,7 @@ export default function AppDetailsPage() {
         return (
             <div className="min-h-screen bg-[#050505] flex items-center justify-center">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
-                    <RefreshCw className="w-6 h-6 text-gold-base" />
+                    <RefreshCw className="w-6 h-6 text-blue-base" />
                 </motion.div>
             </div>
         );
@@ -326,7 +326,7 @@ export default function AppDetailsPage() {
             {/* Background */}
             <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[20%] right-[-5%] w-[40vw] h-[40vw] bg-gold-base/5 rounded-full blur-[120px]" />
+                <div className="absolute top-[20%] right-[-5%] w-[40vw] h-[40vw] bg-blue-base/5 rounded-full blur-[120px]" />
                 <div className="absolute bottom-[10%] left-[-5%] w-[35vw] h-[35vw] bg-accent-cyan/5 rounded-full blur-[100px]" />
             </div>
 
@@ -337,8 +337,8 @@ export default function AppDetailsPage() {
                         <ArrowLeft className="w-5 h-5 text-zinc-500" />
                     </Link>
                     <div className="flex items-center gap-4 flex-1">
-                        <div className="w-14 h-14 rounded-2xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
-                            <Cpu className="w-7 h-7 text-gold-base" />
+                        <div className="w-14 h-14 rounded-2xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center">
+                            <Cpu className="w-7 h-7 text-blue-base" />
                         </div>
                         <div>
                             <h1 className="text-3xl font-serif font-medium">{app.app_name}</h1>
@@ -365,7 +365,7 @@ export default function AppDetailsPage() {
                             className={cn(
                                 "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300",
                                 activeTab === tab.id
-                                    ? "bg-gold-base text-black shadow-lg shadow-gold-base/20"
+                                    ? "bg-blue-base text-black shadow-lg shadow-blue-base/20"
                                     : "text-zinc-500 hover:text-white"
                             )}
                         >
@@ -420,14 +420,14 @@ export default function AppDetailsPage() {
                                                         className={cn(
                                                             "w-full flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 text-left",
                                                             selectedKbIds.includes(kb.kb_id)
-                                                                ? "bg-gold-base/10 border-gold-base/40"
+                                                                ? "bg-blue-base/10 border-blue-base/40"
                                                                 : "bg-white/[0.02] border-white/10 hover:border-white/20"
                                                         )}
                                                     >
                                                         <div className={cn(
                                                             "w-10 h-10 rounded-xl flex items-center justify-center border transition-colors shrink-0",
                                                             selectedKbIds.includes(kb.kb_id)
-                                                                ? "bg-gold-base/20 border-gold-base/40 text-gold-base"
+                                                                ? "bg-blue-base/20 border-blue-base/40 text-blue-base"
                                                                 : "bg-white/5 border-white/10 text-zinc-500"
                                                         )}>
                                                             <Layers className="w-5 h-5" />
@@ -441,7 +441,7 @@ export default function AppDetailsPage() {
                                                         <div className={cn(
                                                             "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
                                                             selectedKbIds.includes(kb.kb_id)
-                                                                ? "bg-gold-base border-gold-base"
+                                                                ? "bg-blue-base border-blue-base"
                                                                 : "border-white/20"
                                                         )}>
                                                             {selectedKbIds.includes(kb.kb_id) && <Check className="w-3 h-3 text-black" />}
@@ -539,8 +539,8 @@ export default function AppDetailsPage() {
                                 <Card className="rounded-[2rem]">
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
-                                                <Wand2 className="w-5 h-5 text-gold-base" />
+                                            <div className="w-10 h-10 rounded-xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center">
+                                                <Wand2 className="w-5 h-5 text-blue-base" />
                                             </div>
                                             <div>
                                                 <CardTitle className="text-xl font-serif">Personality</CardTitle>
@@ -556,7 +556,7 @@ export default function AppDetailsPage() {
                                                 value={chatbotName}
                                                 onChange={e => setChatbotName(e.target.value)}
                                                 placeholder="e.g. Aria"
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-blue-base/50 transition-all font-sans text-sm"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -566,7 +566,7 @@ export default function AppDetailsPage() {
                                                 onChange={e => setSystemPrompt(e.target.value)}
                                                 rows={6}
                                                 placeholder="You are a helpful assistant specializing in..."
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm resize-none leading-relaxed"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-base/50 transition-all font-sans text-sm resize-none leading-relaxed"
                                             />
                                         </div>
                                         <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10">
@@ -583,7 +583,7 @@ export default function AppDetailsPage() {
                                         "w-full h-14 rounded-2xl text-sm font-semibold transition-all duration-300",
                                         saved
                                             ? "bg-green-500 text-white"
-                                            : "bg-gold-base text-black hover:bg-gold-light shadow-lg shadow-gold-base/20"
+                                            : "bg-blue-base text-black hover:bg-blue-light shadow-lg shadow-blue-base/20"
                                     )}
                                 >
                                     {saving ? (
@@ -599,7 +599,7 @@ export default function AppDetailsPage() {
 
                                 <button
                                     onClick={() => { saveConfig().then(() => setActiveTab('playground')); }}
-                                    className="w-full flex items-center justify-center gap-2 text-sm text-zinc-500 hover:text-gold-light transition-colors py-2"
+                                    className="w-full flex items-center justify-center gap-2 text-sm text-zinc-500 hover:text-blue-light transition-colors py-2"
                                 >
                                     Go to Playground <ChevronRight className="w-4 h-4" />
                                 </button>
@@ -619,8 +619,8 @@ export default function AppDetailsPage() {
                                 <Card className="rounded-[2rem]">
                                     <CardContent className="p-6 space-y-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
-                                                <Bot className="w-5 h-5 text-gold-base" />
+                                            <div className="w-10 h-10 rounded-xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center">
+                                                <Bot className="w-5 h-5 text-blue-base" />
                                             </div>
                                             <div>
                                                 <p className="font-medium text-sm">{chatbotName || app.app_name}</p>
@@ -639,13 +639,13 @@ export default function AppDetailsPage() {
                                             </div>
                                             <div className="flex items-center justify-between pt-2 border-t border-white/5">
                                                 <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest flex items-center gap-1.5">
-                                                    Voice Responding <Volume2 className="w-3 h-3 text-gold-base" />
+                                                    Voice Responding <Volume2 className="w-3 h-3 text-blue-base" />
                                                 </span>
                                                 <button
                                                     onClick={toggleVoice}
                                                     className={cn(
                                                         "w-10 h-5 rounded-full relative transition-colors duration-300",
-                                                        voiceEnabled ? "bg-gold-base" : "bg-white/10"
+                                                        voiceEnabled ? "bg-blue-base" : "bg-white/10"
                                                     )}
                                                 >
                                                     <div className={cn(
@@ -659,7 +659,7 @@ export default function AppDetailsPage() {
                                             {voiceEnabled && (
                                                 <div className="pt-2 border-t border-white/5 space-y-3">
                                                     <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest flex items-center gap-1.5">
-                                                        <Mic className="w-3 h-3 text-gold-base" /> Intelligence Profile
+                                                        <Mic className="w-3 h-3 text-blue-base" /> Intelligence Profile
                                                     </span>
                                                     <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                                         {([
@@ -680,7 +680,7 @@ export default function AppDetailsPage() {
                                                                 className={cn(
                                                                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left transition-all duration-300 relative group",
                                                                     selectedVoiceId === v.id
-                                                                        ? "bg-gold-base/10 border border-gold-base/30 shadow-inner"
+                                                                        ? "bg-blue-base/10 border border-blue-base/30 shadow-inner"
                                                                         : "hover:bg-white/5 border border-transparent"
                                                                 )}
                                                             >
@@ -692,13 +692,13 @@ export default function AppDetailsPage() {
                                                                 </div>
                                                                 <div className="flex-1">
                                                                     <div className="flex items-center justify-between">
-                                                                        <p className={cn("text-[11px] font-bold", selectedVoiceId === v.id ? "text-gold-light" : "text-zinc-200")}>{v.name}</p>
-                                                                        {selectedVoiceId === v.id && <Sparkles className="w-2.5 h-2.5 text-gold-base animate-pulse" />}
+                                                                        <p className={cn("text-[11px] font-bold", selectedVoiceId === v.id ? "text-blue-light" : "text-zinc-200")}>{v.name}</p>
+                                                                        {selectedVoiceId === v.id && <Sparkles className="w-2.5 h-2.5 text-blue-base animate-pulse" />}
                                                                     </div>
                                                                     <p className="text-[9px] text-zinc-500 font-medium tracking-tight">{v.desc}</p>
                                                                 </div>
                                                                 {selectedVoiceId === v.id && (
-                                                                    <motion.div layoutId="voiceActive" className="absolute left-1 w-1 h-4 bg-gold-base rounded-full" />
+                                                                    <motion.div layoutId="voiceActive" className="absolute left-1 w-1 h-4 bg-blue-base rounded-full" />
                                                                 )}
                                                             </button>
                                                         ))}
@@ -729,7 +729,7 @@ export default function AppDetailsPage() {
                                             <div className="space-y-2">
                                                 {kbs.filter(k => selectedKbIds.includes(k.kb_id)).map(kb => (
                                                     <div key={kb.kb_id} className="flex items-center gap-2">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-gold-base" />
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-base" />
                                                         <span className="text-xs text-zinc-400 truncate">{kb.kb_name}</span>
                                                     </div>
                                                 ))}
@@ -747,9 +747,9 @@ export default function AppDetailsPage() {
                                         <motion.div
                                             animate={{ boxShadow: ['0 0 10px rgba(212,175,55,0.2)', '0 0 25px rgba(212,175,55,0.5)', '0 0 10px rgba(212,175,55,0.2)'] }}
                                             transition={{ repeat: Infinity, duration: 2 }}
-                                            className="w-10 h-10 rounded-xl bg-gold-base/15 border border-gold-base/30 flex items-center justify-center"
+                                            className="w-10 h-10 rounded-xl bg-blue-base/15 border border-blue-base/30 flex items-center justify-center"
                                         >
-                                            <Bot className="w-5 h-5 text-gold-base" />
+                                            <Bot className="w-5 h-5 text-blue-base" />
                                         </motion.div>
                                         <div>
                                             <p className="font-medium">{chatbotName || app.app_name}</p>
@@ -758,9 +758,9 @@ export default function AppDetailsPage() {
                                                 <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Online · Playground Mode</p>
                                             </div>
                                         </div>
-                                        <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold-base/10 border border-gold-base/20">
-                                            <Sparkles className="w-3 h-3 text-gold-base" />
-                                            <span className="text-[10px] font-bold text-gold-light uppercase tracking-widest">RAG Enabled</span>
+                                        <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-base/10 border border-blue-base/20">
+                                            <Sparkles className="w-3 h-3 text-blue-base" />
+                                            <span className="text-[10px] font-bold text-blue-light uppercase tracking-widest">RAG Enabled</span>
                                         </div>
                                     </div>
 
@@ -771,9 +771,9 @@ export default function AppDetailsPage() {
                                                 <motion.div
                                                     animate={{ scale: [1, 1.05, 1] }}
                                                     transition={{ repeat: Infinity, duration: 3 }}
-                                                    className="w-20 h-20 rounded-3xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center"
+                                                    className="w-20 h-20 rounded-3xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center"
                                                 >
-                                                    <Bot className="w-10 h-10 text-gold-base" />
+                                                    <Bot className="w-10 h-10 text-blue-base" />
                                                 </motion.div>
                                                 <div className="text-center">
                                                     <h3 className="text-xl font-serif font-medium mb-2">
@@ -790,7 +790,7 @@ export default function AppDetailsPage() {
                                                         <button
                                                             key={q}
                                                             onClick={() => setInputValue(q)}
-                                                            className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-zinc-400 hover:border-gold-base/40 hover:text-gold-light transition-all"
+                                                            className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-zinc-400 hover:border-blue-base/40 hover:text-blue-light transition-all"
                                                         >
                                                             {q}
                                                         </button>
@@ -807,14 +807,14 @@ export default function AppDetailsPage() {
                                                         className={cn("flex gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}
                                                     >
                                                         {msg.role === 'assistant' && (
-                                                            <div className="w-8 h-8 rounded-xl bg-gold-base/15 border border-gold-base/30 flex items-center justify-center shrink-0 mt-1">
-                                                                <Bot className="w-4 h-4 text-gold-base" />
+                                                            <div className="w-8 h-8 rounded-xl bg-blue-base/15 border border-blue-base/30 flex items-center justify-center shrink-0 mt-1">
+                                                                <Bot className="w-4 h-4 text-blue-base" />
                                                             </div>
                                                         )}
                                                         <div className={cn(
                                                             "max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed",
                                                             msg.role === 'user'
-                                                                ? "bg-gold-base/15 border border-gold-base/20 text-white"
+                                                                ? "bg-blue-base/15 border border-blue-base/20 text-white"
                                                                 : "bg-white/5 border border-white/10 text-zinc-200"
                                                         )}>
                                                             {msg.content}
@@ -823,8 +823,8 @@ export default function AppDetailsPage() {
                                                 ))}
                                                 {isTyping && (
                                                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-                                                        <div className="w-8 h-8 rounded-xl bg-gold-base/15 border border-gold-base/30 flex items-center justify-center shrink-0">
-                                                            <Bot className="w-4 h-4 text-gold-base" />
+                                                        <div className="w-8 h-8 rounded-xl bg-blue-base/15 border border-blue-base/30 flex items-center justify-center shrink-0">
+                                                            <Bot className="w-4 h-4 text-blue-base" />
                                                         </div>
                                                         <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 flex items-center gap-1.5">
                                                             {[0, 1, 2].map(i => (
@@ -860,8 +860,8 @@ export default function AppDetailsPage() {
                                                     className={cn(
                                                         "w-full bg-white/5 border rounded-2xl pl-6 pr-14 py-4 focus:outline-none transition-all font-sans text-sm",
                                                         isListening ? "border-red-500/70 bg-red-500/5 text-red-300" :
-                                                            isTranscribing ? "border-gold-base/50 bg-gold-base/5" :
-                                                                "border-white/10 focus:border-gold-base/50"
+                                                            isTranscribing ? "border-blue-base/50 bg-blue-base/5" :
+                                                                "border-white/10 focus:border-blue-base/50"
                                                     )}
                                                 />
                                                 {/* Microphone Button */}
@@ -871,7 +871,7 @@ export default function AppDetailsPage() {
                                                     className={cn(
                                                         "absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center transition-all",
                                                         isListening ? "text-red-400 bg-red-400/15 border border-red-400/30" :
-                                                            isTranscribing ? "text-gold-base bg-gold-base/10 cursor-wait" :
+                                                            isTranscribing ? "text-blue-base bg-blue-base/10 cursor-wait" :
                                                                 "text-zinc-500 hover:text-white hover:bg-white/5"
                                                     )}
                                                 >
@@ -897,7 +897,7 @@ export default function AppDetailsPage() {
                                                 className={cn(
                                                     "w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0",
                                                     inputValue.trim() && !isTyping
-                                                        ? "bg-gold-base text-black shadow-lg shadow-gold-base/30 hover:bg-gold-light"
+                                                        ? "bg-blue-base text-black shadow-lg shadow-blue-base/30 hover:bg-blue-light"
                                                         : "bg-white/5 text-zinc-600 cursor-not-allowed"
                                                 )}
                                             >

@@ -77,7 +77,7 @@ export default function SettingsPage() {
             <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-gold-base/5 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-blue-base/5 rounded-full blur-[100px]" />
             </div>
 
             <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
@@ -110,16 +110,16 @@ export default function SettingsPage() {
                     >
                         <Card className="rounded-[2.5rem] overflow-hidden">
                             <div className="p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
-                                <div className="w-24 h-24 rounded-3xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center relative overflow-hidden group">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-gold-base/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <span className="text-3xl font-serif text-gold-base relative z-10">{user?.email?.[0].toUpperCase()}</span>
+                                <div className="w-24 h-24 rounded-3xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-base/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <span className="text-3xl font-serif text-blue-base relative z-10">{user?.email?.[0].toUpperCase()}</span>
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
                                     <h3 className="text-2xl font-serif font-medium mb-1">Neural Identity</h3>
                                     <p className="text-zinc-400 font-sans mb-4">{user?.email}</p>
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
                                         <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
-                                            <Shield className="w-3 h-3 text-gold-base" />
+                                            <Shield className="w-3 h-3 text-blue-base" />
                                             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Verified Account</span>
                                         </div>
                                         <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function SettingsPage() {
                                             </div>
                                             {!keys && (
                                                 <div className="flex items-center gap-2">
-                                                    {isRevealing ? <p className="text-xs text-gold-base">Verifying...</p> : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />}
+                                                    {isRevealing ? <p className="text-xs text-blue-base">Verifying...</p> : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />}
                                                 </div>
                                             )}
                                         </div>
@@ -203,8 +203,8 @@ export default function SettingsPage() {
                                     </div>
                                     <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-gold-base/10 flex items-center justify-center border border-gold-base/20">
-                                                <ChevronRight className="w-5 h-5 text-gold-base" />
+                                            <div className="w-10 h-10 rounded-xl bg-blue-base/10 flex items-center justify-center border border-blue-base/20">
+                                                <ChevronRight className="w-5 h-5 text-blue-base" />
                                             </div>
                                             <Link href="/applications">
                                                 <div>

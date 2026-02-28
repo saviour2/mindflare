@@ -39,11 +39,11 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold-base to-gold-dark text-black flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-base to-blue-dark text-black flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(212,175,55,0.4)]">
                         <Terminal className="w-4 h-4 fill-current" />
                     </div>
                     <span className="text-xl font-bold tracking-tight text-white font-serif">
-                        Mindflare<span className="text-gold-base">AI</span>
+                        Mindflare<span className="text-blue-base">AI</span>
                     </span>
                 </Link>
 
@@ -57,7 +57,7 @@ export default function Navbar() {
                             <button onClick={login} className="text-sm font-medium text-zinc-400 hover:text-white transition-colors ml-4">
                                 Log in
                             </button>
-                            <Button onClick={login} variant="default" className="rounded-full bg-gold-base text-black hover:bg-gold-light shadow-lg shadow-gold-base/20 border-none px-6 font-bold">
+                            <Button onClick={login} variant="default" className="rounded-full bg-blue-base text-black hover:bg-blue-light shadow-lg shadow-blue-base/20 border-none px-6 font-bold">
                                 Sign up Free
                             </Button>
                         </>

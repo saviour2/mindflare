@@ -71,7 +71,7 @@ export default function DashboardPage() {
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-gold-base/5 rounded-full blur-[120px]" />
+                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-blue-base/5 rounded-full blur-[120px]" />
                 <div className="absolute bottom-[10%] left-[-10%] w-[40vw] h-[40vw] bg-accent-cyan/5 rounded-full blur-[100px]" />
             </div>
 
@@ -82,7 +82,7 @@ export default function DashboardPage() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-base/10 border border-gold-base/20 text-gold-light text-xs font-bold uppercase tracking-wider mb-4"
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-base/10 border border-blue-base/20 text-blue-light text-xs font-bold uppercase tracking-wider mb-4"
                         >
                             <Sparkles className="w-3 h-3" /> Dashboard
                         </motion.div>
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                             animate={{ opacity: 1, x: 0 }}
                             className="text-4xl md:text-5xl font-serif font-medium mb-3"
                         >
-                            Welcome back, <span className="text-gold-light italic">{user.name || user.email?.split('@')[0]}</span>
+                            Welcome back, <span className="text-blue-light italic">{user.name || user.email?.split('@')[0]}</span>
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, x: -20 }}
@@ -111,10 +111,10 @@ export default function DashboardPage() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="group relative overflow-hidden rounded-[2.5rem] p-8 border border-gold-base/20 bg-gradient-to-br from-gold-base/[0.05] to-transparent"
+                            className="group relative overflow-hidden rounded-[2.5rem] p-8 border border-blue-base/20 bg-gradient-to-br from-blue-base/[0.05] to-transparent"
                         >
                             <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                                <div className="w-20 h-20 rounded-3xl bg-gold-base flex items-center justify-center shrink-0 shadow-lg shadow-gold-base/20">
+                                <div className="w-20 h-20 rounded-3xl bg-blue-base flex items-center justify-center shrink-0 shadow-lg shadow-blue-base/20">
                                     <Zap className="w-10 h-10 text-black fill-current" />
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
@@ -122,17 +122,17 @@ export default function DashboardPage() {
                                     <p className="text-zinc-400 mb-6 max-w-md">Our production-ready Node.js client is now available for enterprise integration.</p>
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
                                         <Link href="/docs">
-                                            <Button className="rounded-full bg-gold-base text-white hover:bg-gold-light px-8">
+                                            <Button className="rounded-full bg-blue-base text-white hover:bg-blue-light px-8">
                                                 Documentation
                                             </Button>
                                         </Link>
-                                        <a href="https://www.npmjs.com/package/mindflare-sdk" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gold-light hover:text-white transition-colors">
+                                        <a href="https://www.npmjs.com/package/mindflare-sdk" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-blue-light hover:text-white transition-colors">
                                             NPM Package <ExternalLink className="w-3.5 h-3.5" />
                                         </a>
                                     </div>
                                 </div>
                             </div>
-                            <div className="absolute top-0 right-0 p-8 text-gold-base/5 pointer-events-none">
+                            <div className="absolute top-0 right-0 p-8 text-blue-base/5 pointer-events-none">
                                 <Layout className="w-40 h-40" />
                             </div>
                         </motion.div>
@@ -154,7 +154,7 @@ export default function DashboardPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex items-center gap-4">
-                                        <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-mono text-sm text-gold-light break-all flex items-center">
+                                        <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-mono text-sm text-blue-light break-all flex items-center">
                                             {user.sub || 'mf_user_********************'}
                                         </div>
                                         <Button
@@ -242,7 +242,7 @@ export default function DashboardPage() {
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                            <Activity className="w-5 h-5 text-gold-base" />
+                            <Activity className="w-5 h-5 text-blue-base" />
                             <h2 className="text-2xl font-serif font-medium">Neural Activity Feed</h2>
                         </div>
                         <Button variant="ghost" className="text-xs text-zinc-500 hover:text-white">
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                                     <div className="flex items-center gap-4">
                                         <div className={cn(
                                             "w-2 h-2 rounded-full",
-                                            item.status === 'success' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-gold-base animate-pulse"
+                                            item.status === 'success' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-blue-base animate-pulse"
                                         )} />
                                         <div>
                                             <p className="text-sm font-medium text-white">{item.event}</p>

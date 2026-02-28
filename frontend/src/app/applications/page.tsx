@@ -235,8 +235,8 @@ export default function ApplicationsPage() {
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-gold-base/5 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[10%] left-[-10%] w-[40vw] h-[40vw] bg-gold-dark/5 rounded-full blur-[100px]" />
+                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-blue-base/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[10%] left-[-10%] w-[40vw] h-[40vw] bg-blue-dark/5 rounded-full blur-[100px]" />
             </div>
 
             <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
@@ -476,8 +476,8 @@ export default function ApplicationsPage() {
                                         </div>
                                     )}
                                     <CardHeader className="pb-4">
-                                        <div className="w-12 h-12 rounded-xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
-                                            <Cpu className="w-6 h-6 text-gold-base" />
+                                        <div className="w-12 h-12 rounded-xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+                                            <Cpu className="w-6 h-6 text-blue-base" />
                                         </div>
                                         <CardTitle className="text-xl">{app.app_name}</CardTitle>
                                         <CardDescription className="flex items-center gap-2 mt-1">
@@ -506,7 +506,7 @@ export default function ApplicationsPage() {
                                         <div className="h-px bg-white/5" />
                                         <div className="flex items-center justify-between">
                                             <Link href={`/applications/${app.app_id}`}>
-                                                <Button variant="ghost" size="sm" className="rounded-full text-xs font-medium text-gold-light hover:text-gold-base hover:bg-gold-base/10">
+                                                <Button variant="ghost" size="sm" className="rounded-full text-xs font-medium text-blue-light hover:text-blue-base hover:bg-blue-base/10">
                                                     <Code className="w-3.5 h-3.5 mr-2" /> Configure & Chat
                                                 </Button>
                                             </Link>
@@ -576,7 +576,7 @@ export default function ApplicationsPage() {
                                                 value={newAppName}
                                                 onChange={(e) => setNewAppName(e.target.value)}
                                                 placeholder="e.g. Sales Assistant"
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 focus:outline-none focus:border-gold-base/50 transition-all font-sans"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 focus:outline-none focus:border-blue-base/50 transition-all font-sans"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -607,7 +607,7 @@ export default function ApplicationsPage() {
                                                 <ChevronDown className="w-4 h-4 text-zinc-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                                             </div>
                                         </div>
-                                        <Button onClick={createApp} disabled={loading || !newAppName.trim()} className="w-full h-14 rounded-2xl bg-gold-base text-black hover:bg-gold-light mt-4 shadow-lg shadow-gold-base/20 transition-all">
+                                        <Button onClick={createApp} disabled={loading || !newAppName.trim()} className="w-full h-14 rounded-2xl bg-blue-base text-black hover:bg-blue-light mt-4 shadow-lg shadow-blue-base/20 transition-all">
                                             {loading ? 'Initializing Engine...' : 'Initialize Application'}
                                         </Button>
                                     </div>
@@ -667,8 +667,8 @@ export default function ApplicationsPage() {
 
                                 <div className="space-y-8">
                                     <div className="space-y-3">
-                                        <div className="flex items-center gap-2 text-gold-light">
-                                            <div className="w-6 h-6 rounded-full bg-gold-base/10 flex items-center justify-center text-[10px] font-bold">1</div>
+                                        <div className="flex items-center gap-2 text-blue-light">
+                                            <div className="w-6 h-6 rounded-full bg-blue-base/10 flex items-center justify-center text-[10px] font-bold">1</div>
                                             <p className="text-sm font-semibold">Install the SDK</p>
                                         </div>
                                         <div className="relative group">
@@ -682,8 +682,8 @@ export default function ApplicationsPage() {
                                     </div>
 
                                     <div className="space-y-3">
-                                        <div className="flex items-center gap-2 text-gold-light">
-                                            <div className="w-6 h-6 rounded-full bg-gold-base/10 flex items-center justify-center text-[10px] font-bold">2</div>
+                                        <div className="flex items-center gap-2 text-blue-light">
+                                            <div className="w-6 h-6 rounded-full bg-blue-base/10 flex items-center justify-center text-[10px] font-bold">2</div>
                                             <p className="text-sm font-semibold">Start Chatting</p>
                                         </div>
                                         <div className="relative group">
@@ -709,11 +709,11 @@ export default function ApplicationsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="p-5 rounded-2xl bg-gold-base/5 border border-gold-base/10 flex gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-gold-base/10 flex items-center justify-center shrink-0">
-                                            <Activity className="w-5 h-5 text-gold-base" />
+                                    <div className="p-5 rounded-2xl bg-blue-base/5 border border-blue-base/10 flex gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-blue-base/10 flex items-center justify-center shrink-0">
+                                            <Activity className="w-5 h-5 text-blue-base" />
                                         </div>
-                                        <p className="text-xs text-gold-light/80 leading-relaxed font-sans">
+                                        <p className="text-xs text-blue-light/80 leading-relaxed font-sans">
                                             Mindflare tracks real-time usage. Once your SDK makes its first call, this application&apos;s status will update to <span className="font-bold text-green-500">Live</span> automatically.
                                         </p>
                                     </div>

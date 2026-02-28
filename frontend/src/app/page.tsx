@@ -18,9 +18,9 @@ const DocumentToParticles = () => {
         transition={{ duration: 2, repeat: Infinity, ease: "easeIn" }}
         className="w-16 h-20 bg-white/5 border border-white/20 rounded-md shadow-sm flex flex-col justify-center gap-2 p-3 absolute z-10"
       >
-        <div className="w-3/4 h-1 bg-gold-light/40 rounded" />
-        <div className="w-full h-1 bg-gold-light/40 rounded" />
-        <div className="w-5/6 h-1 bg-gold-light/40 rounded" />
+        <div className="w-3/4 h-1 bg-blue-light/40 rounded" />
+        <div className="w-full h-1 bg-blue-light/40 rounded" />
+        <div className="w-5/6 h-1 bg-blue-light/40 rounded" />
       </motion.div>
       <div className="absolute w-24 h-24 flex flex-wrap gap-1 items-center justify-center ml-12">
         {[...Array(15)].map((_, i) => (
@@ -34,7 +34,7 @@ const DocumentToParticles = () => {
               y: [0, (Math.random() - 0.5) * 60]
             }}
             transition={{ duration: 1.5, repeat: Infinity, delay: Math.random() * 2 }}
-            className="w-1.5 h-1.5 rounded-full bg-gold-light shadow-[0_0_8px_rgba(212,175,55,0.8)] absolute"
+            className="w-1.5 h-1.5 rounded-full bg-blue-light shadow-[0_0_8px_rgba(212,175,55,0.8)] absolute"
           />
         ))}
       </div>
@@ -64,11 +64,11 @@ const DeployStatusIndicators = () => {
           <div className="flex items-center gap-2">
             <span className={cn(
               "text-[10px] tracking-widest font-mono",
-              p.status === 'LIVE' ? "text-gold-light" : "text-zinc-500"
+              p.status === 'LIVE' ? "text-blue-light" : "text-zinc-500"
             )}>{p.status}</span>
             <div className={cn(
               "w-1.5 h-1.5 rounded-full",
-              p.status === 'LIVE' ? "bg-gold-base animate-pulse shadow-[0_0_8px_rgba(212,175,55,1)]" : "bg-zinc-700"
+              p.status === 'LIVE' ? "bg-blue-base animate-pulse shadow-[0_0_8px_rgba(212,175,55,1)]" : "bg-zinc-700"
             )} />
           </div>
         </motion.div>
@@ -78,7 +78,7 @@ const DeployStatusIndicators = () => {
 };
 
 const CheckIcon = () => (
-  <svg className="w-5 h-5 text-gold-base shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className="w-5 h-5 text-blue-base shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
   </svg>
 );
@@ -252,7 +252,7 @@ export default function Home() {
       <div className="fixed inset-0 z-0 bg-noise opacity-[0.04] mix-blend-overlay pointer-events-none" />
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] w-[70vw] h-[70vw] max-w-[1000px] max-h-[1000px] bg-amber-600/15 rounded-full blur-[140px] mix-blend-screen animate-blob" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-gold-dark/15 rounded-full blur-[120px] mix-blend-screen animate-blob" style={{ animationDelay: '5s' }} />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-blue-dark/15 rounded-full blur-[120px] mix-blend-screen animate-blob" style={{ animationDelay: '5s' }} />
       </div>
 
       <main className="flex-1 relative z-10 pt-16">
@@ -262,9 +262,9 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 border border-white/10 text-xs font-medium text-gold-light/80 mb-8 tracking-wide backdrop-blur-md"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 border border-white/10 text-xs font-medium text-blue-light/80 mb-8 tracking-wide backdrop-blur-md"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-gold-base animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-base animate-pulse" />
                 <span>Mindflare RAG v2 is live</span>
               </motion.div>
 
@@ -284,7 +284,7 @@ export default function Home() {
                       animate={{ y: "0%", opacity: 1 }}
                       exit={{ y: "-100%", opacity: 0 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className="absolute left-0 italic text-gold-base pb-2 pr-4"
+                      className="absolute left-0 italic text-blue-base pb-2 pr-4"
                     >
                       {WORDS[currentWordIndex]}
                     </motion.span>
@@ -346,16 +346,16 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="p-6 font-mono text-sm leading-[1.8] text-zinc-300 flex-1 overflow-hidden">
-                    <div><span className="text-zinc-600">~</span> <span className="text-gold-light font-bold">❯</span> Initialize SDK</div>
+                    <div><span className="text-zinc-600">~</span> <span className="text-blue-light font-bold">❯</span> Initialize SDK</div>
                     <div className="text-zinc-500 pl-4 border-l border-white/5 my-3">
                       <span className="text-zinc-400">Created connection pool.</span><br />
-                      <span className="text-gold-base">✓ Environment secured.</span>
+                      <span className="text-blue-base">✓ Environment secured.</span>
                     </div>
-                    <div><span className="text-zinc-600">~</span> <span className="text-gold-light font-bold">❯</span> const engine = new Mindflare()</div>
+                    <div><span className="text-zinc-600">~</span> <span className="text-blue-light font-bold">❯</span> const engine = new Mindflare()</div>
                     <div className="text-zinc-500 pl-4 border-l border-white/5 my-3">
-                      Embedding documents... <span className="text-gold-base">[██████████] 100%</span><br />
+                      Embedding documents... <span className="text-blue-base">[██████████] 100%</span><br />
                       Routing models initiated.<br />
-                      <span className="text-gold-base">✓ Memory synced.</span>
+                      <span className="text-blue-base">✓ Memory synced.</span>
                     </div>
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function Home() {
             </div>
             <div className="max-w-4xl mx-auto relative">
               <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-px bg-white/5 -translate-x-1/2">
-                <motion.div className="absolute top-0 left-0 w-full bg-gradient-to-b from-transparent via-gold-base to-gold-dark" style={{ height: lineHeight }} />
+                <motion.div className="absolute top-0 left-0 w-full bg-gradient-to-b from-transparent via-blue-base to-blue-dark" style={{ height: lineHeight }} />
               </div>
               <div className="flex flex-col gap-24 relative z-10">
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 relative">
@@ -380,7 +380,7 @@ export default function Home() {
                     <h3 className="text-3xl font-serif font-medium text-white mb-3">Ingest</h3>
                     <p className="text-zinc-400 font-sans font-light leading-relaxed">Point Mindflare at your data—GitHub, Website, or local PDFs. We handle the chunking and embedding.</p>
                   </div>
-                  <div className="absolute left-8 md:left-1/2 top-1/2 w-4 h-4 rounded-full bg-black border-2 border-gold-base -translate-x-1/2 -translate-y-1/2" />
+                  <div className="absolute left-8 md:left-1/2 top-1/2 w-4 h-4 rounded-full bg-black border-2 border-blue-base -translate-x-1/2 -translate-y-1/2" />
                   <div className="flex-1 w-full pl-20 md:pl-12">
                     <div className="p-6 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md">
                       <DocumentToParticles />
@@ -393,7 +393,7 @@ export default function Home() {
                     <h3 className="text-3xl font-serif font-medium text-white mb-3">Connect</h3>
                     <p className="text-zinc-400 font-sans font-light leading-relaxed">Drop our SDK into your codebase. Three lines of code to replace your entire orchestration backend.</p>
                   </div>
-                  <div className="absolute left-8 md:left-1/2 top-1/2 w-4 h-4 rounded-full bg-black border-2 border-gold-base -translate-x-1/2 -translate-y-1/2" />
+                  <div className="absolute left-8 md:left-1/2 top-1/2 w-4 h-4 rounded-full bg-black border-2 border-blue-base -translate-x-1/2 -translate-y-1/2" />
                   <div className="flex-1 w-full md:text-right pl-20 md:pl-0 pr-0 md:pr-12">
                     <div className="text-left font-mono text-sm p-6 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-xl">
                       <span className="text-blue-400">import</span> Mindflare <span className="text-blue-400">from</span> <span className="text-green-400">'mindflare-sdk'</span>;<br /><br />
@@ -408,7 +408,7 @@ export default function Home() {
                     <h3 className="text-3xl font-serif font-medium text-white mb-3">Deploy</h3>
                     <p className="text-zinc-400 font-sans font-light leading-relaxed">Go live across web, WhatsApp, and Telegram instantly. Monitored and production-ready.</p>
                   </div>
-                  <div className="absolute left-8 md:left-1/2 top-1/2 w-4 h-4 rounded-full bg-black border-2 border-gold-base -translate-x-1/2 -translate-y-1/2" />
+                  <div className="absolute left-8 md:left-1/2 top-1/2 w-4 h-4 rounded-full bg-black border-2 border-blue-base -translate-x-1/2 -translate-y-1/2" />
                   <div className="flex-1 w-full pl-20 md:pl-12">
                     <div className="p-6 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md">
                       <DeployStatusIndicators />
@@ -431,9 +431,9 @@ export default function Home() {
                 const isActive = activeFeature === idx;
                 return (
                   <button key={idx} onClick={() => setActiveFeature(idx)} className={`text-left p-6 rounded-2xl transition-all duration-500 relative ${isActive ? 'bg-white/[0.03] border border-white/10' : 'hover:bg-white/[0.01]'}`}>
-                    {isActive && <motion.div layoutId="featureActive" className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-gold-light to-gold-dark" />}
+                    {isActive && <motion.div layoutId="featureActive" className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-light to-blue-dark" />}
                     <div className="flex items-center gap-5 mb-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isActive ? 'bg-gold-base/10 text-gold-light border border-gold-base/20' : 'bg-black/40 border border-white/5 text-zinc-500'}`}><Icon className="w-5 h-5" /></div>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isActive ? 'bg-blue-base/10 text-blue-light border border-blue-base/20' : 'bg-black/40 border border-white/5 text-zinc-500'}`}><Icon className="w-5 h-5" /></div>
                       <h3 className={`text-xl font-medium transition-all ${isActive ? 'text-white translate-x-1' : 'text-zinc-500'}`}>{feature.title}</h3>
                     </div>
                     <p className={`text-sm leading-relaxed ${isActive ? 'text-zinc-400' : 'text-zinc-600'}`}>{feature.description}</p>
@@ -464,15 +464,15 @@ export default function Home() {
                 </ul>
                 <Button onClick={login} className="w-full rounded-full h-14 bg-white text-black font-semibold">Start Building</Button>
               </div>
-              <div className="lg:col-span-3 bg-gradient-to-br from-gold-dark/20 to-black/80 border border-gold-base/20 rounded-3xl p-12 relative overflow-hidden group hover:border-gold-base/40 transition-all">
-                <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-all"><Cpu className="w-32 h-32 text-gold-base rotate-12" /></div>
+              <div className="lg:col-span-3 bg-gradient-to-br from-blue-dark/20 to-black/80 border border-blue-base/20 rounded-3xl p-12 relative overflow-hidden group hover:border-blue-base/40 transition-all">
+                <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-all"><Cpu className="w-32 h-32 text-blue-base rotate-12" /></div>
                 <h3 className="font-serif text-4xl text-white mb-4">White-Glove</h3>
-                <p className="text-gold-light/80 text-lg mb-10 font-light max-w-sm">We build and manage your custom AI agents for you.</p>
+                <p className="text-blue-light/80 text-lg mb-10 font-light max-w-sm">We build and manage your custom AI agents for you.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                   <ul className="space-y-4">{['Custom Engineering', 'Managed Pipeline'].map(f => <li key={f} className="flex gap-3 text-white text-sm"><CheckIcon /> {f}</li>)}</ul>
                   <ul className="space-y-4">{['24/7 Priority Support', 'Dedicated Success'].map(f => <li key={f} className="flex gap-3 text-white text-sm"><CheckIcon /> {f}</li>)}</ul>
                 </div>
-                <Button className="w-full sm:w-auto px-10 rounded-full h-14 bg-gradient-to-r from-gold-base to-gold-dark text-black font-semibold">Book Consultation</Button>
+                <Button className="w-full sm:w-auto px-10 rounded-full h-14 bg-gradient-to-r from-blue-base to-blue-dark text-black font-semibold">Book Consultation</Button>
               </div>
             </div>
           </div>
