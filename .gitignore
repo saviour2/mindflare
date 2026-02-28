@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.local
+.env*.local
+__pycache__/
+*.pyc
+dist/
+.next/
+faiss_indices/
+mindflare.json

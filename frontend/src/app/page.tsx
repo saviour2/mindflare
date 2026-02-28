@@ -1,137 +1,203 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import { Zap, Bot, Database, Code, BarChart3, Shield, ArrowRight, Check, Sparkles } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
-  const [user, setUser] = useState<{ name: string, email: string } | null>(null);
+  const [user, setUser] = useState<any>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
+  React.useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
+    if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    const endpoint = isLogin ? 'http://localhost:5000/api/auth/login' : 'http://localhost:5000/api/auth/register';
-    const payload = isLogin ? { email, password } : { email, password, name };
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Something went wrong');
-      }
-
-      if (isLogin) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setUser(data.user);
-        router.push('/dashboard');
-      } else {
-        setIsLogin(true);
-        setError('Registration successful! Please log in.');
-      }
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-8">
-      <h1 className="text-5xl font-bold mb-4">Mindflare AI</h1>
-      <p className="mb-8 text-xl text-gray-300 text-center">Production-ready AI SaaS platform</p>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navbar />
 
-      {!user ? (
-        <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md border border-gray-700">
-          <h2 className="text-2xl font-semibold mb-6 text-center">{isLogin ? 'Log In' : 'Sign Up'}</h2>
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-card)] text-sm text-[var(--text-secondary)] mb-8 animate-fade-in">
+            <Sparkles className="w-4 h-4 text-[var(--accent-orange)]" />
+            Now with RAG-powered knowledge bases
+          </div>
 
-          {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            Build AI-Powered<br />
+            Applications in <span className="gradient-text">Minutes</span>
+          </h1>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div>
-                <label className="block text-sm mb-1">Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-                  required
-                />
-              </div>
-            )}
-            <div>
-              <label className="block text-sm mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded font-semibold transition"
-            >
-              {isLogin ? 'Log In' : 'Create Account'}
-            </button>
-          </form>
-
-          <p className="mt-4 text-center text-gray-400">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
-            <button
-              onClick={() => { setIsLogin(!isLogin); setError(''); }}
-              className="text-blue-400 hover:underline hover:text-blue-300"
-            >
-              {isLogin ? 'Sign up' : 'Log in'}
-            </button>
+          <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            MindflareAI provides a complete platform for creating intelligent applications with AI. Build
+            chatbots, assistants, and smart tools with custom knowledge bases and seamless SDK
+            integration.
           </p>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center space-y-4">
-          <p className="text-2xl">Welcome, {user.name}!</p>
-          <div className="space-x-4">
-            <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-blue-600 rounded shadow hover:bg-blue-500">Go to Dashboard</button>
-            <button onClick={logout} className="px-6 py-2 bg-red-600 rounded shadow hover:bg-red-500">Log out</button>
+
+          <div className="flex items-center justify-center gap-4 mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <button
+              onClick={() => router.push(user ? '/dashboard' : '/signup')}
+              className="px-6 py-3 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-lg font-semibold hover:opacity-90 transition-all flex items-center gap-2"
+            >
+              Get started for free
+            </button>
+            <a href="#features" className="px-6 py-3 text-[var(--text-primary)] font-medium hover:text-blue-400 transition-colors flex items-center gap-1">
+              Learn more <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+
+          <div className="flex items-center justify-center gap-6 text-sm text-[var(--text-muted)] animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <span className="flex items-center gap-1.5">
+              <Check className="w-4 h-4 text-blue-400" /> No credit card required
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Check className="w-4 h-4 text-green-400" /> Free tier available
+            </span>
           </div>
         </div>
-      )}
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Build AI-Powered Applications with Ease</h2>
+            <p className="text-[var(--text-secondary)] max-w-xl mx-auto">
+              Everything you need to create, deploy, and manage intelligent applications powered by AI.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <Bot className="w-6 h-6" />,
+                title: "AI Applications",
+                description: "Create chatbot applications powered by leading open-source LLMs. Select from Llama, Mistral, DeepSeek and more.",
+                color: "blue"
+              },
+              {
+                icon: <Database className="w-6 h-6" />,
+                title: "Knowledge Bases",
+                description: "Upload PDFs, crawl websites, or ingest GitHub repos. Your AI learns from your custom data using RAG.",
+                color: "purple"
+              },
+              {
+                icon: <Code className="w-6 h-6" />,
+                title: "SDK & CLI",
+                description: "Integrate in 3-4 lines of code with our Node.js SDK. Or use the CLI to manage your apps from the terminal.",
+                color: "cyan"
+              },
+              {
+                icon: <BarChart3 className="w-6 h-6" />,
+                title: "Analytics Dashboard",
+                description: "Track API usage, token consumption, costs, and response times. Real-time charts powered by Recharts.",
+                color: "orange"
+              },
+              {
+                icon: <Shield className="w-6 h-6" />,
+                title: "Enterprise Security",
+                description: "API key encryption, rate limiting, input sanitization, and backend-only model keys for production safety.",
+                color: "green"
+              },
+              {
+                icon: <Zap className="w-6 h-6" />,
+                title: "Multi-Model Support",
+                description: "Primary routing via OpenRouter with automatic Groq fallback. Always-on reliability for your applications.",
+                color: "red"
+              },
+            ].map((feature, i) => (
+              <div
+                key={i}
+                className="p-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-light)] transition-all duration-300 group animate-fade-in"
+                style={{ animationDelay: `${0.1 * i}s` }}
+              >
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${feature.color === 'blue' ? 'bg-blue-500/10 text-blue-400' :
+                    feature.color === 'purple' ? 'bg-purple-500/10 text-purple-400' :
+                      feature.color === 'cyan' ? 'bg-cyan-500/10 text-cyan-400' :
+                        feature.color === 'orange' ? 'bg-orange-500/10 text-orange-400' :
+                          feature.color === 'green' ? 'bg-green-500/10 text-green-400' :
+                            'bg-red-500/10 text-red-400'
+                  }`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-[var(--text-primary)] group-hover:text-blue-400 transition-colors">{feature.title}</h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="py-20 px-6 border-t border-[var(--border-color)]">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+            <p className="text-[var(--text-secondary)]">Get started in just a few steps</p>
+          </div>
+
+          <div className="space-y-8">
+            {[
+              { step: "1", title: "Create an App", desc: "Sign up, create a new application, and select your preferred AI model." },
+              { step: "2", title: "Upload Knowledge", desc: "Add PDFs, websites, or GitHub repos as knowledge bases for RAG." },
+              { step: "3", title: "Get Your API Key", desc: "Generate a secure API key to integrate with your product." },
+              { step: "4", title: "Integrate with SDK", desc: "Install mindflare-sdk and start chatting with your AI in 3 lines of code." },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-6 items-start animate-fade-in" style={{ animationDelay: `${0.1 * i}s` }}>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                  {item.step}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">{item.title}</h3>
+                  <p className="text-[var(--text-secondary)]">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Code snippet */}
+          <div className="mt-16 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border-color)]">
+              <div className="w-3 h-3 rounded-full bg-red-500/60"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500/60"></div>
+              <span className="text-xs text-[var(--text-muted)] ml-2">app.ts</span>
+            </div>
+            <pre className="p-6 text-sm font-mono overflow-x-auto">
+              <code>
+                <span className="text-purple-400">import</span> <span className="text-blue-300">{"{ Mindflare }"}</span> <span className="text-purple-400">from</span> <span className="text-green-400">{'"mindflare-sdk"'}</span>;<br />
+                <br />
+                <span className="text-purple-400">const</span> <span className="text-blue-300">mf</span> = <span className="text-purple-400">new</span> <span className="text-yellow-300">Mindflare</span>({"{ "}
+                <span className="text-blue-300">apiKey</span>: <span className="text-green-400">{'"YOUR_API_KEY"'}</span>{" }"});<br />
+                <br />
+                <span className="text-purple-400">const</span> <span className="text-blue-300">response</span> = <span className="text-purple-400">await</span> mf.<span className="text-yellow-300">chat</span>({"{"}<br />
+                {"  "}<span className="text-blue-300">message</span>: <span className="text-green-400">{'"Explain this repository"'}</span><br />
+                {"}"});<br />
+                <br />
+                console.<span className="text-yellow-300">log</span>(response);
+              </code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-[var(--border-color)] py-12 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Zap className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-sm font-semibold">MindflareAI</span>
+          </div>
+          <p className="text-sm text-[var(--text-muted)]">© 2024 MindflareAI. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }
