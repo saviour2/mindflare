@@ -1,0 +1,620 @@
+"use client";
+
+import React, { useEffect, useState, useRef } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import Navbar from '@/components/Navbar';
+import Link from 'next/link';
+import {
+    ArrowLeft, Bot, Database, Settings2, Wand2, Send, Sparkles,
+    Check, RefreshCw, ChevronRight, Cpu, MessageSquare, Zap, Info, Layers
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+
+const MODELS = [
+    { value: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B Instruct', badge: 'Fast' },
+    { value: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B Instruct', badge: 'Powerful' },
+    { value: 'mistralai/mixtral-8x7b-instruct', label: 'Mixtral 8x7B MoE', badge: 'Balanced' },
+    { value: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku', badge: 'Efficient' },
+    { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', badge: 'Smart' },
+    { value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat', badge: 'Value' },
+    { value: 'llama3-70b-8192', label: 'Groq: Llama 3 70B', badge: 'Groq 🚀' },
+    { value: 'google/gemini-flash-1.5', label: 'Gemini Flash 1.5', badge: 'Google' },
+];
+
+interface KBDoc {
+    kb_id: string;
+    kb_name: string;
+    source_type: string;
+    chunks_count: number;
+    status: string;
+}
+
+interface AppDoc {
+    app_id: string;
+    app_name: string;
+    model_name: string;
+    knowledge_base_ids: string[];
+    system_prompt?: string;
+    chatbot_name?: string;
+    created_at: string;
+    status?: string;
+}
+
+interface Message {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
+type Tab = 'configure' | 'playground';
+
+export default function AppDetailsPage() {
+    const router = useRouter();
+    const params = useParams();
+    const appId = params.appId as string;
+
+    const [app, setApp] = useState<AppDoc | null>(null);
+    const [kbs, setKbs] = useState<KBDoc[]>([]);
+    const [activeTab, setActiveTab] = useState<Tab>('configure');
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+
+    // Config state
+    const [selectedKbIds, setSelectedKbIds] = useState<string[]>([]);
+    const [selectedModel, setSelectedModel] = useState('meta-llama/llama-3-8b-instruct');
+    const [systemPrompt, setSystemPrompt] = useState('You are a helpful assistant.');
+    const [chatbotName, setChatbotName] = useState('');
+
+    // Playground state
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [inputValue, setInputValue] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    useEffect(() => {
+        if (!token) { router.push('/login'); return; }
+
+        // Fetch app
+        fetch(`http://localhost:5000/api/applications/${appId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(d => {
+            if (d.app) {
+                const a = d.app;
+                setApp(a);
+                setSelectedKbIds(a.knowledge_base_ids || []);
+                setSelectedModel(a.model_name || 'meta-llama/llama-3-8b-instruct');
+                setSystemPrompt(a.system_prompt || 'You are a helpful assistant.');
+                setChatbotName(a.chatbot_name || a.app_name);
+            }
+        }).catch(() => router.push('/applications'));
+
+        // Fetch user's knowledge bases
+        fetch('http://localhost:5000/api/knowledge_base/', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(d => setKbs(d.knowledge_bases || []));
+    }, [appId, token, router]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const toggleKb = (kbId: string) => {
+        setSelectedKbIds(prev =>
+            prev.includes(kbId) ? prev.filter(id => id !== kbId) : [...prev, kbId]
+        );
+    };
+
+    const saveConfig = async () => {
+        if (!token) return;
+        setSaving(true);
+        try {
+            await fetch(`http://localhost:5000/api/applications/${appId}/config`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    knowledge_base_ids: selectedKbIds,
+                    model_name: selectedModel,
+                    system_prompt: systemPrompt,
+                    chatbot_name: chatbotName
+                })
+            });
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2500);
+        } catch { }
+        setSaving(false);
+    };
+
+    const sendMessage = async () => {
+        const text = inputValue.trim();
+        if (!text || isTyping) return;
+        setInputValue('');
+
+        const newMessages: Message[] = [...messages, { role: 'user', content: text }];
+        setMessages(newMessages);
+        setIsTyping(true);
+
+        try {
+            const res = await fetch(`http://localhost:5000/api/chat/playground/${appId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: newMessages })
+            });
+            const data = await res.json();
+            setMessages(prev => [...prev, { role: 'assistant', content: data.response || data.error || 'Sorry, I encountered an error.' }]);
+        } catch {
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please try again.' }]);
+        }
+        setIsTyping(false);
+    };
+
+    if (!app) {
+        return (
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                    <RefreshCw className="w-6 h-6 text-gold-base" />
+                </motion.div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-[#050505] text-white">
+            <Navbar />
+
+            {/* Background */}
+            <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[20%] right-[-5%] w-[40vw] h-[40vw] bg-gold-base/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[10%] left-[-5%] w-[35vw] h-[35vw] bg-accent-cyan/5 rounded-full blur-[100px]" />
+            </div>
+
+            <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex items-center gap-4 mb-10">
+                    <Link href="/applications" className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                        <ArrowLeft className="w-5 h-5 text-zinc-500" />
+                    </Link>
+                    <div className="flex items-center gap-4 flex-1">
+                        <div className="w-14 h-14 rounded-2xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
+                            <Cpu className="w-7 h-7 text-gold-base" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-serif font-medium">{app.app_name}</h1>
+                            <p className="text-zinc-500 text-sm font-mono">ID: {app.app_id}</p>
+                        </div>
+                    </div>
+                    {app.status === 'active' && (
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-xs font-bold text-green-500 uppercase tracking-widest">Live</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Tabs */}
+                <div className="flex items-center gap-2 mb-10 p-1 bg-white/[0.03] border border-white/10 rounded-2xl w-fit">
+                    {[
+                        { id: 'configure' as Tab, label: 'Configure', icon: Settings2 },
+                        { id: 'playground' as Tab, label: 'Playground', icon: MessageSquare },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300",
+                                activeTab === tab.id
+                                    ? "bg-gold-base text-black shadow-lg shadow-gold-base/20"
+                                    : "text-zinc-500 hover:text-white"
+                            )}
+                        >
+                            <tab.icon className="w-4 h-4" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <AnimatePresence mode="wait">
+                    {activeTab === 'configure' ? (
+                        <motion.div
+                            key="configure"
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -16 }}
+                            transition={{ duration: 0.2 }}
+                            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+                        >
+                            {/* Left: KB + Model */}
+                            <div className="lg:col-span-2 space-y-8">
+                                {/* Knowledge Bases */}
+                                <Card className="rounded-[2rem]">
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                                                <Database className="w-5 h-5 text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xl font-serif">Knowledge Sources</CardTitle>
+                                                <CardDescription>Select which knowledge bases power this chatbot</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pt-6">
+                                        {kbs.length === 0 ? (
+                                            <div className="text-center py-10 border-2 border-dashed border-white/10 rounded-2xl">
+                                                <Database className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+                                                <p className="text-zinc-500 text-sm mb-4">No knowledge bases found.</p>
+                                                <Link href="/knowledge-base">
+                                                    <Button variant="outline" className="rounded-full text-xs">
+                                                        Create Knowledge Base
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {kbs.map(kb => (
+                                                    <button
+                                                        key={kb.kb_id}
+                                                        onClick={() => toggleKb(kb.kb_id)}
+                                                        className={cn(
+                                                            "w-full flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 text-left",
+                                                            selectedKbIds.includes(kb.kb_id)
+                                                                ? "bg-gold-base/10 border-gold-base/40"
+                                                                : "bg-white/[0.02] border-white/10 hover:border-white/20"
+                                                        )}
+                                                    >
+                                                        <div className={cn(
+                                                            "w-10 h-10 rounded-xl flex items-center justify-center border transition-colors shrink-0",
+                                                            selectedKbIds.includes(kb.kb_id)
+                                                                ? "bg-gold-base/20 border-gold-base/40 text-gold-base"
+                                                                : "bg-white/5 border-white/10 text-zinc-500"
+                                                        )}>
+                                                            <Layers className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-sm truncate">{kb.kb_name}</p>
+                                                            <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">
+                                                                {kb.source_type} · {kb.chunks_count} chunks · {kb.status}
+                                                            </p>
+                                                        </div>
+                                                        <div className={cn(
+                                                            "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                                                            selectedKbIds.includes(kb.kb_id)
+                                                                ? "bg-gold-base border-gold-base"
+                                                                : "border-white/20"
+                                                        )}>
+                                                            {selectedKbIds.includes(kb.kb_id) && <Check className="w-3 h-3 text-black" />}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+
+                                {/* AI Model */}
+                                <Card className="rounded-[2rem]">
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 border border-accent-cyan/20 flex items-center justify-center">
+                                                <Cpu className="w-5 h-5 text-accent-cyan" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xl font-serif">Language Model</CardTitle>
+                                                <CardDescription>Choose the AI engine for your chatbot</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pt-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {MODELS.map(model => (
+                                                <button
+                                                    key={model.value}
+                                                    onClick={() => setSelectedModel(model.value)}
+                                                    className={cn(
+                                                        "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 text-left",
+                                                        selectedModel === model.value
+                                                            ? "bg-accent-cyan/10 border-accent-cyan/40"
+                                                            : "bg-white/[0.02] border-white/10 hover:border-white/20"
+                                                    )}
+                                                >
+                                                    <span className={cn(
+                                                        "text-sm font-medium",
+                                                        selectedModel === model.value ? "text-accent-cyan" : "text-zinc-300"
+                                                    )}>{model.label}</span>
+                                                    <span className={cn(
+                                                        "text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest",
+                                                        selectedModel === model.value
+                                                            ? "bg-accent-cyan/20 text-accent-cyan"
+                                                            : "bg-white/5 text-zinc-600"
+                                                    )}>{model.badge}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Right: Personality */}
+                            <div className="space-y-8">
+                                <Card className="rounded-[2rem]">
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
+                                                <Wand2 className="w-5 h-5 text-gold-base" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xl font-serif">Personality</CardTitle>
+                                                <CardDescription>Define your chatbot's identity</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pt-6 space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Chatbot Name</label>
+                                            <input
+                                                type="text"
+                                                value={chatbotName}
+                                                onChange={e => setChatbotName(e.target.value)}
+                                                placeholder="e.g. Aria"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">System Prompt</label>
+                                            <textarea
+                                                value={systemPrompt}
+                                                onChange={e => setSystemPrompt(e.target.value)}
+                                                rows={6}
+                                                placeholder="You are a helpful assistant specializing in..."
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm resize-none leading-relaxed"
+                                            />
+                                        </div>
+                                        <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10">
+                                            <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-zinc-500 leading-relaxed">The system prompt guides your chatbot's personality and behavior. Be specific about its role and context.</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Button
+                                    onClick={saveConfig}
+                                    disabled={saving}
+                                    className={cn(
+                                        "w-full h-14 rounded-2xl text-sm font-semibold transition-all duration-300",
+                                        saved
+                                            ? "bg-green-500 text-white"
+                                            : "bg-gold-base text-black hover:bg-gold-light shadow-lg shadow-gold-base/20"
+                                    )}
+                                >
+                                    {saving ? (
+                                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                            <RefreshCw className="w-4 h-4" />
+                                        </motion.div>
+                                    ) : saved ? (
+                                        <><Check className="w-4 h-4 mr-2" /> Configuration Saved!</>
+                                    ) : (
+                                        <><Zap className="w-4 h-4 mr-2" /> Save & Deploy Config</>
+                                    )}
+                                </Button>
+
+                                <button
+                                    onClick={() => { saveConfig().then(() => setActiveTab('playground')); }}
+                                    className="w-full flex items-center justify-center gap-2 text-sm text-zinc-500 hover:text-gold-light transition-colors py-2"
+                                >
+                                    Go to Playground <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="playground"
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -16 }}
+                            transition={{ duration: 0.2 }}
+                            className="grid grid-cols-1 lg:grid-cols-4 gap-8"
+                        >
+                            {/* Sidebar Info */}
+                            <div className="space-y-6">
+                                <Card className="rounded-[2rem]">
+                                    <CardContent className="p-6 space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center">
+                                                <Bot className="w-5 h-5 text-gold-base" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-sm">{chatbotName || app.app_name}</p>
+                                                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Active Agent</p>
+                                            </div>
+                                        </div>
+                                        <div className="h-px bg-white/5" />
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest">Model</span>
+                                                <span className="text-xs text-zinc-400 font-mono">{selectedModel.split('/').pop()}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest">Knowledge</span>
+                                                <span className="text-xs text-zinc-400">{selectedKbIds.length} bases</span>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            onClick={() => setMessages([])}
+                                            variant="outline"
+                                            className="w-full rounded-xl text-xs border-white/10 hover:bg-white/5"
+                                        >
+                                            <RefreshCw className="w-3 h-3 mr-2" /> Clear Chat
+                                        </Button>
+                                        <Button
+                                            onClick={() => setActiveTab('configure')}
+                                            variant="ghost"
+                                            className="w-full rounded-xl text-xs text-zinc-500"
+                                        >
+                                            <Settings2 className="w-3 h-3 mr-2" /> Edit Config
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                                {selectedKbIds.length > 0 && (
+                                    <Card className="rounded-[2rem]">
+                                        <CardContent className="p-6">
+                                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Connected</p>
+                                            <div className="space-y-2">
+                                                {kbs.filter(k => selectedKbIds.includes(k.kb_id)).map(kb => (
+                                                    <div key={kb.kb_id} className="flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-gold-base" />
+                                                        <span className="text-xs text-zinc-400 truncate">{kb.kb_name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </div>
+
+                            {/* Chat Interface */}
+                            <div className="lg:col-span-3">
+                                <Card className="rounded-[2rem] overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 320px)', minHeight: '560px' }}>
+                                    {/* Chat Header */}
+                                    <div className="flex items-center gap-4 px-8 py-5 border-b border-white/5 bg-white/[0.01]">
+                                        <motion.div
+                                            animate={{ boxShadow: ['0 0 10px rgba(212,175,55,0.2)', '0 0 25px rgba(212,175,55,0.5)', '0 0 10px rgba(212,175,55,0.2)'] }}
+                                            transition={{ repeat: Infinity, duration: 2 }}
+                                            className="w-10 h-10 rounded-xl bg-gold-base/15 border border-gold-base/30 flex items-center justify-center"
+                                        >
+                                            <Bot className="w-5 h-5 text-gold-base" />
+                                        </motion.div>
+                                        <div>
+                                            <p className="font-medium">{chatbotName || app.app_name}</p>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Online · Playground Mode</p>
+                                            </div>
+                                        </div>
+                                        <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold-base/10 border border-gold-base/20">
+                                            <Sparkles className="w-3 h-3 text-gold-base" />
+                                            <span className="text-[10px] font-bold text-gold-light uppercase tracking-widest">RAG Enabled</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Messages */}
+                                    <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                                        {messages.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center gap-6">
+                                                <motion.div
+                                                    animate={{ scale: [1, 1.05, 1] }}
+                                                    transition={{ repeat: Infinity, duration: 3 }}
+                                                    className="w-20 h-20 rounded-3xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center"
+                                                >
+                                                    <Bot className="w-10 h-10 text-gold-base" />
+                                                </motion.div>
+                                                <div className="text-center">
+                                                    <h3 className="text-xl font-serif font-medium mb-2">
+                                                        {chatbotName || app.app_name} is ready
+                                                    </h3>
+                                                    <p className="text-zinc-500 text-sm max-w-xs">
+                                                        {selectedKbIds.length > 0
+                                                            ? `Powered by ${selectedKbIds.length} knowledge base${selectedKbIds.length > 1 ? 's' : ''}. Ask me anything!`
+                                                            : 'No knowledge bases connected. Responding from base model knowledge.'}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2 justify-center">
+                                                    {["What can you help me with?", "Tell me about yourself", "What do you know?"].map(q => (
+                                                        <button
+                                                            key={q}
+                                                            onClick={() => setInputValue(q)}
+                                                            className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-zinc-400 hover:border-gold-base/40 hover:text-gold-light transition-all"
+                                                        >
+                                                            {q}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {messages.map((msg, i) => (
+                                                    <motion.div
+                                                        key={i}
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        className={cn("flex gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}
+                                                    >
+                                                        {msg.role === 'assistant' && (
+                                                            <div className="w-8 h-8 rounded-xl bg-gold-base/15 border border-gold-base/30 flex items-center justify-center shrink-0 mt-1">
+                                                                <Bot className="w-4 h-4 text-gold-base" />
+                                                            </div>
+                                                        )}
+                                                        <div className={cn(
+                                                            "max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed",
+                                                            msg.role === 'user'
+                                                                ? "bg-gold-base/15 border border-gold-base/20 text-white"
+                                                                : "bg-white/5 border border-white/10 text-zinc-200"
+                                                        )}>
+                                                            {msg.content}
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                                {isTyping && (
+                                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
+                                                        <div className="w-8 h-8 rounded-xl bg-gold-base/15 border border-gold-base/30 flex items-center justify-center shrink-0">
+                                                            <Bot className="w-4 h-4 text-gold-base" />
+                                                        </div>
+                                                        <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 flex items-center gap-1.5">
+                                                            {[0, 1, 2].map(i => (
+                                                                <motion.div
+                                                                    key={i}
+                                                                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
+                                                                    transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+                                                                    className="w-2 h-2 rounded-full bg-zinc-500"
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                                <div ref={messagesEndRef} />
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Input */}
+                                    <div className="px-8 py-5 border-t border-white/5 bg-white/[0.01]">
+                                        <div className="flex gap-3 items-center">
+                                            <input
+                                                type="text"
+                                                value={inputValue}
+                                                onChange={e => setInputValue(e.target.value)}
+                                                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                                                placeholder={`Message ${chatbotName || app.app_name}...`}
+                                                className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm"
+                                            />
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={sendMessage}
+                                                disabled={!inputValue.trim() || isTyping}
+                                                className={cn(
+                                                    "w-14 h-14 rounded-2xl flex items-center justify-center transition-all shrink-0",
+                                                    inputValue.trim() && !isTyping
+                                                        ? "bg-gold-base text-black shadow-lg shadow-gold-base/30 hover:bg-gold-light"
+                                                        : "bg-white/5 text-zinc-600 cursor-not-allowed"
+                                                )}
+                                            >
+                                                <Send className="w-5 h-5" />
+                                            </motion.button>
+                                        </div>
+                                        <p className="text-center text-[10px] text-zinc-700 mt-3 font-mono">
+                                            Playground · Not production traffic · Logs are tracked
+                                        </p>
+                                    </div>
+                                </Card>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </main>
+        </div>
+    );
+}

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Plus, AppWindow, Trash2, Copy, Check, X, Search, Code, Cpu, Activity, Clock, ChevronDown, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -194,9 +195,16 @@ export default function ApplicationsPage() {
                                     </CardHeader>
                                     <CardContent className="flex-1 space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                                                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Knowledge</p>
-                                                <p className="text-sm font-medium">{app.knowledge_base_ids?.length || 0} Bases</p>
+                                            <div className={cn(
+                                                "p-3 rounded-xl border",
+                                                (app.knowledge_base_ids?.length || 0) === 0
+                                                    ? "bg-amber-500/5 border-amber-500/20"
+                                                    : "bg-white/5 border-white/5"
+                                            )}>
+                                                <p className={cn("text-[10px] uppercase font-bold tracking-wider mb-1", (app.knowledge_base_ids?.length || 0) === 0 ? "text-amber-500/60" : "text-zinc-500")}>Knowledge</p>
+                                                <p className={cn("text-sm font-medium", (app.knowledge_base_ids?.length || 0) === 0 ? "text-amber-400" : "")}>
+                                                    {(app.knowledge_base_ids?.length || 0) === 0 ? "⚠ None" : `${app.knowledge_base_ids.length} Bases`}
+                                                </p>
                                             </div>
                                             <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                                                 <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Created</p>
@@ -205,12 +213,19 @@ export default function ApplicationsPage() {
                                         </div>
                                         <div className="h-px bg-white/5" />
                                         <div className="flex items-center justify-between">
-                                            <Button onClick={() => setSelectedSdkApp(app)} variant="ghost" size="sm" className="rounded-full text-xs font-medium">
-                                                <Code className="w-3.5 h-3.5 mr-2" /> SDK Snippet
-                                            </Button>
-                                            <Button onClick={() => deleteApp(app.app_id)} variant="ghost" size="sm" className="rounded-full text-red-400/70 hover:text-red-400 hover:bg-red-400/10">
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
+                                            <Link href={`/applications/${app.app_id}`}>
+                                                <Button variant="ghost" size="sm" className="rounded-full text-xs font-medium text-gold-light hover:text-gold-base hover:bg-gold-base/10">
+                                                    <Code className="w-3.5 h-3.5 mr-2" /> Configure & Chat
+                                                </Button>
+                                            </Link>
+                                            <div className="flex gap-1">
+                                                <Button onClick={() => setSelectedSdkApp(app)} variant="ghost" size="sm" className="rounded-full text-zinc-500 hover:text-white">
+                                                    <Code className="w-3.5 h-3.5" />
+                                                </Button>
+                                                <Button onClick={() => deleteApp(app.app_id)} variant="ghost" size="sm" className="rounded-full text-red-400/70 hover:text-red-400 hover:bg-red-400/10">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>

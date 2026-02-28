@@ -93,3 +93,78 @@ def chat():
         "usage": usage,
         "provider": provider
     }), 200
+
+@chat_bp.route('/playground/<app_id>', methods=['POST'])
+def playground_chat(app_id):
+    """Playground endpoint - auth via user JWT, not API key. For use in the dashboard."""
+    from auth import requires_auth
+    from flask import g
+    
+    @requires_auth
+    def handle():
+        user_id = g.current_user['sub']
+        start_time = time.time()
+        
+        # Verify this app belongs to the user
+        app_doc = applications_collection.find_one({"app_id": app_id, "user_id": user_id})
+        if not app_doc:
+            return jsonify({"error": "App not found or unauthorized"}), 404
+        
+        data = request.json
+        messages = data.get('messages', [])
+        if not messages:
+            return jsonify({"error": "messages required"}), 400
+        
+        user_query = messages[-1]['content']
+        
+        # RAG PIPELINE (same as main chat)
+        kb_ids = app_doc.get("knowledge_base_ids", [])
+        context_chunks = []
+        if kb_ids:
+            for kb_id in kb_ids:
+                index_path = f"faiss_indices/{kb_id}"
+                if os.path.exists(index_path):
+                    try:
+                        vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
+                        docs = vectorstore.similarity_search(user_query, k=3)
+                        for doc in docs:
+                            context_chunks.append(doc.page_content)
+                    except Exception as e:
+                        print(f"Error loading FAISS for {kb_id}: {e}")
+        
+        new_messages = list(messages)
+        if context_chunks:
+            context_text = "\n\n".join(context_chunks)
+            system_prompt = app_doc.get('system_prompt', "You are a helpful assistant.")
+            augmented_prompt = f"{system_prompt}\n\nUse the following knowledge base context to answer the user's question.\n\nContext:\n{context_text}\n\nUser Question:\n{user_query}"
+            new_messages[-1]['content'] = augmented_prompt
+        
+        model_name = app_doc.get('model_name', 'meta-llama/llama-3-8b-instruct')
+        
+        try:
+            content, usage, provider = generate_response(model_name, new_messages)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        
+        latency = time.time() - start_time
+        total_tokens = usage.get("total_tokens", 0)
+        cost = total_tokens * 0.000002
+        logs_collection.insert_one({
+            "user_id": user_id,
+            "app_id": app_id,
+            "model": model_name,
+            "provider": provider,
+            "tokens_used": total_tokens,
+            "cost": cost,
+            "latency": latency,
+            "timestamp": datetime.utcnow()
+        })
+        
+        return jsonify({
+            "response": content,
+            "usage": usage,
+            "provider": provider,
+            "chatbot_name": app_doc.get("chatbot_name", app_doc["app_name"])
+        }), 200
+    
+    return handle()

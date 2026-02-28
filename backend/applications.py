@@ -95,3 +95,68 @@ def update_model(app_id):
     if res.matched_count == 1:
         return jsonify({"message": "Model updated"}), 200
     return jsonify({"error": "App not found"}), 404
+
+@applications_bp.route('/<app_id>', methods=['GET'])
+@requires_auth
+def get_app(app_id):
+    user = g.current_user
+    user_id = user['sub']
+    
+    app_doc = applications_collection.find_one({"app_id": app_id, "user_id": user_id})
+    if not app_doc:
+        return jsonify({"error": "App not found"}), 404
+    
+    app_doc['_id'] = str(app_doc['_id'])
+    return jsonify({"app": app_doc}), 200
+
+@applications_bp.route('/<app_id>/knowledge_bases', methods=['PUT'])
+@requires_auth
+def update_knowledge_bases(app_id):
+    """Set the list of knowledge bases attached to this app."""
+    user = g.current_user
+    user_id = user['sub']
+    
+    data = request.json
+    kb_ids = data.get('knowledge_base_ids', [])
+    
+    res = applications_collection.update_one(
+        {"app_id": app_id, "user_id": user_id},
+        {"$set": {"knowledge_base_ids": kb_ids}}
+    )
+    
+    if res.matched_count == 1:
+        return jsonify({"message": "Knowledge bases updated"}), 200
+    return jsonify({"error": "App not found"}), 404
+
+@applications_bp.route('/<app_id>/config', methods=['PUT'])
+@requires_auth
+def update_config(app_id):
+    """Update app config: model, system_prompt, and knowledge_base_ids."""
+    user = g.current_user
+    user_id = user['sub']
+    
+    data = request.json
+    update_fields = {}
+    
+    if 'model_name' in data:
+        update_fields['model_name'] = data['model_name']
+    if 'knowledge_base_ids' in data:
+        update_fields['knowledge_base_ids'] = data['knowledge_base_ids']
+    if 'system_prompt' in data:
+        update_fields['system_prompt'] = data['system_prompt']
+    if 'chatbot_name' in data:
+        update_fields['chatbot_name'] = data['chatbot_name']
+    if 'chatbot_icon' in data:
+        update_fields['chatbot_icon'] = data['chatbot_icon']
+        
+    if not update_fields:
+        return jsonify({"error": "No fields to update"}), 400
+        
+    res = applications_collection.update_one(
+        {"app_id": app_id, "user_id": user_id},
+        {"$set": update_fields}
+    )
+    
+    if res.matched_count == 1:
+        return jsonify({"message": "Config updated"}), 200
+    return jsonify({"error": "App not found"}), 404
