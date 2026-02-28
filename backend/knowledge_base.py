@@ -147,37 +147,42 @@ def create_knowledge_base():
         )
 
     # ── Dispatch ingestion task ──────────────────
-    # Try Celery first. If Redis is down or Celery worker isn't running,
-    # fall back to a Python background thread so ingestion always works.
-    from ingestion import process_knowledge_base
-    dispatched = False
+    # Strategy: always use background thread UNLESS a live Celery worker
+    # responds to a ping within 1 second.  Redis being up is NOT enough —
+    # we also need a worker process actually consuming the queue.
+    import threading
+    from ingestion import run_ingestion_pipeline, celery_app, process_knowledge_base
 
-    try:
-        # Quick Redis connectivity check before dispatching
-        from ingestion import celery_app
-        celery_app.backend  # touch the backend
-        conn = celery_app.connection_for_write()
-        conn.connect()
-        conn.release()
+    use_celery = os.getenv("USE_CELERY", "false").lower() == "true"
+    worker_alive = False
 
+    if use_celery:
+        try:
+            # inspect().ping() broadcasts to all workers with a 1s timeout.
+            # Returns a dict like {worker_name: {'ok': 'pong'}} if any alive.
+            i = celery_app.control.inspect(timeout=1.0)
+            pong = i.ping()
+            worker_alive = bool(pong)
+            if worker_alive:
+                logger.info(f"[KB:{kb_id}] Celery workers alive: {list(pong.keys())}")
+            else:
+                logger.warning(f"[KB:{kb_id}] No Celery workers responded to ping")
+        except Exception as e:
+            logger.warning(f"[KB:{kb_id}] Celery inspect failed: {e}")
+
+    if worker_alive:
         process_knowledge_base.delay(kb_id, source_type, source_url)
         logger.info(f"[KB:{kb_id}] Dispatched via Celery")
-        dispatched = True
-    except Exception as e:
-        logger.warning(f"[KB:{kb_id}] Celery unavailable ({e}), falling back to thread")
-
-    if not dispatched:
-        import threading
-        from ingestion import run_ingestion_pipeline
-
+    else:
         def _run():
             run_ingestion_pipeline(kb_id, source_type, source_url)
 
-        t = threading.Thread(target=_run, daemon=True)
+        t = threading.Thread(target=_run, daemon=True, name=f"kb-ingest-{kb_id[:8]}")
         t.start()
-        logger.info(f"[KB:{kb_id}] Dispatched via background thread")
+        logger.info(f"[KB:{kb_id}] Dispatched via background thread (set USE_CELERY=true to use Celery)")
 
     return jsonify({"knowledge_base": kb_doc, "message": "Ingestion started"}), 201
+
 
 
 
