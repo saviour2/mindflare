@@ -177,25 +177,28 @@ def chat():
         return jsonify({"error": "Invalid authentication token."}), 401
 
     # ── Auth Phase 2: Verify Client Secret & API Key ──
-    client_secret = request.headers.get("X-Mindflare-Client-Secret")
+    client_secret_provided = request.headers.get("X-Mindflare-Client-Secret")
     api_key_plain = request.headers.get("X-Mindflare-Api-Key")
 
-    if not client_secret or not api_key_plain:
+    if not client_secret_provided or not api_key_plain:
         return jsonify({"error": "Client Secret and API Key are required to interface with the engine."}), 401
 
-    if user_id_from_token != client_secret:
-        return jsonify({"error": "Client Secret does not match the authenticated identity."}), 403
+    from database import users_collection
+    user_record = users_collection.find_one({"user_id": user_id_from_token})
+    
+    if not user_record or user_record.get("client_secret") != client_secret_provided:
+        return jsonify({"error": "Invalid Client Secret provided."}), 403
 
     api_key_hash = encrypt_api_key(api_key_plain)
     
     query = {
         "api_key_hash": api_key_hash,
-        "user_id": client_secret
+        "user_id": user_id_from_token
     }
 
     app_doc = applications_collection.find_one(query)
     if not app_doc:
-        return jsonify({"error": "Invalid Client Secret or API Key for this application."}), 401
+        return jsonify({"error": "Invalid API Key for this application."}), 401
 
     # ── Parse & validate request ─────────────────
     data = request.get_json(silent=True)

@@ -45,7 +45,7 @@ export function registerAuthCommands(program: Command) {
             try {
                 const data = await api<{
                     token: string;
-                    user: { id: string; name: string; email: string };
+                    user: { id: string; name: string; email: string; client_secret: string };
                 }>({
                     method: "POST",
                     url: `${baseUrl}/api/auth/login`,
@@ -53,7 +53,7 @@ export function registerAuthCommands(program: Command) {
                 });
 
                 config.set("token", data.token);
-                config.set("clientSecret", data.user.id);
+                config.set("clientSecret", data.user.client_secret);
                 success(`Logged in as ${chalk.bold(data.user.name)} (${data.user.email})`);
             } catch (e) {
                 fatal((e as Error).message);
@@ -114,6 +114,7 @@ export function registerAuthCommands(program: Command) {
         .description("Clear saved authentication")
         .action(() => {
             config.set("token", "");
+            config.set("clientSecret", "");
             config.set("defaultAppId", "");
             success("Logged out. Config cleared.");
         });
@@ -128,7 +129,7 @@ export function registerAuthCommands(program: Command) {
 
             try {
                 const data = await api<{
-                    user: { user_id: string; email: string; name: string };
+                    user: { user_id: string; email: string; name: string; client_secret: string };
                 }>({
                     method: "GET",
                     url: `${config.get("baseUrl")}/api/auth/me`,
@@ -136,9 +137,10 @@ export function registerAuthCommands(program: Command) {
                 });
                 const u = data.user;
                 console.log();
-                console.log(`  ${chalk.bold("Name:")}  ${u.name}`);
-                console.log(`  ${chalk.bold("Email:")} ${u.email}`);
-                console.log(`  ${chalk.bold("ID:")}    ${chalk.dim(u.user_id)}`);
+                console.log(`  ${chalk.bold("Name:")}   ${u.name}`);
+                console.log(`  ${chalk.bold("Email:")}  ${u.email}`);
+                console.log(`  ${chalk.bold("ID:")}     ${chalk.dim(u.user_id)}`);
+                console.log(`  ${chalk.bold("Secret:")} ${chalk.yellow(u.client_secret)}`);
                 info(`API: ${config.get("baseUrl")}`);
                 console.log();
             } catch (e) {

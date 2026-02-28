@@ -1,12 +1,27 @@
 import { Auth0Client } from '@auth0/nextjs-auth0/server';
 
-// Reads AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_SECRET,
-// and APP_BASE_URL from environment variables automatically.
 export const auth0 = new Auth0Client({
+    // Explicitly pass appBaseUrl so the SDK knows the correct redirect URI
+    appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3000',
+
     routes: {
         login: '/api/auth/login',
         logout: '/api/auth/logout',
         callback: '/api/auth/callback',
-        backChannelLogout: '/api/auth/backchannel-logout',
     },
+
+    // Fix "state parameter is invalid" on localhost by ensuring
+    // the transaction cookie is NOT marked as Secure (http != https)
+    transactionCookie: {
+        sameSite: 'lax',
+        secure: false,
+    },
+
+    // Session cookie also needs to work over plain http on localhost
+    session: {
+        cookie: {
+            sameSite: 'lax',
+            secure: false,
+        },
+    }
 });

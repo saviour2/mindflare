@@ -196,7 +196,7 @@ export default function DocsPage() {
                                             <span className="text-blue-400">const</span> mf = <span className="text-blue-400">new</span> Mindflare({"{"}<br />
                                             &nbsp;&nbsp;email: <span className="text-emerald-400">"dev@startup.com"</span>,<br />
                                             &nbsp;&nbsp;password: <span className="text-emerald-400">"••••••••"</span>,<br />
-                                            &nbsp;&nbsp;clientSecret: <span className="text-emerald-400">"user_abc123"</span>,<br />
+                                            &nbsp;&nbsp;clientSecret: <span className="text-emerald-400">"mf_sk_••••••••"</span>,<br />
                                             &nbsp;&nbsp;appId: <span className="text-emerald-400">"mf_app_123"</span>,<br />
                                             &nbsp;&nbsp;apiKey: <span className="text-emerald-400">"mf_secret_xyz"</span><br />
                                             {"}"});<br /><br />
@@ -231,7 +231,7 @@ export default function DocsPage() {
                                             mf = Mindflare(<br />
                                             &nbsp;&nbsp;email=<span className="text-emerald-400">"dev@startup.com"</span>,<br />
                                             &nbsp;&nbsp;password=<span className="text-emerald-400">"••••••••"</span>,<br />
-                                            &nbsp;&nbsp;client_secret=<span className="text-emerald-400">"user_abc123"</span>,<br />
+                                            &nbsp;&nbsp;client_secret=<span className="text-emerald-400">"mf_sk_••••••••"</span>,<br />
                                             &nbsp;&nbsp;app_id=<span className="text-emerald-400">"mf_app_123"</span>,<br />
                                             &nbsp;&nbsp;api_key=<span className="text-emerald-400">"mf_secret_xyz"</span><br />
                                             )<br /><br />

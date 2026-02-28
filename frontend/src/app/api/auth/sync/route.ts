@@ -10,16 +10,15 @@ export async function GET() {
 
         const { user } = session;
 
-        // Send this to our Python backend to sync
+        // Send the raw Auth0 access token to the backend for secure verification
+        const { token } = await auth0.getAccessToken();
+
         const res = await fetch('http://localhost:5000/api/auth/auth0-sync', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                auth0_sub: user.sub,
-                email: user.email,
-                name: user.name || user.nickname || 'User',
-                picture: user.picture
-            })
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
         });
 
         const data = await res.json();

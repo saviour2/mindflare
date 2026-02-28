@@ -57,11 +57,9 @@ export default function Navbar() {
                             <button onClick={login} className="text-sm font-medium text-zinc-400 hover:text-white transition-colors ml-4">
                                 Log in
                             </button>
-                            <button onClick={login}>
-                                <Button variant="default" className="rounded-full bg-gold-base text-black hover:bg-gold-light shadow-lg shadow-gold-base/20 border-none px-6 font-bold">
-                                    Sign up Free
-                                </Button>
-                            </button>
+                            <Button onClick={login} variant="default" className="rounded-full bg-gold-base text-black hover:bg-gold-light shadow-lg shadow-gold-base/20 border-none px-6 font-bold">
+                                Sign up Free
+                            </Button>
                         </>
                     ) : (
                         <>
@@ -135,9 +133,7 @@ export default function Navbar() {
                                     <a href="#features" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>Features</a>
                                     <a href="#how-it-works" className="text-lg font-medium" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
                                     <button onClick={login} className="text-lg font-medium text-left">Login</button>
-                                    <button onClick={login}>
-                                        <Button className="w-full">Get Started</Button>
-                                    </button>
+                                    <Button className="w-full" onClick={login}>Get Started</Button>
                                 </>
                             ) : (
                                 <>

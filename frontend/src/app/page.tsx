@@ -315,11 +315,9 @@ export default function Home() {
                     </Button>
                   </Link>
                 ) : (
-                  <button onClick={login} className="w-full sm:w-auto group relative">
-                    <Button size="lg" className="relative w-full sm:w-auto h-14 px-10 rounded-full bg-white text-black hover:bg-zinc-200 font-sans font-medium tracking-wide">
-                      Start Building Free
-                    </Button>
-                  </button>
+                  <Button onClick={login} size="lg" className="relative w-full sm:w-auto h-14 px-10 rounded-full bg-white text-black hover:bg-zinc-200 font-sans font-medium tracking-wide">
+                    Start Building For Free
+                  </Button>
                 )}
                 <Link href="#features" className="w-full sm:w-auto group font-medium">
                   <Button variant="ghost" size="lg" className="h-14 px-8 rounded-full text-zinc-400 hover:text-white">
@@ -464,9 +462,7 @@ export default function Home() {
                     <li key={i} className="flex items-center gap-3 text-sm text-zinc-300"><CheckIcon /> {f}</li>
                   ))}
                 </ul>
-                <button onClick={login} className="w-full text-left">
-                  <Button className="w-full rounded-full h-14 bg-white text-black font-semibold">Start Building</Button>
-                </button>
+                <Button onClick={login} className="w-full rounded-full h-14 bg-white text-black font-semibold">Start Building</Button>
               </div>
               <div className="lg:col-span-3 bg-gradient-to-br from-gold-dark/20 to-black/80 border border-gold-base/20 rounded-3xl p-12 relative overflow-hidden group hover:border-gold-base/40 transition-all">
                 <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-all"><Cpu className="w-32 h-32 text-gold-base rotate-12" /></div>

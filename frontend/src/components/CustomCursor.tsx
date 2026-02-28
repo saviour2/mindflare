@@ -14,8 +14,17 @@ export default function CustomCursor() {
     const springConfig = { damping: 25, stiffness: 250 };
     const cursorXSpring = useSpring(cursorX, springConfig);
     const cursorYSpring = useSpring(cursorY, springConfig);
+    const trailingXSpring = useSpring(cursorX, { damping: 40, stiffness: 150 });
+    const trailingYSpring = useSpring(cursorY, { damping: 40, stiffness: 150 });
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isMounted) return;
+
         const moveCursor = (e: MouseEvent) => {
             cursorX.set(e.clientX);
             cursorY.set(e.clientY);
@@ -54,9 +63,9 @@ export default function CustomCursor() {
             document.removeEventListener('mouseleave', handleMouseLeave);
             document.removeEventListener('mouseenter', handleMouseEnter);
         };
-    }, [cursorX, cursorY, isVisible]);
+    }, [cursorX, cursorY, isVisible, isMounted]);
 
-    if (typeof window === 'undefined') return null;
+    if (!isMounted || typeof window === 'undefined') return null;
 
     return (
         <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
@@ -80,8 +89,8 @@ export default function CustomCursor() {
             {/* Trailing Particle for Neural feel */}
             <motion.div
                 style={{
-                    translateX: useSpring(cursorX, { damping: 40, stiffness: 150 }),
-                    translateY: useSpring(cursorY, { damping: 40, stiffness: 150 }),
+                    translateX: trailingXSpring,
+                    translateY: trailingYSpring,
                     left: -4,
                     top: -4,
                 }}

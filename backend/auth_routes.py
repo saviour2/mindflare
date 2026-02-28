@@ -3,6 +3,7 @@ import uuid
 import logging
 import datetime
 import os
+import secrets
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -47,8 +48,10 @@ def register():
 
     # ── Create user ──────────────────────────────
     user_id = str(uuid.uuid4())
+    client_secret = f"mf_sk_{secrets.token_urlsafe(16)}"
     users_collection.insert_one({
         "user_id": user_id,
+        "client_secret": client_secret,
         "email": email,
         "name": name,
         "password": generate_password_hash(password),
@@ -56,7 +59,86 @@ def register():
     })
 
     logger.info(f"New user registered: {email} ({user_id})")
-    return jsonify({"message": "Account created successfully"}), 201
+    return jsonify({"message": "Account created successfully", "client_secret": client_secret}), 201
+
+
+import requests
+
+@auth_bp.route('/auth0-sync', methods=['POST'])
+def auth0_sync():
+    """Sync an Auth0 user into the MongoDB and return a valid custom HS256 JWT by verifying the access token."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+    
+    token = auth_header.split(" ")[1]
+
+    # Verify the token with Auth0's /userinfo endpoint
+    # The domain should ideally be in env vars, but dev-nh7aeq727fmpmxak.us.auth0.com is currently used
+    auth0_domain = os.getenv('AUTH0_DOMAIN', 'dev-nh7aeq727fmpmxak.us.auth0.com')
+    userinfo_url = f"https://{auth0_domain}/userinfo"
+    
+    resp = requests.get(userinfo_url, headers={"Authorization": f"Bearer {token}"})
+    if resp.status_code != 200:
+        return jsonify({"error": "Invalid Auth0 access token"}), 401
+        
+    userinfo = resp.json()
+    
+    auth0_sub = userinfo.get('sub')
+    email = userinfo.get('email', '').strip().lower()
+    name = userinfo.get('name', 'User').strip()
+
+    if not auth0_sub or not email:
+        return jsonify({"error": "Missing required user claims from Auth0"}), 400
+
+    user = users_collection.find_one({"email": email})
+    
+    if not user:
+        # Create user with a randomly generated, unguessable password
+        user_id = str(uuid.uuid4())
+        client_secret = f"mf_sk_{secrets.token_urlsafe(16)}"
+        users_collection.insert_one({
+            "user_id": user_id,
+            "client_secret": client_secret,
+            "email": email,
+            "name": name,
+            "auth0_sub": auth0_sub,
+            "password": generate_password_hash(str(uuid.uuid4()) + "MindFlare2024!"),
+            "created_at": datetime.datetime.utcnow(),
+        })
+        user = users_collection.find_one({"user_id": user_id})
+    else:
+        # Update user with auth0_sub if it's not set
+        if not user.get('auth0_sub'):
+            users_collection.update_one(
+                {"user_id": user['user_id']},
+                {"$set": {"auth0_sub": auth0_sub}}
+            )
+        if not user.get('client_secret'):
+            client_secret = f"mf_sk_{secrets.token_urlsafe(16)}"
+            users_collection.update_one(
+                {"user_id": user['user_id']},
+                {"$set": {"client_secret": client_secret}}
+            )
+            user['client_secret'] = client_secret
+
+    # Issue standard Mindflare JWT so SDK works seamlessly 
+    token = jwt.encode({
+        'sub': user['user_id'],
+        'email': user['email'],
+        'name': user['name'],
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+    }, JWT_SECRET, algorithm="HS256")
+
+    return jsonify({
+        "token": token,
+        "user": {
+            "id": user['user_id'],
+            "email": user['email'],
+            "name": user['name'],
+            "client_secret": user.get('client_secret'),
+        }
+    }), 200
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -77,6 +159,15 @@ def login():
     if not user or not check_password_hash(user.get('password', ''), password):
         return jsonify({"error": "Invalid email or password"}), 401
 
+    # Migration: Ensure existing users also have a client_secret
+    if not user.get('client_secret'):
+        client_secret = f"mf_sk_{secrets.token_urlsafe(16)}"
+        users_collection.update_one(
+            {"user_id": user['user_id']},
+            {"$set": {"client_secret": client_secret}}
+        )
+        user['client_secret'] = client_secret
+
     token = jwt.encode({
         'sub': user['user_id'],
         'email': user['email'],
@@ -91,6 +182,7 @@ def login():
             "id": user['user_id'],
             "email": user['email'],
             "name": user['name'],
+            "client_secret": user.get('client_secret'),
         }
     }), 200
 
