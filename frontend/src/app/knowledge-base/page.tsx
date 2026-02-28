@@ -12,6 +12,7 @@ interface KBDoc {
     chunks_count: number;
     status: string;
     created_at: string;
+    error?: string;
 }
 
 export default function KnowledgeBasePage() {
@@ -41,7 +42,16 @@ export default function KnowledgeBasePage() {
     useEffect(() => {
         if (!token) { router.push('/login'); return; }
         fetchKBs();
-    }, []);
+
+        const interval = setInterval(() => {
+            const hasProcessing = kbs.some(kb => kb.status === 'pending' || kb.status === 'processing');
+            if (hasProcessing || kbs.length === 0) {
+                fetchKBs();
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [token, kbs]);
 
     const createKB = async () => {
         if (!kbName.trim()) return;
@@ -185,9 +195,16 @@ export default function KnowledgeBasePage() {
                                         <p className="text-xs text-[var(--text-muted)]">{kb.source_type.toUpperCase()} · {kb.chunks_count} chunks</p>
                                     </div>
                                 </div>
-                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(kb.status)}`}>
-                                    {kb.status}
-                                </span>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(kb.status)}`}>
+                                        {kb.status}
+                                    </span>
+                                    {kb.status === 'failed' && kb.error && (
+                                        <p className="text-[10px] text-red-400 max-w-[200px] text-right truncate" title={kb.error}>
+                                            {kb.error}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>

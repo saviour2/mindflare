@@ -42,6 +42,16 @@ def call_groq(model_name, messages):
         raise Exception(f"Groq Error: {resp.text}")
 
 def generate_response(model_name, messages):
+    # Route based on model ID
+    is_groq_native = any(x in model_name.lower() for x in ["groq", "llama3-70b-8192", "mixtral-8x7b-32768"])
+    
+    if is_groq_native:
+        try:
+            content, usage = call_groq(model_name, messages)
+            return content, usage, "groq"
+        except Exception as e:
+            print(f"Groq primary failed: {e}")
+
     try:
         content, usage = call_openrouter(model_name, messages)
         provider = "openrouter"
@@ -51,6 +61,6 @@ def generate_response(model_name, messages):
             content, usage = call_groq(model_name, messages)
             provider = "groq"
         except Exception as e2:
-            raise Exception(f"Both OpenRouter and Groq failed: {e2}")
+            raise Exception(f"Both providers failed: {e2}")
             
     return content, usage, provider

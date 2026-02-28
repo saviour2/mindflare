@@ -22,6 +22,8 @@ interface AppDoc {
     model_name: string;
     knowledge_base_ids: string[];
     created_at: string;
+    status?: string;
+    last_active?: string;
 }
 
 export default function ApplicationsPage() {
@@ -34,6 +36,7 @@ export default function ApplicationsPage() {
     const [loading, setLoading] = useState(false);
     const [createdKey, setCreatedKey] = useState('');
     const [copiedKey, setCopiedKey] = useState(false);
+    const [selectedSdkApp, setSelectedSdkApp] = useState<AppDoc | null>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
@@ -169,6 +172,48 @@ export default function ApplicationsPage() {
                     </div>
                 )}
 
+                {/* SDK Snippet Modal */}
+                {selectedSdkApp && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="w-full max-w-2xl rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 animate-slide-down">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="text-xl font-bold">Connect to {selectedSdkApp.app_name}</h3>
+                                    <p className="text-sm text-[var(--text-muted)] mt-1">Integrate your AI in 3 simple steps.</p>
+                                </div>
+                                <button onClick={() => setSelectedSdkApp(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-sm font-semibold mb-2">1. Install SDK</p>
+                                    <pre className="bg-[var(--bg-primary)] p-3 rounded-lg border border-[var(--border-color)] text-xs text-blue-400 font-mono">
+                                        npm install mindflare-sdk
+                                    </pre>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold mb-2">2. Initialize & Chat</p>
+                                    <pre className="bg-[var(--bg-primary)] p-4 rounded-lg border border-[var(--border-color)] text-xs text-pink-400 font-mono overflow-x-auto">
+                                        {`import Mindflare from 'mindflare-sdk';
+
+const mf = new Mindflare('YOUR_API_KEY');
+
+const response = await mf.chat("Hello!", []);
+console.log(response.response);`}
+                                    </pre>
+                                </div>
+                                <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                    <p className="text-sm text-blue-400">
+                                        💡 Your application will automatically show as <span className="font-bold">Active</span> on this dashboard once it receives its first request.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* App List */}
                 {filteredApps.length === 0 ? (
                     <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-16 text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
@@ -190,13 +235,23 @@ export default function ApplicationsPage() {
                                         <AppWindow className="w-5 h-5 text-purple-400" />
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-sm">{app.app_name}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-semibold text-sm">{app.app_name}</p>
+                                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] uppercase font-bold ${app.status === 'active' ? 'bg-green-500/10 text-green-500' : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-color)]'}`}>
+                                                {app.status || 'inactive'}
+                                            </span>
+                                        </div>
                                         <p className="text-xs text-[var(--text-muted)]">{app.model_name} · {app.knowledge_base_ids?.length || 0} KBs</p>
                                     </div>
                                 </div>
-                                <button onClick={() => deleteApp(app.app_id)} className="p-2 rounded-lg hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-colors">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => setSelectedSdkApp(app)} className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-colors text-xs flex items-center gap-2">
+                                        SDK Snippet
+                                    </button>
+                                    <button onClick={() => deleteApp(app.app_id)} className="p-2 rounded-lg hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-colors">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

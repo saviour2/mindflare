@@ -4,7 +4,7 @@ from datetime import datetime
 from applications import encrypt_api_key
 from database import applications_collection, knowledge_base_collection, logs_collection
 from models import generate_response
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 import faiss
 import time
@@ -26,6 +26,12 @@ def chat():
     app_doc = applications_collection.find_one({"api_key_hash": api_key_hash})
     if not app_doc:
         return jsonify({"error": "Invalid API key"}), 401
+    
+    # Update app activity for "Realtime" status
+    applications_collection.update_one(
+        {"app_id": app_doc["app_id"]},
+        {"$set": {"last_active": datetime.utcnow(), "status": "active"}}
+    )
     
     data = request.json
     messages = data.get('messages', [])

@@ -7,8 +7,8 @@ from git import Repo
 import faiss
 from celery import Celery
 from database import knowledge_base_collection
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 import pdf2image
 import pytesseract
@@ -41,22 +41,51 @@ def extract_from_pdf(file_path):
             pass
     return [text] if text.strip() else []
 
-def extract_from_website(url):
-    print(f"Crawling website: {url}")
-    try:
-        # Simplistic crawl of a single page (a real crawler would walk links)
-        headers = {"User-Agent": "Mindflare Bot"}
-        res = requests.get(url, headers=headers, timeout=10)
-        res.raise_for_status()
-        soup = BeautifulSoup(res.text, "html.parser")
-        # Remove scripts and styles
-        for script in soup(["script", "style"]):
-            script.extract()
-        text = soup.get_text(separator="\n", strip=True)
-        return [text] if text.strip() else []
-    except Exception as e:
-        print(f"Website extraction error: {e}")
-        return []
+def extract_from_website(url, max_pages=20):
+    if not url.startswith("http://") and not url.startswith("https://"):
+        url = "https://" + url
+    
+    from urllib.parse import urljoin, urlparse
+    domain = urlparse(url).netloc
+    to_visit = {url}
+    visited = set()
+    all_texts = []
+    
+    print(f"Crawling website: {url} (max {max_pages} pages)")
+    
+    while to_visit and len(visited) < max_pages:
+        current_url = to_visit.pop()
+        if current_url in visited:
+            continue
+        
+        visited.add(current_url)
+        try:
+            headers = {"User-Agent": "Mindflare Bot"}
+            res = requests.get(current_url, headers=headers, timeout=10)
+            if res.status_code != 200: continue
+            
+            soup = BeautifulSoup(res.text, "html.parser")
+            
+            # Extract text
+            for script in soup(["script", "style"]):
+                script.extract()
+            text = soup.get_text(separator="\n", strip=True)
+            if text:
+                all_texts.append(text)
+            
+            # Find more links
+            for link in soup.find_all("a", href=True):
+                absolute_link = urljoin(current_url, link["href"])
+                parsed_link = urlparse(absolute_link)
+                # Stay on same domain and avoid fragments
+                if parsed_link.netloc == domain and parsed_link.fragment == "":
+                    if absolute_link not in visited:
+                        to_visit.add(absolute_link)
+                        
+        except Exception as e:
+            print(f"Error crawling {current_url}: {e}")
+            
+    return all_texts
 
 def extract_from_github(repo_url):
     print(f"Ingesting GitHub repo: {repo_url}")
