@@ -18,10 +18,12 @@ if db is not None:
     applications_collection = db["applications"]
     knowledge_base_collection = db["knowledge_bases"]
     logs_collection = db["logs"]
+    users_collection = db["users"]
 else:
     applications_collection = None
     knowledge_base_collection = None
     logs_collection = None
+    users_collection = None
 
 def get_db():
     return db
