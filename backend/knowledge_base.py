@@ -146,19 +146,39 @@ def create_knowledge_base():
             {"$push": {"knowledge_base_ids": kb_id}}
         )
 
-    # ── Dispatch Celery task ─────────────────────
+    # ── Dispatch ingestion task ──────────────────
+    # Try Celery first. If Redis is down or Celery worker isn't running,
+    # fall back to a Python background thread so ingestion always works.
+    from ingestion import process_knowledge_base
+    dispatched = False
+
     try:
-        from ingestion import process_knowledge_base
+        # Quick Redis connectivity check before dispatching
+        from ingestion import celery_app
+        celery_app.backend  # touch the backend
+        conn = celery_app.connection_for_write()
+        conn.connect()
+        conn.release()
+
         process_knowledge_base.delay(kb_id, source_type, source_url)
-        logger.info(f"[KB:{kb_id}] Dispatched to Celery")
+        logger.info(f"[KB:{kb_id}] Dispatched via Celery")
+        dispatched = True
     except Exception as e:
-        logger.error(f"[KB:{kb_id}] Failed to dispatch Celery task: {e}")
-        knowledge_base_collection.update_one(
-            {"kb_id": kb_id},
-            {"$set": {"status": "failed", "error": "Failed to queue ingestion task"}}
-        )
+        logger.warning(f"[KB:{kb_id}] Celery unavailable ({e}), falling back to thread")
+
+    if not dispatched:
+        import threading
+        from ingestion import run_ingestion_pipeline
+
+        def _run():
+            run_ingestion_pipeline(kb_id, source_type, source_url)
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+        logger.info(f"[KB:{kb_id}] Dispatched via background thread")
 
     return jsonify({"knowledge_base": kb_doc, "message": "Ingestion started"}), 201
+
 
 
 @knowledge_base_bp.route('/', methods=['GET'])

@@ -263,10 +263,10 @@ def extract_text(source_type: str, source_url: str) -> list[str]:
 
 
 # ─────────────────────────────────────────────
-# Celery Task — Full Pipeline with Progress
+# Core Pipeline (callable directly or via Celery)
 # ─────────────────────────────────────────────
-@celery_app.task(bind=True, max_retries=2, default_retry_delay=10)
-def process_knowledge_base(self, kb_id: str, source_type: str, source_url: str):
+def run_ingestion_pipeline(kb_id: str, source_type: str, source_url: str, celery_task=None):
+    """The actual ingestion work. Called by the Celery task or directly in a thread."""
     logger.info(f"[KB:{kb_id}] Starting ingestion | type={source_type}")
 
     def _update(fields: dict):
@@ -381,8 +381,18 @@ def process_knowledge_base(self, kb_id: str, source_type: str, source_url: str):
             "progress_message": "",
             "error": str(exc)
         })
-        try:
-            raise self.retry(exc=exc)
-        except Exception:
-            pass
+        # Only retry if called through Celery
+        if celery_task is not None:
+            try:
+                raise celery_task.retry(exc=exc)
+            except Exception:
+                pass
 
+
+# ─────────────────────────────────────────────
+# Celery Task Wrapper
+# ─────────────────────────────────────────────
+@celery_app.task(bind=True, max_retries=2, default_retry_delay=10)
+def process_knowledge_base(self, kb_id: str, source_type: str, source_url: str):
+    """Celery entry point — delegates to run_ingestion_pipeline."""
+    run_ingestion_pipeline(kb_id, source_type, source_url, celery_task=self)
