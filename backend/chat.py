@@ -1,154 +1,106 @@
 import os
-from flask import Blueprint, request, jsonify
+import time
+import logging
+from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 from applications import encrypt_api_key
 from database import applications_collection, knowledge_base_collection, logs_collection
 from models import generate_response
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-import faiss
-import time
 
+logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
+
+# Loaded once at module level — expensive operation
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-@chat_bp.route('/', methods=['POST'])
-def chat():
-    start_time = time.time()
-    
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    api_key_plain = auth_header.split(" ")[1]
-    api_key_hash = encrypt_api_key(api_key_plain)
-    
-    app_doc = applications_collection.find_one({"api_key_hash": api_key_hash})
-    if not app_doc:
-        return jsonify({"error": "Invalid API key"}), 401
-    
-    # Update app activity for "Realtime" status
-    applications_collection.update_one(
-        {"app_id": app_doc["app_id"]},
-        {"$set": {"last_active": datetime.utcnow(), "status": "active"}}
-    )
-    
-    data = request.json
-    messages = data.get('messages', [])
-    if not messages:
-        return jsonify({"error": "messages required"}), 400
-        
-    user_query = messages[-1]['content']
-    
-    # RAG PIPELINE
-    kb_ids = app_doc.get("knowledge_base_ids", [])
-    context_chunks = []
-    if kb_ids:
-        # Load FAISS indices for these KBs
-        for kb_id in kb_ids:
-            index_path = f"faiss_indices/{kb_id}"
-            if os.path.exists(index_path):
-                try:
-                    vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
-                    docs = vectorstore.similarity_search(user_query, k=3)
-                    for doc in docs:
-                        context_chunks.append(doc.page_content)
-                except Exception as e:
-                    print(f"Error loading FAISS for {kb_id}: {e}")
-    
-    # 2. Build augmented prompt
-    new_messages = list(messages)
-    if context_chunks:
-        context_text = "\n\n".join(context_chunks)
-        augmented_prompt = f"Use the following knowledge base context to answer the user's question accurately. If the context doesn't contain the answer, say you don't know.\n\nContext:\n{context_text}\n\nUser Question:\n{user_query}"
-        new_messages[-1]['content'] = augmented_prompt
-        
-    model_name = app_doc.get('model_name', 'meta-llama/llama-3-8b-instruct')
-    
-    try:
-        content, usage, provider = generate_response(model_name, new_messages)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-        
-    latency = time.time() - start_time
-    
-    # ANALYTICS LOGGING
-    total_tokens = usage.get("total_tokens", 0)
-    cost = total_tokens * 0.000002
-    
-    log_doc = {
-        "user_id": app_doc["user_id"],
-        "app_id": app_doc["app_id"],
-        "model": model_name,
-        "provider": provider,
-        "tokens_used": total_tokens,
-        "cost": cost,
-        "latency": latency,
-        "timestamp": datetime.utcnow()
-    }
-    logs_collection.insert_one(log_doc)
-    
-    return jsonify({
-        "response": content,
-        "usage": usage,
-        "provider": provider
-    }), 200
+MAX_CONTEXT_CHUNKS = 5          # Max retrieved chunks per query
+MAX_CONTEXT_CHARS  = 8000       # Hard cap on total context injected
+MAX_MESSAGE_LENGTH = 4000       # Max length of a single user message
+MAX_CONVERSATION_TURNS = 20     # Max messages in history sent to LLM
 
-@chat_bp.route('/playground/<app_id>', methods=['POST'])
-def playground_chat(app_id):
-    """Playground endpoint - auth via user JWT, not API key. For use in the dashboard."""
-    from auth import requires_auth
-    from flask import g
-    
-    @requires_auth
-    def handle():
-        user_id = g.current_user['sub']
-        start_time = time.time()
-        
-        # Verify this app belongs to the user
-        app_doc = applications_collection.find_one({"app_id": app_id, "user_id": user_id})
-        if not app_doc:
-            return jsonify({"error": "App not found or unauthorized"}), 404
-        
-        data = request.json
-        messages = data.get('messages', [])
-        if not messages:
-            return jsonify({"error": "messages required"}), 400
-        
-        user_query = messages[-1]['content']
-        
-        # RAG PIPELINE (same as main chat)
-        kb_ids = app_doc.get("knowledge_base_ids", [])
-        context_chunks = []
-        if kb_ids:
-            for kb_id in kb_ids:
-                index_path = f"faiss_indices/{kb_id}"
-                if os.path.exists(index_path):
-                    try:
-                        vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
-                        docs = vectorstore.similarity_search(user_query, k=3)
-                        for doc in docs:
-                            context_chunks.append(doc.page_content)
-                    except Exception as e:
-                        print(f"Error loading FAISS for {kb_id}: {e}")
-        
-        new_messages = list(messages)
-        if context_chunks:
-            context_text = "\n\n".join(context_chunks)
-            system_prompt = app_doc.get('system_prompt', "You are a helpful assistant.")
-            augmented_prompt = f"{system_prompt}\n\nUse the following knowledge base context to answer the user's question.\n\nContext:\n{context_text}\n\nUser Question:\n{user_query}"
-            new_messages[-1]['content'] = augmented_prompt
-        
-        model_name = app_doc.get('model_name', 'meta-llama/llama-3-8b-instruct')
-        
+
+# ─────────────────────────────────────────────
+# Shared RAG Helper
+# ─────────────────────────────────────────────
+def _retrieve_context(kb_ids: list, user_query: str) -> str:
+    """Query FAISS indices for the given KB IDs and return merged context."""
+    if not kb_ids or not user_query.strip():
+        return ""
+
+    context_chunks: list[str] = []
+
+    for kb_id in kb_ids:
+        index_path = os.path.join("faiss_indices", kb_id)
+        if not os.path.exists(index_path):
+            logger.warning(f"FAISS index missing for kb_id={kb_id}")
+            continue
         try:
-            content, usage, provider = generate_response(model_name, new_messages)
+            vs = FAISS.load_local(
+                index_path, embeddings,
+                allow_dangerous_deserialization=True
+            )
+            docs = vs.similarity_search(user_query, k=MAX_CONTEXT_CHUNKS)
+            for doc in docs:
+                chunk = doc.page_content.strip()
+                if chunk:
+                    context_chunks.append(chunk)
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
-        
-        latency = time.time() - start_time
-        total_tokens = usage.get("total_tokens", 0)
-        cost = total_tokens * 0.000002
+            logger.error(f"FAISS load/search error for kb_id={kb_id}: {e}")
+
+    if not context_chunks:
+        return ""
+
+    # Merge and truncate to stay within context budget
+    merged = "\n\n---\n\n".join(context_chunks)
+    if len(merged) > MAX_CONTEXT_CHARS:
+        merged = merged[:MAX_CONTEXT_CHARS] + "\n\n[Context truncated for length]"
+
+    return merged
+
+
+def _build_augmented_messages(
+    messages: list,
+    context: str,
+    system_prompt: str = ""
+) -> list:
+    """Inject retrieved context into the conversation messages."""
+    # Trim to last N turns to avoid token overrun
+    trimmed = messages[-MAX_CONVERSATION_TURNS:]
+
+    if not trimmed:
+        return trimmed
+
+    user_query = trimmed[-1].get("content", "")
+
+    if context:
+        augmented_content = (
+            f"{system_prompt}\n\n"
+            if system_prompt else ""
+        ) + (
+            "Use the following knowledge base context to answer the user's question. "
+            "If the answer is not in the context, say you don't know.\n\n"
+            f"Context:\n{context}\n\n"
+            f"User Question:\n{user_query}"
+        )
+        result = list(trimmed)
+        result[-1] = {**result[-1], "content": augmented_content}
+        return result
+
+    # No context — just inject system prompt as a system message
+    if system_prompt:
+        return [{"role": "system", "content": system_prompt}] + list(trimmed)
+
+    return list(trimmed)
+
+
+def _log_interaction(user_id, app_id, model_name, provider, usage, latency, is_playground=False):
+    """Write an analytics log document."""
+    try:
+        total_tokens = usage.get("total_tokens", 0) if isinstance(usage, dict) else 0
+        cost = total_tokens * 0.000002  # rough estimate
+
         logs_collection.insert_one({
             "user_id": user_id,
             "app_id": app_id,
@@ -156,15 +108,171 @@ def playground_chat(app_id):
             "provider": provider,
             "tokens_used": total_tokens,
             "cost": cost,
-            "latency": latency,
-            "timestamp": datetime.utcnow()
+            "latency": round(latency, 4),
+            "is_playground": is_playground,
+            "timestamp": datetime.utcnow(),
         })
-        
+    except Exception as e:
+        logger.error(f"Failed to write analytics log: {e}")
+
+
+def _validate_messages(messages) -> tuple[bool, str]:
+    """Validate the messages array structure."""
+    if not isinstance(messages, list) or len(messages) == 0:
+        return False, "messages must be a non-empty array"
+    for m in messages:
+        if not isinstance(m, dict):
+            return False, "each message must be an object"
+        if m.get("role") not in ("user", "assistant", "system"):
+            return False, f"invalid role: {m.get('role')}"
+        content = m.get("content", "")
+        if not isinstance(content, str):
+            return False, "message content must be a string"
+        if len(content) > MAX_MESSAGE_LENGTH:
+            return False, f"message too long (max {MAX_MESSAGE_LENGTH} chars)"
+    return True, ""
+
+
+# ─────────────────────────────────────────────
+# Production Chat Endpoint (API key auth)
+# ─────────────────────────────────────────────
+@chat_bp.route('/', methods=['POST'])
+def chat():
+    start_time = time.time()
+
+    # ── Auth: API key ────────────────────────────
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    api_key_plain = auth_header[7:].strip()
+    if not api_key_plain:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    api_key_hash = encrypt_api_key(api_key_plain)
+    app_doc = applications_collection.find_one({"api_key_hash": api_key_hash})
+    if not app_doc:
+        return jsonify({"error": "Invalid API key"}), 401
+
+    # ── Parse & validate request ─────────────────
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Invalid JSON body"}), 400
+
+    messages = data.get("messages", [])
+    valid, err = _validate_messages(messages)
+    if not valid:
+        return jsonify({"error": err}), 400
+
+    user_query = messages[-1].get("content", "")
+
+    # ── RAG ──────────────────────────────────────
+    kb_ids = app_doc.get("knowledge_base_ids", [])
+    context = _retrieve_context(kb_ids, user_query)
+    system_prompt = app_doc.get("system_prompt", "You are a helpful assistant.")
+    augmented_msgs = _build_augmented_messages(messages, context, system_prompt)
+
+    # ── LLM call ────────────────────────────────
+    model_name = app_doc.get("model_name", "llama-3.1-8b-instant")
+    try:
+        content, usage, provider = generate_response(model_name, augmented_msgs)
+    except Exception as e:
+        logger.error(f"LLM error for app {app_doc['app_id']}: {e}")
+        return jsonify({"error": "The AI model is temporarily unavailable. Please try again."}), 503
+
+    latency = time.time() - start_time
+
+    # ── Update app last_active ───────────────────
+    applications_collection.update_one(
+        {"app_id": app_doc["app_id"]},
+        {"$set": {"last_active": datetime.utcnow(), "status": "active"}}
+    )
+
+    # ── Log ──────────────────────────────────────
+    _log_interaction(
+        user_id=app_doc["user_id"],
+        app_id=app_doc["app_id"],
+        model_name=model_name,
+        provider=provider,
+        usage=usage,
+        latency=latency,
+        is_playground=False
+    )
+
+    return jsonify({
+        "response": content,
+        "usage": usage,
+        "provider": provider,
+        "context_used": bool(context),
+    }), 200
+
+
+# ─────────────────────────────────────────────
+# Playground Endpoint (JWT auth)
+# ─────────────────────────────────────────────
+@chat_bp.route('/playground/<app_id>', methods=['POST'])
+def playground_chat(app_id):
+    """Playground endpoint — authenticated via user JWT, not API key.
+    Only the app owner can access this."""
+    from auth import requires_auth
+
+    @requires_auth
+    def _handle():
+        start_time = time.time()
+        user_id = g.current_user["sub"]
+
+        # ── Ownership check ──────────────────────
+        app_doc = applications_collection.find_one(
+            {"app_id": app_id, "user_id": user_id}
+        )
+        if not app_doc:
+            return jsonify({"error": "App not found or unauthorized"}), 404
+
+        # ── Parse & validate ─────────────────────
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "Invalid JSON body"}), 400
+
+        messages = data.get("messages", [])
+        valid, err = _validate_messages(messages)
+        if not valid:
+            return jsonify({"error": err}), 400
+
+        user_query = messages[-1].get("content", "")
+
+        # ── RAG ──────────────────────────────────
+        kb_ids = app_doc.get("knowledge_base_ids", [])
+        context = _retrieve_context(kb_ids, user_query)
+        system_prompt = app_doc.get("system_prompt", "You are a helpful assistant.")
+        augmented_msgs = _build_augmented_messages(messages, context, system_prompt)
+
+        # ── LLM call ─────────────────────────────
+        model_name = app_doc.get("model_name", "llama-3.1-8b-instant")
+        try:
+            content, usage, provider = generate_response(model_name, augmented_msgs)
+        except Exception as e:
+            logger.error(f"[Playground] LLM error for app {app_id}: {e}")
+            return jsonify({"error": "The AI model is temporarily unavailable. Please try again."}), 503
+
+        latency = time.time() - start_time
+
+        # ── Log ──────────────────────────────────
+        _log_interaction(
+            user_id=user_id,
+            app_id=app_id,
+            model_name=model_name,
+            provider=provider,
+            usage=usage,
+            latency=latency,
+            is_playground=True
+        )
+
         return jsonify({
             "response": content,
             "usage": usage,
             "provider": provider,
-            "chatbot_name": app_doc.get("chatbot_name", app_doc["app_name"])
+            "context_used": bool(context),
+            "chatbot_name": app_doc.get("chatbot_name") or app_doc.get("app_name", "Assistant"),
         }), 200
-    
-    return handle()
+
+    return _handle()
