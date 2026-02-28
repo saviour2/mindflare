@@ -263,7 +263,7 @@ def extract_text(source_type: str, source_url: str) -> list[str]:
 
 
 # ─────────────────────────────────────────────
-# Celery Task — Full Pipeline
+# Celery Task — Full Pipeline with Progress
 # ─────────────────────────────────────────────
 @celery_app.task(bind=True, max_retries=2, default_retry_delay=10)
 def process_knowledge_base(self, kb_id: str, source_type: str, source_url: str):
@@ -274,64 +274,115 @@ def process_knowledge_base(self, kb_id: str, source_type: str, source_url: str):
             {"kb_id": kb_id}, {"$set": fields}
         )
 
-    try:
-        _update({"status": "processing"})
+    def _progress(pct: int, message: str):
+        """Write live progress update to MongoDB so frontend can poll it."""
+        _update({
+            "status": "processing",
+            "progress": pct,
+            "progress_message": message,
+        })
+        logger.info(f"[KB:{kb_id}] {pct}% — {message}")
 
-        # ── 1. Extract ──────────────────────────────
+    try:
+        _progress(0, "Starting ingestion...")
+
+        # ── Stage 1: Extract (0 → 40%) ─────────────────
+        stage_labels = {
+            "pdf": "Reading and extracting PDF text...",
+            "website": "Crawling website pages...",
+            "github": "Cloning and reading repository files...",
+        }
+        _progress(5, stage_labels.get(source_type, "Extracting source..."))
+
         texts = extract_text(source_type, source_url)
+
         if not texts:
-            _update({"status": "failed", "error": "No text could be extracted from the source"})
+            _update({
+                "status": "failed",
+                "progress": 0,
+                "progress_message": "",
+                "error": "No text could be extracted from the source"
+            })
             return
 
         total_chars = sum(len(t) for t in texts)
-        logger.info(f"[KB:{kb_id}] Extracted {len(texts)} text blocks, {total_chars} total chars")
+        source_label = {
+            "pdf": f"Extracted {total_chars:,} characters",
+            "website": f"Crawled {len(texts)} pages ({total_chars:,} chars)",
+            "github": f"Read {len(texts)} files ({total_chars:,} chars)",
+        }.get(source_type, f"Extracted {len(texts)} text blocks")
 
-        # ── 2. Chunk ────────────────────────────────
+        _progress(40, f"{source_label} \u2014 splitting into chunks...")
+
+        # ── Stage 2: Chunk (40 → 60%) ───────────────────
         docs = text_splitter.create_documents(texts)
         chunk_texts = [doc.page_content for doc in docs if doc.page_content.strip()]
 
         if not chunk_texts:
-            _update({"status": "failed", "error": "Text extracted but chunking produced no content"})
+            _update({
+                "status": "failed",
+                "progress": 0,
+                "progress_message": "",
+                "error": "Text extracted but chunking produced no content"
+            })
             return
 
-        logger.info(f"[KB:{kb_id}] Created {len(chunk_texts)} chunks")
+        _progress(60, f"Created {len(chunk_texts)} chunks \u2014 generating embeddings...")
 
-        # ── 3. Embed + FAISS ────────────────────────
+        # ── Stage 3: Embed + FAISS (60 → 90%) ───────────
         index_path = os.path.join("faiss_indices", kb_id)
         os.makedirs("faiss_indices", exist_ok=True)
 
         try:
+            _progress(65, f"Embedding {len(chunk_texts)} chunks (this may take a moment)...")
             vectorstore = FAISS.from_texts(chunk_texts, embeddings)
+            _progress(88, "Saving vector index to disk...")
             vectorstore.save_local(index_path)
             logger.info(f"[KB:{kb_id}] FAISS index saved to {index_path}")
         except Exception as e:
             logger.error(f"[KB:{kb_id}] FAISS error: {e}")
-            _update({"status": "failed", "error": f"Embedding failed: {str(e)}"})
+            _update({
+                "status": "failed",
+                "progress": 0,
+                "progress_message": "",
+                "error": f"Embedding failed: {str(e)}"
+            })
             return
 
-        # ── 4. Update MongoDB ────────────────────────
+        # ── Stage 4: Finalize (90 → 100%) ───────────────
+        _progress(95, "Saving knowledge base to database...")
+
         _update({
             "status": "completed",
+            "progress": 100,
+            "progress_message": "Ingestion complete",
             "chunks_count": len(chunk_texts),
             "vector_index_path": index_path,
             "total_chars": total_chars,
             "source_pages": len(texts),
+            "error": None,
         })
 
-        # ── 5. Cleanup uploaded PDF ──────────────────
-        if source_type == "pdf" and os.path.exists(source_url):
+        # ── Stage 5: Cleanup uploaded PDF ───────────────
+        if source_type == "pdf" and source_url and os.path.exists(source_url):
             try:
                 os.remove(source_url)
                 logger.info(f"[KB:{kb_id}] Cleaned up temp file: {source_url}")
             except Exception as e:
                 logger.warning(f"[KB:{kb_id}] Could not delete temp file: {e}")
 
-        logger.info(f"[KB:{kb_id}] ✓ Ingestion complete — {len(chunk_texts)} chunks")
+        logger.info(f"[KB:{kb_id}] \u2713 Ingestion complete \u2014 {len(chunk_texts)} chunks")
 
     except Exception as exc:
         logger.error(f"[KB:{kb_id}] Unhandled exception: {exc}", exc_info=True)
-        _update({"status": "failed", "error": str(exc)})
+        _update({
+            "status": "failed",
+            "progress": 0,
+            "progress_message": "",
+            "error": str(exc)
+        })
         try:
             raise self.retry(exc=exc)
         except Exception:
             pass
+

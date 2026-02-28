@@ -18,6 +18,10 @@ interface KBDoc {
     status: string;
     created_at: string;
     error?: string;
+    progress?: number;
+    progress_message?: string;
+    total_chars?: number;
+    source_pages?: number;
 }
 
 export default function KnowledgeBasePage() {
@@ -51,18 +55,17 @@ export default function KnowledgeBasePage() {
         if (!token) { router.push('/login'); return; }
         fetchKBs();
 
-        // Poll every 5 seconds only if there are pending/processing KBs.
-        // Use kbsRef (not kbs) to avoid re-running the effect on every fetch.
+        // Poll every 2 seconds when something is processing for snappy progress updates
         const interval = setInterval(() => {
             const hasProcessing = kbsRef.current.some(
                 kb => kb.status === 'pending' || kb.status === 'processing'
             );
             if (hasProcessing) fetchKBs();
-        }, 5000);
+        }, 2000);
 
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]); // ← Only token, not kbs — prevents the infinite loop
+    }, [token]);
 
     const deleteKB = async (kbId: string) => {
         toast(
@@ -220,65 +223,109 @@ export default function KnowledgeBasePage() {
                     </motion.div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredKBs.map((kb, i) => (
-                            <motion.div
-                                key={kb.kb_id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                            >
-                                <Card className="group hover:border-white/20 transition-all duration-300 relative overflow-hidden">
-                                    <CardContent className="p-6">
-                                        <div className="flex items-start justify-between mb-6">
-                                            <div className={cn(
-                                                "w-12 h-12 rounded-2xl flex items-center justify-center border",
-                                                kb.source_type === 'pdf' ? "bg-orange-500/10 border-orange-500/20" :
-                                                    kb.source_type === 'website' ? "bg-blue-500/10 border-blue-500/20" :
-                                                        "bg-green-500/10 border-green-500/20"
-                                            )}>
-                                                {getIcon(kb.source_type)}
+                        {filteredKBs.map((kb, i) => {
+                            const isProcessing = kb.status === 'processing' || kb.status === 'pending';
+                            const progress = kb.progress ?? (kb.status === 'pending' ? 0 : kb.status === 'completed' ? 100 : 0);
+                            return (
+                                <motion.div
+                                    key={kb.kb_id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.05 }}
+                                >
+                                    <Card className="group hover:border-white/20 transition-all duration-300 relative overflow-hidden">
+                                        <CardContent className="p-6">
+                                            {/* Header */}
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className={cn(
+                                                    "w-12 h-12 rounded-2xl flex items-center justify-center border",
+                                                    kb.source_type === 'pdf' ? "bg-orange-500/10 border-orange-500/20" :
+                                                        kb.source_type === 'website' ? "bg-blue-500/10 border-blue-500/20" :
+                                                            "bg-green-500/10 border-green-500/20"
+                                                )}>
+                                                    {getIcon(kb.source_type)}
+                                                </div>
+                                                <div className={cn(
+                                                    "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
+                                                    kb.status === 'completed' ? "bg-green-500/10 border-green-500/20 text-green-500" :
+                                                        kb.status === 'failed' ? "bg-red-500/10 border-red-500/20 text-red-500" :
+                                                            "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                                                )}>
+                                                    {kb.status === 'pending' ? 'Queued' : kb.status}
+                                                </div>
                                             </div>
-                                            <div className={cn(
-                                                "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
-                                                kb.status === 'completed' ? "bg-green-500/10 border-green-500/20 text-green-500" :
-                                                    kb.status === 'failed' ? "bg-red-500/10 border-red-500/20 text-red-500" :
-                                                        "bg-zinc-500/10 border-zinc-500/20 text-zinc-500"
-                                            )}>
-                                                {kb.status}
+
+                                            {/* Name */}
+                                            <h3 className="text-xl font-medium mb-3 group-hover:text-gold-light transition-colors">{kb.kb_name}</h3>
+
+                                            {/* Progress bar — shown while processing */}
+                                            {isProcessing && (
+                                                <div className="mb-4">
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-[10px] text-zinc-500 font-mono">
+                                                            {kb.progress_message || 'Initializing...'}
+                                                        </span>
+                                                        <span className="text-[11px] font-bold text-amber-400 tabular-nums">{progress}%</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            className="h-full rounded-full"
+                                                            style={{
+                                                                background: 'linear-gradient(90deg, #f59e0b, #fcd34d)',
+                                                            }}
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${progress}%` }}
+                                                            transition={{ duration: 0.6, ease: 'easeOut' }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Stats — shown when completed */}
+                                            {!isProcessing && kb.status === 'completed' && (
+                                                <div className="flex gap-4 mb-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Type</span>
+                                                        <span className="text-sm font-medium text-zinc-400">{kb.source_type.toUpperCase()}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Chunks</span>
+                                                        <span className="text-sm font-medium text-zinc-400">{kb.chunks_count.toLocaleString()}</span>
+                                                    </div>
+                                                    {kb.total_chars && (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Chars</span>
+                                                            <span className="text-sm font-medium text-zinc-400">{(kb.total_chars / 1000).toFixed(0)}k</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Error message */}
+                                            {kb.status === 'failed' && kb.error && (
+                                                <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/10 flex items-start gap-2 mb-3">
+                                                    <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                                                    <p className="text-[11px] text-red-400/80 leading-relaxed italic">{kb.error}</p>
+                                                </div>
+                                            )}
+
+                                            {/* Footer */}
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+                                                <span className="text-[10px] text-zinc-600 font-mono italic">ID: {kb.kb_id.slice(0, 8)}...</span>
+                                                <div className="flex items-center gap-2">
+                                                    <Button onClick={() => deleteKB(kb.kb_id)} variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-red-400">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-white">
+                                                        <Settings className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <h3 className="text-xl font-medium mb-2 group-hover:text-gold-light transition-colors">{kb.kb_name}</h3>
-                                        <div className="flex gap-4 mb-4">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Type</span>
-                                                <span className="text-sm font-medium text-zinc-400">{kb.source_type.toUpperCase()}</span>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Chunks</span>
-                                                <span className="text-sm font-medium text-zinc-400">{kb.chunks_count}</span>
-                                            </div>
-                                        </div>
-                                        {kb.status === 'failed' && kb.error && (
-                                            <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/10 flex items-start gap-2 mb-2">
-                                                <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
-                                                <p className="text-[11px] text-red-400/80 leading-relaxed italic">{kb.error}</p>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
-                                            <span className="text-[10px] text-zinc-600 font-mono italic">ID: {kb.kb_id.slice(0, 8)}...</span>
-                                            <div className="flex items-center gap-2">
-                                                <Button onClick={() => deleteKB(kb.kb_id)} variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-red-400">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-white">
-                                                    <Settings className="w-3.5 h-3.5" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
+                                        </CardContent>
+                                    </Card>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 )}
             </main>
