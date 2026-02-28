@@ -3,7 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Plus, Database, Search, Upload, Globe, Github, X } from 'lucide-react';
+import { Plus, Database, Search, Upload, Globe, Github, X, FileText, Settings, AlertCircle, ChevronDown, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface KBDoc {
     kb_id: string;
@@ -87,129 +91,240 @@ export default function KnowledgeBasePage() {
     };
 
     const filteredKBs = kbs.filter(k => k.kb_name.toLowerCase().includes(search.toLowerCase()));
-    const typeIcon = (t: string) => t === 'pdf' ? <Upload className="w-5 h-5 text-orange-400" /> : t === 'website' ? <Globe className="w-5 h-5 text-blue-400" /> : <Github className="w-5 h-5 text-green-400" />;
-    const statusBadge = (s: string) => s === 'completed' ? 'bg-green-500/10 text-green-400' : s === 'processing' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-gray-500/10 text-gray-400';
+
+    const getIcon = (type: string) => {
+        switch (type) {
+            case 'pdf': return <FileText className="w-5 h-5 text-orange-400" />;
+            case 'website': return <Globe className="w-5 h-5 text-blue-400" />;
+            case 'github': return <Github className="w-5 h-5 text-green-400" />;
+            default: return <Database className="w-5 h-5 text-zinc-400" />;
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)]">
+        <div className="min-h-screen bg-[#050505] text-white">
             <Navbar />
-            <main className="pt-24 pb-12 px-6 max-w-5xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-2 animate-fade-in">
+
+            {/* Background Effects */}
+            <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
+                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-gold-base/5 rounded-full blur-[100px]" />
+            </div>
+
+            <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                     <div>
-                        <h1 className="text-3xl font-bold">Knowledge Bases <span className="text-sm font-normal text-[var(--text-muted)] px-2 py-0.5 rounded border border-[var(--border-color)]">Beta</span></h1>
-                        <p className="text-[var(--text-secondary)] text-sm mt-1">Manage your knowledge bases for RAG.</p>
-                    </div>
-                    <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Create KB
-                    </button>
-                </div>
-
-                {/* Search */}
-                <div className="flex items-center gap-4 my-6 animate-fade-in" style={{ animationDelay: '0.05s' }}>
-                    <div className="flex-1 relative">
-                        <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder="Search knowledge bases..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-blue-500 text-sm"
-                        />
-                    </div>
-                    <select className="px-3 py-2.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-sm text-[var(--text-secondary)] focus:outline-none">
-                        <option>Newest First</option>
-                        <option>Oldest First</option>
-                    </select>
-                </div>
-
-                {/* Create Modal */}
-                {showCreate && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                        <div className="w-full max-w-md rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 animate-slide-down">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-semibold">Create Knowledge Base</h3>
-                                <button onClick={() => setShowCreate(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X className="w-5 h-5" /></button>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-sm text-[var(--text-secondary)] mb-1.5 block">Name</label>
-                                    <input type="text" value={kbName} onChange={(e) => setKbName(e.target.value)} placeholder="My Knowledge Base"
-                                        className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-blue-500 text-sm" />
-                                </div>
-                                <div>
-                                    <label className="text-sm text-[var(--text-secondary)] mb-1.5 block">Source Type</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {[
-                                            { val: 'pdf', lbl: 'PDF', ic: <Upload className="w-4 h-4" /> },
-                                            { val: 'website', lbl: 'Website', ic: <Globe className="w-4 h-4" /> },
-                                            { val: 'github', lbl: 'GitHub', ic: <Github className="w-4 h-4" /> },
-                                        ].map(s => (
-                                            <button key={s.val} onClick={() => setSourceType(s.val)}
-                                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm transition-colors ${sourceType === s.val ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'}`}>
-                                                {s.ic} {s.lbl}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                {sourceType !== 'pdf' && (
-                                    <div>
-                                        <label className="text-sm text-[var(--text-secondary)] mb-1.5 block">{sourceType === 'website' ? 'Website URL' : 'GitHub Repo URL'}</label>
-                                        <input type="text" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} placeholder={sourceType === 'website' ? 'https://example.com' : 'https://github.com/user/repo'}
-                                            className="w-full px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-blue-500 text-sm" />
-                                    </div>
-                                )}
-                                {sourceType === 'pdf' && (
-                                    <div className="border-2 border-dashed border-[var(--border-color)] rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer relative">
-                                        <Upload className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2" />
-                                        <p className="text-sm text-[var(--text-muted)]">{file ? file.name : 'Click or drag PDF file here'}</p>
-                                        <p className="text-xs text-[var(--text-muted)] mt-1">Max 10MB</p>
-                                        <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                    </div>
-                                )}
-                                <button onClick={createKB} disabled={loading} className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-500 disabled:opacity-50 text-sm">
-                                    {loading ? 'Creating...' : 'Create Knowledge Base'}
-                                </button>
-                            </div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <motion.h1
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="text-4xl font-serif font-medium"
+                            >
+                                Knowledge Bases
+                            </motion.h1>
+                            <div className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase font-bold tracking-widest text-zinc-500">Beta</div>
                         </div>
+                        <motion.p
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="text-zinc-500"
+                        >
+                            Train your AI models on custom datasets and live data sources.
+                        </motion.p>
                     </div>
-                )}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-4"
+                    >
+                        <div className="relative group">
+                            <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-white transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Search datasets..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="pl-11 pr-4 py-2.5 w-64 bg-white/5 border border-white/10 rounded-full text-sm focus:outline-none focus:border-white/20 transition-all"
+                            />
+                        </div>
+                        <Button onClick={() => setShowCreate(true)} className="rounded-full h-12 px-6">
+                            <Plus className="w-4 h-4 mr-2" /> Connect Data
+                        </Button>
+                    </motion.div>
+                </div>
 
-                {/* KB List */}
                 {filteredKBs.length === 0 ? (
-                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-16 text-center animate-fade-in">
-                        <Database className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
-                        <p className="text-lg font-semibold mb-1">No knowledge bases yet</p>
-                        <p className="text-sm text-[var(--text-muted)]">Upload PDFs, crawl websites, or ingest GitHub repos.</p>
-                    </div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-[2.5rem] border border-white/10 bg-white/[0.02] backdrop-blur-xl p-24 text-center border-dashed"
+                    >
+                        <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
+                            <Database className="w-10 h-10 text-zinc-500" />
+                        </div>
+                        <h2 className="text-2xl font-serif font-medium mb-3">No knowledge bases yet</h2>
+                        <p className="text-zinc-500 mb-10 max-w-sm mx-auto font-sans leading-relaxed">
+                            Upload PDFs, crawl websites, or ingest GitHub repositories to give your AI context.
+                        </p>
+                        <Button onClick={() => setShowCreate(true)} variant="outline" className="rounded-full h-12 px-8">
+                            Initialize Store <Plus className="w-4 h-4 ml-2" />
+                        </Button>
+                    </motion.div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredKBs.map((kb, i) => (
-                            <div key={kb.kb_id} className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 flex items-center justify-between hover:border-[var(--border-light)] transition-colors animate-fade-in" style={{ animationDelay: `${0.05 * i}s` }}>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center">
-                                        {typeIcon(kb.source_type)}
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-sm">{kb.kb_name}</p>
-                                        <p className="text-xs text-[var(--text-muted)]">{kb.source_type.toUpperCase()} · {kb.chunks_count} chunks</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(kb.status)}`}>
-                                        {kb.status}
-                                    </span>
-                                    {kb.status === 'failed' && kb.error && (
-                                        <p className="text-[10px] text-red-400 max-w-[200px] text-right truncate" title={kb.error}>
-                                            {kb.error}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
+                            <motion.div
+                                key={kb.kb_id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                            >
+                                <Card className="group hover:border-white/20 transition-all duration-300 relative overflow-hidden">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start justify-between mb-6">
+                                            <div className={cn(
+                                                "w-12 h-12 rounded-2xl flex items-center justify-center border",
+                                                kb.source_type === 'pdf' ? "bg-orange-500/10 border-orange-500/20" :
+                                                    kb.source_type === 'website' ? "bg-blue-500/10 border-blue-500/20" :
+                                                        "bg-green-500/10 border-green-500/20"
+                                            )}>
+                                                {getIcon(kb.source_type)}
+                                            </div>
+                                            <div className={cn(
+                                                "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
+                                                kb.status === 'completed' ? "bg-green-500/10 border-green-500/20 text-green-500" :
+                                                    kb.status === 'failed' ? "bg-red-500/10 border-red-500/20 text-red-500" :
+                                                        "bg-zinc-500/10 border-zinc-500/20 text-zinc-500"
+                                            )}>
+                                                {kb.status}
+                                            </div>
+                                        </div>
+                                        <h3 className="text-xl font-medium mb-2 group-hover:text-gold-light transition-colors">{kb.kb_name}</h3>
+                                        <div className="flex gap-4 mb-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Type</span>
+                                                <span className="text-sm font-medium text-zinc-400">{kb.source_type.toUpperCase()}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Chunks</span>
+                                                <span className="text-sm font-medium text-zinc-400">{kb.chunks_count}</span>
+                                            </div>
+                                        </div>
+                                        {kb.status === 'failed' && kb.error && (
+                                            <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/10 flex items-start gap-2 mb-2">
+                                                <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                                                <p className="text-[11px] text-red-400/80 leading-relaxed italic">{kb.error}</p>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
+                                            <span className="text-[10px] text-zinc-600 font-mono italic">ID: {kb.kb_id.slice(0, 8)}...</span>
+                                            <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-white">
+                                                <Settings className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
                         ))}
                     </div>
                 )}
             </main>
+
+            {/* Create Modal */}
+            <AnimatePresence>
+                {showCreate && (
+                    <div className="fixed inset-0 flex items-center justify-center z-[100] px-6">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreate(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-lg bg-zinc-950 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl"
+                        >
+                            <div className="p-10">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-2xl font-serif font-medium">Connect Data</h3>
+                                        <p className="text-zinc-500 text-sm mt-1">Ground your AI in your reality.</p>
+                                    </div>
+                                    <button onClick={() => setShowCreate(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                                        <X className="w-5 h-5 text-zinc-500" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-8">
+                                    <div className="space-y-3">
+                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Database Name</label>
+                                        <input
+                                            type="text"
+                                            value={kbName}
+                                            onChange={(e) => setKbName(e.target.value)}
+                                            placeholder="e.g. Project Archive"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-gold-base/50 transition-all font-sans"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Source Pipeline</label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {[
+                                                { val: 'pdf', lbl: 'PDF', ic: <Upload className="w-4 h-4" /> },
+                                                { val: 'website', lbl: 'Spider', ic: <Globe className="w-4 h-4" /> },
+                                                { val: 'github', lbl: 'Git', ic: <Github className="w-4 h-4" /> },
+                                            ].map(s => (
+                                                <button
+                                                    key={s.val}
+                                                    onClick={() => setSourceType(s.val)}
+                                                    className={cn(
+                                                        "flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all duration-300",
+                                                        sourceType === s.val ? "bg-gold-base/10 border-gold-base/40 text-gold-light" : "bg-white/5 border-white/5 text-zinc-500 hover:bg-white/[0.07]"
+                                                    )}
+                                                >
+                                                    {s.ic}
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest">{s.lbl}</span>
+                                                    {sourceType === s.val && <motion.div layoutId="srcCheck" className="absolute top-2 right-2"><Check className="w-3 h-3" /></motion.div>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {sourceType !== 'pdf' && (
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">{sourceType === 'website' ? 'Target URL' : 'Repository URL'}</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={sourceUrl}
+                                                    onChange={(e) => setSourceUrl(e.target.value)}
+                                                    placeholder={sourceType === 'website' ? 'https://docs.myproduct.com' : 'https://github.com/org/repo'}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-gold-base/50 transition-all font-sans text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {sourceType === 'pdf' && (
+                                        <div className="relative">
+                                            <div className="border-2 border-dashed border-white/10 rounded-[1.5rem] p-10 text-center hover:bg-white/[0.02] transition-colors cursor-pointer group">
+                                                <Upload className="w-8 h-8 text-zinc-600 mx-auto mb-4 group-hover:text-gold-light transition-colors" />
+                                                <p className="text-sm text-zinc-400 font-medium mb-1 truncate px-4">{file ? file.name : 'Drop architectural PDF here'}</p>
+                                                <p className="text-[10px] text-zinc-600 uppercase tracking-widest">Supports up to 50MB</p>
+                                                <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <Button onClick={createKB} disabled={loading || !kbName.trim()} className="w-full h-14 rounded-2xl bg-gold-base text-black hover:bg-gold-light mt-4 shadow-lg shadow-gold-base/20 transition-all">
+                                        {loading ? 'Ingesting Pipeline...' : 'Initialize Ingestion'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

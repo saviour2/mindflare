@@ -4,7 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
-import { AppWindow, Database, Plus, Copy, Check, ExternalLink, ArrowRight } from 'lucide-react';
+import { AppWindow, Database, Plus, Copy, Check, ExternalLink, ArrowRight, Zap, Shield, Layout, Sparkles, Activity } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -49,89 +53,216 @@ export default function DashboardPage() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)]">
+        <div className="min-h-screen bg-[#050505] text-white">
             <Navbar />
-            <main className="pt-24 pb-12 px-6 max-w-5xl mx-auto">
-                {/* Welcome */}
-                <div className="mb-8 animate-fade-in">
-                    <h1 className="text-3xl font-bold">Welcome back</h1>
-                    <p className="text-[var(--text-secondary)] mt-1">Manage your apps and knowledge bases.</p>
-                </div>
 
-                {/* SDK Banner */}
-                <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 mb-6 flex items-center justify-between animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <AppWindow className="w-5 h-5 text-blue-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold">Mindflare SDK is now live</p>
-                            <p className="text-xs text-[var(--text-muted)]">Integrate your AI apps with our official Node.js client.</p>
-                        </div>
-                    </div>
-                    <a href="https://www.npmjs.com/package/mindflare-sdk" target="_blank" rel="noreferrer" className="text-sm text-blue-400 hover:underline flex items-center gap-1">
-                        View on NPM <ExternalLink className="w-3 h-3" />
-                    </a>
-                </div>
+            {/* Background Effects */}
+            <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-gold-base/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[10%] left-[-10%] w-[40vw] h-[40vw] bg-accent-cyan/5 rounded-full blur-[100px]" />
+            </div>
 
-                {/* Client ID */}
-                <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 mb-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
-                    <h3 className="text-base font-semibold mb-3">Your Client ID</h3>
-                    <div className="flex items-center gap-3">
-                        <div className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-sm text-[var(--text-secondary)] font-mono truncate">
-                            {user.id || 'Loading...'}
-                        </div>
-                        <button
-                            onClick={copyId}
-                            className="px-4 py-2.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] hover:bg-[var(--bg-card-hover)] transition-colors flex items-center gap-2 text-sm"
+            <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-base/10 border border-gold-base/20 text-gold-light text-xs font-bold uppercase tracking-wider mb-4"
                         >
-                            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                            {copied ? 'Copied' : 'Copy'}
-                        </button>
-                    </div>
-                    <p className="text-xs text-[var(--text-muted)] mt-2">This Client ID is fixed and unique to your account. Use it to initialize the SDK.</p>
-                </div>
-
-                {/* Quick Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                    {/* Active Applications */}
-                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                                    <AppWindow className="w-5 h-5 text-purple-400" />
-                                </div>
-                            </div>
-                            <Link href="/applications" className="text-xs text-blue-400 hover:underline flex items-center gap-1">
-                                View all <ArrowRight className="w-3 h-3" />
-                            </Link>
-                        </div>
-                        <p className="text-3xl font-bold mb-1">{appCount}</p>
-                        <p className="text-sm text-[var(--text-secondary)]">Active Applications</p>
-                        <Link href="/applications" className="flex items-center gap-1 mt-4 text-sm text-blue-400 hover:underline">
-                            <Plus className="w-4 h-4" /> Create New App
-                        </Link>
-                    </div>
-
-                    {/* Knowledge Bases */}
-                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                                    <Database className="w-5 h-5 text-cyan-400" />
-                                </div>
-                            </div>
-                            <Link href="/knowledge-base" className="text-xs text-blue-400 hover:underline flex items-center gap-1">
-                                View all <ArrowRight className="w-3 h-3" />
-                            </Link>
-                        </div>
-                        <p className="text-3xl font-bold mb-1">{kbCount}</p>
-                        <p className="text-sm text-[var(--text-secondary)]">Knowledge Bases</p>
-                        <Link href="/knowledge-base" className="flex items-center gap-1 mt-4 text-sm text-blue-400 hover:underline">
-                            <Plus className="w-4 h-4" /> Create Knowledge Base
-                        </Link>
+                            <Sparkles className="w-3 h-3" /> Dashboard
+                        </motion.div>
+                        <motion.h1
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="text-4xl md:text-5xl font-serif font-medium mb-3"
+                        >
+                            Welcome back, <span className="text-gold-light italic">{user.email?.split('@')[0]}</span>
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="text-zinc-500 max-w-lg"
+                        >
+                            Your cognitive infrastructure is ready. Monitor your agents and manage your intelligence pipelines.
+                        </motion.p>
                     </div>
                 </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: API & Banner */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* SDK Banner */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="group relative overflow-hidden rounded-[2.5rem] p-8 border border-gold-base/20 bg-gradient-to-br from-gold-base/[0.05] to-transparent"
+                        >
+                            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                                <div className="w-20 h-20 rounded-3xl bg-gold-base flex items-center justify-center shrink-0 shadow-lg shadow-gold-base/20">
+                                    <Zap className="w-10 h-10 text-black fill-current" />
+                                </div>
+                                <div className="flex-1 text-center md:text-left">
+                                    <h3 className="text-2xl font-serif font-medium mb-2">Mindflare SDK v1.0</h3>
+                                    <p className="text-zinc-400 mb-6 max-w-md">Our production-ready Node.js client is now available for enterprise integration.</p>
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                                        <Button className="rounded-full bg-gold-base text-white hover:bg-gold-light px-8">
+                                            Documentation
+                                        </Button>
+                                        <a href="https://www.npmjs.com/package/mindflare-sdk" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gold-light hover:text-white transition-colors">
+                                            NPM Package <ExternalLink className="w-3.5 h-3.5" />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="absolute top-0 right-0 p-8 text-gold-base/5 pointer-events-none">
+                                <Layout className="w-40 h-40" />
+                            </div>
+                        </motion.div>
+
+                        {/* Client ID Section */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                        >
+                            <Card className="rounded-[2.5rem]">
+                                <CardHeader>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Shield className="w-4 h-4 text-accent-cyan" />
+                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Security Credentials</span>
+                                    </div>
+                                    <CardTitle>Global Client ID</CardTitle>
+                                    <CardDescription>Use this unique identifier to authenticate your SDK calls across all applications.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-mono text-sm text-gold-light break-all flex items-center">
+                                            {user.id || 'mf_user_********************'}
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            onClick={copyId}
+                                            className="h-full rounded-2xl px-6 border-white/10 hover:bg-white/5"
+                                        >
+                                            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                            <span className="ml-2 hidden md:inline">{copied ? 'Copied' : 'Copy'}</span>
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    </div>
+
+                    {/* Right Column: Stats & Links */}
+                    <div className="space-y-6">
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <Card className="rounded-[2.5rem] border-accent-cyan/20 bg-accent-cyan/[0.02]">
+                                <CardContent className="p-8">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div className="w-12 h-12 rounded-2xl bg-accent-cyan/10 flex items-center justify-center text-accent-cyan border border-accent-cyan/20">
+                                            <AppWindow className="w-6 h-6" />
+                                        </div>
+                                        <Link href="/applications" className="p-2 hover:bg-white/5 rounded-full transition-colors" title="View Apps">
+                                            <ArrowRight className="w-5 h-5 text-zinc-500" />
+                                        </Link>
+                                    </div>
+                                    <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-500 mb-2">Engines Deployed</p>
+                                    <div className="flex items-end gap-2 mb-6">
+                                        <h2 className="text-5xl font-serif">{appCount}</h2>
+                                        <span className="text-zinc-500 mb-2 font-medium">/ 10</span>
+                                    </div>
+                                    <Link href="/applications">
+                                        <Button className="w-full rounded-xl bg-accent-cyan text-white hover:bg-accent-cyan/80">
+                                            <Plus className="w-4 h-4 mr-2" /> New Agent
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            <Card className="rounded-[2.5rem] border-purple-500/20 bg-purple-500/[0.02]">
+                                <CardContent className="p-8">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
+                                            <Database className="w-6 h-6" />
+                                        </div>
+                                        <Link href="/knowledge-base" className="p-2 hover:bg-white/5 rounded-full transition-colors" title="View Knowledge Bases">
+                                            <ArrowRight className="w-5 h-5 text-zinc-500" />
+                                        </Link>
+                                    </div>
+                                    <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-500 mb-2">Contextual Chunks</p>
+                                    <div className="flex items-end gap-2 mb-6">
+                                        <h2 className="text-5xl font-serif">{kbCount}</h2>
+                                        <span className="text-zinc-500 mb-2 font-medium">Stores</span>
+                                    </div>
+                                    <Link href="/knowledge-base">
+                                        <Button variant="outline" className="w-full rounded-xl border-purple-500/20 hover:bg-purple-500/5 hover:text-purple-400">
+                                            <Plus className="w-4 h-4 mr-2" /> Connect Data
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    </div>
+                </div>
+
+                {/* Recent Activity Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="mt-12"
+                >
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <Activity className="w-5 h-5 text-gold-base" />
+                            <h2 className="text-2xl font-serif font-medium">Neural Activity Feed</h2>
+                        </div>
+                        <Button variant="ghost" className="text-xs text-zinc-500 hover:text-white">
+                            View all logs <ArrowRight className="w-3 h-3 ml-2" />
+                        </Button>
+                    </div>
+
+                    <Card className="rounded-[2.5rem] overflow-hidden">
+                        <div className="divide-y divide-white/5">
+                            {[
+                                { event: 'Cognitive Handshake', app: 'Sales Assistant', time: '2m ago', status: 'success' },
+                                { event: 'Knowledge Ingestion', app: 'Internal Wiki', time: '14m ago', status: 'processing' },
+                                { event: 'API Authentication', app: 'Customer Bot', time: '1h ago', status: 'success' },
+                                { event: 'Model Switched', app: 'Sales Assistant', time: '3h ago', status: 'success' },
+                            ].map((item, i) => (
+                                <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-white/[0.01] transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn(
+                                            "w-2 h-2 rounded-full",
+                                            item.status === 'success' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-gold-base animate-pulse"
+                                        )} />
+                                        <div>
+                                            <p className="text-sm font-medium text-white">{item.event}</p>
+                                            <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">{item.app}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-zinc-500 font-mono">{item.time}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </motion.div>
             </main>
         </div>
     );

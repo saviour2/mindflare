@@ -14,8 +14,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Mindflare AI",
-  description: "AI SaaS Platform",
+  title: "Mindflare AI | Neural Infrastructure & Intelligent Systems",
+  description: "Enterprise-grade AI SaaS platform for building, deploying, and scaling intelligent neural networks and applications.",
 };
 
 export default function RootLayout({
