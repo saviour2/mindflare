@@ -75,3 +75,21 @@ def get_knowledge_bases():
         k['_id'] = str(k['_id'])
         
     return jsonify({"knowledge_bases": kbs}), 200
+
+@knowledge_base_bp.route('/<kb_id>', methods=['DELETE'])
+@requires_auth
+def delete_kb(kb_id):
+    user = g.current_user
+    user_id = user['sub']
+    
+    # Remove reference from all applications
+    applications_collection.update_many(
+        {"user_id": user_id},
+        {"$pull": {"knowledge_base_ids": kb_id}}
+    )
+    
+    result = knowledge_base_collection.delete_one({"kb_id": kb_id, "user_id": user_id})
+    if result.deleted_count == 1:
+        # Note: In a production app, we would also delete the vector storage (FAISS index)
+        return jsonify({"message": "Knowledge base deleted"}), 200
+    return jsonify({"error": "Knowledge base not found"}), 404

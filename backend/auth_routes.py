@@ -60,3 +60,28 @@ def login():
             "name": user['name']
         }
     }), 200
+
+@auth_bp.route('/purge', methods=['DELETE'])
+def purge():
+    # We need requires_auth but it's imported in other files. 
+    # Let's import it here or handle it manually.
+    from auth import requires_auth
+    from flask import g
+    from database import applications_collection, knowledge_base_collection, logs_collection
+    
+    @requires_auth
+    def handle_purge():
+        user_id = g.current_user['sub']
+        
+        # Delete apps
+        applications_collection.delete_many({"user_id": user_id})
+        # Delete KBs
+        knowledge_base_collection.delete_many({"user_id": user_id})
+        # Delete logs
+        logs_collection.delete_many({"user_id": user_id})
+        # Delete user
+        users_collection.delete_one({"user_id": user_id})
+        
+        return jsonify({"message": "Soul purged successfully"}), 200
+        
+    return handle_purge()

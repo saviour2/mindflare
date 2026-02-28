@@ -23,32 +23,32 @@ export default function AnalyticsPage() {
     useEffect(() => {
         if (!token) { router.push('/login'); return; }
 
-        // Generate sample chart data
-        const days = [];
-        for (let i = 29; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            days.push({
-                date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                requests: Math.floor(Math.random() * 100),
-                tokens: Math.floor(Math.random() * 5000),
-                latency: Math.floor(Math.random() * 200) + 100,
-            });
-        }
-        setDailyData(days);
-        setStats({
-            totalRequests: days.reduce((acc, curr) => acc + curr.requests, 0),
-            totalTokens: days.reduce((acc, curr) => acc + curr.tokens, 0),
-            totalCost: days.reduce((acc, curr) => acc + curr.tokens, 0) * 0.00002,
-            avgResponse: Math.floor(days.reduce((acc, curr) => acc + curr.latency, 0) / days.length)
-        });
-        setModelDist([
-            { name: 'Gemini 3.1 Pro', value: 400 },
-            { name: 'GPT-4o', value: 300 },
-            { name: 'Llama 3 70B', value: 300 },
-            { name: 'Claude 3.5 Sonnet', value: 200 },
-        ]);
-    }, []);
+        fetch('http://localhost:5000/api/analytics/stats', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.summary) {
+                    setStats({
+                        totalRequests: data.summary.totalRequests,
+                        totalTokens: data.summary.totalTokens,
+                        totalCost: data.summary.totalCost,
+                        avgResponse: data.summary.avgLatency * 1000 // display in ms
+                    });
+                }
+                if (data.usageOverTime) {
+                    setDailyData(data.usageOverTime.map((d: any) => ({
+                        date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        requests: d.count,
+                        // We don't have per-day tokens/latency in simple aggregator yet, but we'll show count
+                    })));
+                }
+                if (data.modelDistribution) {
+                    setModelDist(data.modelDistribution);
+                }
+            })
+            .catch(() => { });
+    }, [token, router]);
 
     return (
         <div className="min-h-screen bg-[#050505] text-white">
@@ -235,19 +235,23 @@ export default function AnalyticsPage() {
                                     </ResponsiveContainer>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                         <span className="text-xs text-zinc-500 uppercase font-bold tracking-widest">Active</span>
-                                        <span className="text-2xl font-serif">4</span>
+                                        <span className="text-2xl font-serif">{modelDist.length}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-3 mt-6">
-                                    {modelDist.map((m, i) => (
-                                        <div key={i} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                                <span className="text-xs text-zinc-400">{m.name}</span>
+                                    {modelDist.map((m, i) => {
+                                        const total = modelDist.reduce((acc, curr) => acc + curr.value, 0);
+                                        const percent = total > 0 ? ((m.value / total) * 100).toFixed(1) : 0;
+                                        return (
+                                            <div key={i} className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                                                    <span className="text-xs text-zinc-400">{m.name}</span>
+                                                </div>
+                                                <span className="text-[10px] font-mono text-zinc-600">{percent}%</span>
                                             </div>
-                                            <span className="text-[10px] font-mono text-zinc-600">{(m.value / 12).toFixed(1)}%</span>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </CardContent>
                         </Card>

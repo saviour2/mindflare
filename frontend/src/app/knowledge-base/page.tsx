@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Plus, Database, Search, Upload, Globe, Github, X, FileText, Settings, AlertCircle, ChevronDown, Check } from 'lucide-react';
+import { Plus, Database, Search, Upload, Globe, Github, X, FileText, Settings, AlertCircle, ChevronDown, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,13 +49,24 @@ export default function KnowledgeBasePage() {
 
         const interval = setInterval(() => {
             const hasProcessing = kbs.some(kb => kb.status === 'pending' || kb.status === 'processing');
-            if (hasProcessing || kbs.length === 0) {
+            if (hasProcessing) {
                 fetchKBs();
             }
         }, 5000);
 
         return () => clearInterval(interval);
     }, [token, kbs]);
+
+    const deleteKB = async (kbId: string) => {
+        if (!confirm('Are you sure you want to delete this knowledge base?')) return;
+        try {
+            await fetch(`http://localhost:5000/api/knowledge_base/${kbId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            fetchKBs();
+        } catch { }
+    };
 
     const createKB = async () => {
         if (!kbName.trim()) return;
@@ -220,9 +231,14 @@ export default function KnowledgeBasePage() {
                                         )}
                                         <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
                                             <span className="text-[10px] text-zinc-600 font-mono italic">ID: {kb.kb_id.slice(0, 8)}...</span>
-                                            <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-white">
-                                                <Settings className="w-3.5 h-3.5" />
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Button onClick={() => deleteKB(kb.kb_id)} variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-red-400">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                                <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-white">
+                                                    <Settings className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>

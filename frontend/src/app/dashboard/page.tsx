@@ -16,6 +16,7 @@ export default function DashboardPage() {
     const [copied, setCopied] = useState(false);
     const [appCount, setAppCount] = useState(0);
     const [kbCount, setKbCount] = useState(0);
+    const [logs, setLogs] = useState<any[]>([]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -39,6 +40,14 @@ export default function DashboardPage() {
         })
             .then(r => r.json())
             .then(d => setKbCount(d.knowledge_bases?.length || 0))
+            .catch(() => { });
+
+        // Fetch logs
+        fetch('http://localhost:5000/api/analytics/logs', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => setLogs(d.logs || []))
             .catch(() => { });
     }, [router]);
 
@@ -238,12 +247,7 @@ export default function DashboardPage() {
 
                     <Card className="rounded-[2.5rem] overflow-hidden">
                         <div className="divide-y divide-white/5">
-                            {[
-                                { event: 'Cognitive Handshake', app: 'Sales Assistant', time: '2m ago', status: 'success' },
-                                { event: 'Knowledge Ingestion', app: 'Internal Wiki', time: '14m ago', status: 'processing' },
-                                { event: 'API Authentication', app: 'Customer Bot', time: '1h ago', status: 'success' },
-                                { event: 'Model Switched', app: 'Sales Assistant', time: '3h ago', status: 'success' },
-                            ].map((item, i) => (
+                            {logs.length > 0 ? logs.map((item, i) => (
                                 <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-white/[0.01] transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className={cn(
@@ -252,14 +256,18 @@ export default function DashboardPage() {
                                         )} />
                                         <div>
                                             <p className="text-sm font-medium text-white">{item.event}</p>
-                                            <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">{item.app}</p>
+                                            <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">{item.app_name}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-xs text-zinc-500 font-mono">{item.time}</p>
+                                        <p className="text-xs text-zinc-500 font-sans">{item.latency}s latency</p>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="p-8 text-center text-zinc-500 font-sans italic">
+                                    No neural activity detected yet.
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </motion.div>

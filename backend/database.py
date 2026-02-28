@@ -13,7 +13,7 @@ except Exception as e:
     print(f"Failed to connect to MongoDB: {e}")
     db = None
 
-# Collections
+# Collections     
 if db is not None:
     applications_collection = db["applications"]
     knowledge_base_collection = db["knowledge_bases"]

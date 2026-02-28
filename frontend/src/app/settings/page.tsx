@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { User, Key, Trash2, Shield, Heart, Fingerprint, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -21,6 +22,23 @@ export default function SettingsPage() {
 
     if (!user) return null;
 
+    const handlePurge = async () => {
+        if (!confirm("CRITICAL WARNING: This will permanently delete your identity and all neural assets. Proceed?")) return;
+        const password = prompt("Please type 'PURGE' to confirm deletion:");
+        if (password !== 'PURGE') return;
+
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/purge', {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (res.ok) {
+                localStorage.clear();
+                router.push('/signup');
+            }
+        } catch { }
+    };
+
     return (
         <div className="min-h-screen bg-[#050505] text-white">
             <Navbar />
@@ -28,112 +46,107 @@ export default function SettingsPage() {
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-gold-base/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[20%] left-[-10%] w-[40vw] h-[40vw] bg-accent-cyan/5 rounded-full blur-[100px]" />
+                <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
+                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-gold-base/5 rounded-full blur-[100px]" />
             </div>
 
-            <main className="relative z-10 pt-28 pb-20 px-6 max-w-4xl mx-auto">
-                <div className="mb-12">
-                    <motion.h1
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl font-serif font-medium mb-3"
-                    >
-                        Infrastructure Settings
-                    </motion.h1>
-                    <motion.p
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="text-zinc-500 font-sans"
-                    >
-                        Manage your architect profile and security protocols.
-                    </motion.p>
+            <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div>
+                        <motion.h1
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="text-4xl font-serif font-medium mb-2"
+                        >
+                            System Configuration
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="text-zinc-500"
+                        >
+                            Manage your cognitive identity and security protocols.
+                        </motion.p>
+                    </div>
                 </div>
 
-                <div className="space-y-8">
-                    {/* Profile */}
+                <div className="grid grid-cols-1 gap-8">
+                    {/* Profile Section */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.15 }}
                     >
                         <Card className="rounded-[2.5rem] overflow-hidden">
-                            <div className="p-8 md:p-10">
-                                <div className="flex items-center gap-4 mb-10">
-                                    <div className="w-12 h-12 rounded-2xl bg-gold-base/10 flex items-center justify-center border border-gold-base/20">
-                                        <Fingerprint className="w-6 h-6 text-gold-base" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-serif">Architect Profile</h3>
-                                        <p className="text-xs text-zinc-500 uppercase font-bold tracking-widest mt-1">Core Identity</p>
-                                    </div>
+                            <div className="p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
+                                <div className="w-24 h-24 rounded-3xl bg-gold-base/10 border border-gold-base/20 flex items-center justify-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-gold-base/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <span className="text-3xl font-serif text-gold-base relative z-10">{user?.email?.[0].toUpperCase()}</span>
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Identity Name</label>
-                                        <div className="px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-sans text-sm">
-                                            {user.name}
+                                <div className="flex-1 text-center md:text-left">
+                                    <h3 className="text-2xl font-serif font-medium mb-1">Neural Identity</h3>
+                                    <p className="text-zinc-400 font-sans mb-4">{user?.email}</p>
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
+                                            <Shield className="w-3 h-3 text-gold-base" />
+                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Verified Account</span>
                                         </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Cognitive Protocol (Email)</label>
-                                        <div className="px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-sans text-sm">
-                                            {user.email}
-                                        </div>
-                                    </div>
-                                    <div className="md:col-span-2 space-y-2">
-                                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Universal Identifier</label>
-                                        <div className="px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-zinc-400 font-mono text-xs">
-                                            {user.id}
+                                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
+                                            <Fingerprint className="w-3 h-3 text-accent-cyan" />
+                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Biometric Link Active</span>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="mt-10 flex justify-end">
-                                    <Button variant="outline" className="rounded-full h-12 border-white/10 hover:bg-white/5 px-8">
-                                        Update Identity
-                                    </Button>
-                                </div>
+                                <Button variant="outline" className="rounded-full h-12 px-8 border-white/10 hover:bg-white/5">
+                                    Update Profile
+                                </Button>
                             </div>
                         </Card>
                     </motion.div>
 
-                    {/* API Keys info */}
+                    {/* API and Access */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                     >
-                        <Card className="rounded-[2.5rem] overflow-hidden group">
-                            <div className="p-8 md:p-10 relative">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-accent-cyan/10 flex items-center justify-center border border-accent-cyan/20 group-hover:bg-accent-cyan/20 transition-colors">
-                                            <Key className="w-6 h-6 text-accent-cyan" />
+                        <Card className="rounded-[2.5rem] overflow-hidden">
+                            <div className="p-8 md:p-10">
+                                <h3 className="text-xl font-serif font-medium mb-8">Access Infrastructure</h3>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 flex items-center justify-center border border-accent-cyan/20">
+                                                <Key className="w-5 h-5 text-accent-cyan" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium">Manage Global API Keys</p>
+                                                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">3 active keys</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-xl font-serif italic">Access Provisioning</h3>
-                                            <p className="text-xs text-zinc-500 uppercase font-bold tracking-widest mt-1">Application Hub</p>
+                                        <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />
+                                    </div>
+                                    <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-gold-base/10 flex items-center justify-center border border-gold-base/20">
+                                                <ChevronRight className="w-5 h-5 text-gold-base" />
+                                            </div>
+                                            <Link href="/applications">
+                                                <div>
+                                                    <p className="text-sm font-medium">Link Applications</p>
+                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">Manage connections</p>
+                                                </div>
+                                            </Link>
                                         </div>
+                                        <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />
                                     </div>
-
-                                    <div className="flex-1 max-w-md">
-                                        <p className="text-zinc-400 text-sm font-sans leading-relaxed">
-                                            Credentials and cryptographic keys are managed within each specialized application.
-                                        </p>
-                                    </div>
-
-                                    <Button variant="outline" className="rounded-full h-14 px-8 border-white/10 hover:bg-white/5" onClick={() => router.push('/applications')}>
-                                        Manage Apps <ChevronRight className="w-4 h-4 ml-2" />
-                                    </Button>
                                 </div>
                             </div>
                         </Card>
                     </motion.div>
 
-                    {/* Danger */}
+                    {/* Danger Zone */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -150,7 +163,11 @@ export default function SettingsPage() {
                                 <p className="text-zinc-500 text-sm font-sans mb-8 max-w-2xl leading-relaxed">
                                     Executing this command will permanently purge all neural applications, knowledge bases, and architectural data associated with this identity. This operation is irreversible.
                                 </p>
-                                <Button variant="outline" className="rounded-full h-12 border-red-500/20 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 px-8 transition-all">
+                                <Button
+                                    onClick={handlePurge}
+                                    variant="outline"
+                                    className="rounded-full h-12 border-red-500/20 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 px-8 transition-all"
+                                >
                                     Initiate Purge Sequence
                                 </Button>
                             </div>
