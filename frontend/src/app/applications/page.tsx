@@ -50,6 +50,7 @@ export default function ApplicationsPage() {
     const [ghLoading, setGhLoading] = useState(false);
     const [showAutoPR, setShowAutoPR] = useState<AppDoc | null>(null);
     const [selectedRepo, setSelectedRepo] = useState('');
+    const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
     const [prLoading, setPrLoading] = useState(false);
     const [prResult, setPrResult] = useState<{ url: string, stack: string } | null>(null);
 
@@ -314,7 +315,7 @@ export default function ApplicationsPage() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-                            onClick={() => { setShowAutoPR(null); setPrResult(null); setSelectedRepo(''); }}
+                            onClick={() => { setShowAutoPR(null); setPrResult(null); setSelectedRepo(''); setRepoDropdownOpen(false); }}
                         >
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -333,7 +334,7 @@ export default function ApplicationsPage() {
                                             <p className="text-xs text-zinc-500">{showAutoPR.app_name}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => { setShowAutoPR(null); setPrResult(null); setSelectedRepo(''); }} className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center">
+                                    <button onClick={() => { setShowAutoPR(null); setPrResult(null); setSelectedRepo(''); setRepoDropdownOpen(false); }} className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center">
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -343,20 +344,52 @@ export default function ApplicationsPage() {
                                             <p className="text-sm text-zinc-400 font-sans">
                                                 Mindflare detects your stack, generates integration code, and opens a PR automatically.
                                             </p>
-                                            <div>
+                                            <div className="relative">
                                                 <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Select Repository</label>
-                                                <select
-                                                    value={selectedRepo}
-                                                    onChange={e => setSelectedRepo(e.target.value)}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white font-sans focus:outline-none focus:border-white/20"
+
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setRepoDropdownOpen(!repoDropdownOpen); }}
+                                                    className="w-full flex items-center justify-between bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all rounded-xl p-3 text-sm text-zinc-300 font-sans focus:outline-none"
                                                 >
-                                                    <option value="">— choose a repo —</option>
-                                                    {ghRepos.map(r => (
-                                                        <option key={r.full_name} value={r.full_name}>
-                                                            {r.full_name}{r.language ? ` (${r.language})` : ''}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    <span className="truncate">
+                                                        {selectedRepo
+                                                            ? ghRepos.find(r => r.full_name === selectedRepo)?.full_name || selectedRepo
+                                                            : '— choose a repo —'
+                                                        }
+                                                    </span>
+                                                    <ChevronDown className={cn("w-4 h-4 text-zinc-500 transition-transform", repoDropdownOpen && "rotate-180")} />
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {repoDropdownOpen && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: -10 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            exit={{ opacity: 0, y: -10 }}
+                                                            className="absolute top-full left-0 right-0 mt-2 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                                                        >
+                                                            <div className="max-h-60 overflow-y-auto p-1 custom-scrollbar">
+                                                                {ghRepos.length === 0 ? (
+                                                                    <div className="p-3 text-sm text-zinc-500 text-center font-sans">No repositories found.</div>
+                                                                ) : (
+                                                                    ghRepos.map(r => (
+                                                                        <button
+                                                                            key={r.full_name}
+                                                                            onClick={() => { setSelectedRepo(r.full_name); setRepoDropdownOpen(false); }}
+                                                                            className={cn(
+                                                                                "w-full text-left flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-sans transition-colors",
+                                                                                selectedRepo === r.full_name ? "bg-purple-500/20 text-purple-300" : "hover:bg-white/5 text-zinc-300"
+                                                                            )}
+                                                                        >
+                                                                            <span className="truncate">{r.full_name}</span>
+                                                                            {r.language && <span className="text-[10px] text-zinc-500 font-mono ml-2 shrink-0">{r.language}</span>}
+                                                                        </button>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
                                             </div>
                                             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs text-zinc-400 font-sans">
                                                 <p className="font-bold text-zinc-300 text-xs uppercase tracking-widest mb-2">What gets created</p>
