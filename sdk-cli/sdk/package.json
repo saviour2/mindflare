@@ -1,0 +1,46 @@
+{
+  "name": "@mindflare/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript/JavaScript SDK for the Mindflare AI platform",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mindflare",
+    "ai",
+    "chatbot",
+    "RAG",
+    "sdk",
+    "openai-compatible"
+  ],
+  "author": "Mindflare AI",
+  "license": "MIT",
+  "homepage": "https://github.com/Srizdebnath/mindflare.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Srizdebnath/mindflare.ai.git",
+    "directory": "sdk-cli/sdk"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,38 @@
+{
+    "name": "@mindflare/cli",
+    "version": "0.1.0",
+    "description": "Official CLI for the Mindflare AI platform",
+    "type": "module",
+    "bin": {
+        "mindflare": "./dist/index.js"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "start": "node dist/index.mjs"
+    },
+    "keywords": [
+        "mindflare",
+        "ai",
+        "cli",
+        "chatbot"
+    ],
+    "author": "Mindflare AI",
+    "license": "MIT",
+    "dependencies": {
+        "chalk": "^5.4.1",
+        "commander": "^13.1.0",
+        "conf": "^13.1.0",
+        "inquirer": "^12.6.0",
+        "ora": "^8.2.0"
+    },
+    "devDependencies": {
+        "@types/node": "^25.3.2",
+        "tsup": "^8.5.1",
+        "typescript": "^5.9.3"
+    }
+}
