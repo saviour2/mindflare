@@ -1,0 +1,16 @@
+{
+  "name": "mindflare",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "sdk",
+    "cli"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "cd backend && flask run",
+    "build:sdk": "npm run build --workspace=sdk",
+    "build:cli": "npm run build --workspace=cli"
+  }
+}

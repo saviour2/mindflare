@@ -1,0 +1,16 @@
+Flask==3.0.3
+Flask-RESTful==0.3.10
+pymongo==4.10.1
+langchain==0.3.4
+faiss-cpu==1.9.0
+requests==2.32.3
+celery==5.4.0
+redis==5.2.0
+python-dotenv==1.0.1
+pytesseract==0.3.13
+beautifulsoup4==4.12.3
+GitPython==3.1.43
+PyJWT==2.9.0
+auth0-python==4.7.1
+flask-cors==5.0.0
+gunicorn==23.0.0

@@ -1,0 +1,16 @@
+{
+    "name": "mindflare-cli",
+    "version": "1.0.0",
+    "description": "",
+    "bin": {
+        "mindflare": "./bin/mindflare.js"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "commander": "^12.1.0"
+    }
+}
