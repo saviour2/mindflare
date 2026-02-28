@@ -5,7 +5,7 @@ import uuid
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 from applications import encrypt_api_key
-from database import applications_collection, knowledge_base_collection, logs_collection
+from database import applications_collection, knowledge_base_collection, logs_collection, conversations_collection
 from models import generate_response
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
