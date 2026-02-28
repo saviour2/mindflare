@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Plus, Database, Search, Upload, Globe, Github, X, FileText, Settings, AlertCircle, ChevronDown, Check, Trash2 } from 'lucide-react';
@@ -32,6 +32,7 @@ export default function KnowledgeBasePage() {
     const [loading, setLoading] = useState(false);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const kbsRef = useRef<KBDoc[]>([]);
 
     const fetchKBs = async () => {
         if (!token) return;
@@ -40,7 +41,9 @@ export default function KnowledgeBasePage() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
-            setKbs(data.knowledge_bases || []);
+            const list = data.knowledge_bases || [];
+            setKbs(list);
+            kbsRef.current = list;
         } catch { }
     };
 
@@ -48,15 +51,18 @@ export default function KnowledgeBasePage() {
         if (!token) { router.push('/login'); return; }
         fetchKBs();
 
+        // Poll every 5 seconds only if there are pending/processing KBs.
+        // Use kbsRef (not kbs) to avoid re-running the effect on every fetch.
         const interval = setInterval(() => {
-            const hasProcessing = kbs.some(kb => kb.status === 'pending' || kb.status === 'processing');
-            if (hasProcessing) {
-                fetchKBs();
-            }
+            const hasProcessing = kbsRef.current.some(
+                kb => kb.status === 'pending' || kb.status === 'processing'
+            );
+            if (hasProcessing) fetchKBs();
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [token, kbs]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token]); // ← Only token, not kbs — prevents the infinite loop
 
     const deleteKB = async (kbId: string) => {
         toast(
