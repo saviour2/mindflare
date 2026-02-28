@@ -1,8 +1,8 @@
 // src/hooks/useAuth.ts
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
-import { useEffect, useState } from 'react';
 
 export function useAuth() {
     const { user: auth0User, isLoading: auth0Loading, error } = useUser();
@@ -58,12 +58,17 @@ export function useAuth() {
         window.location.href = '/api/auth/logout';
     };
 
-    return {
-        user: backendUser ? { ...auth0User, ...backendUser } : (auth0User ?? null),
+    const user = React.useMemo(() => {
+        if (!auth0User && !backendUser) return null;
+        return backendUser ? { ...auth0User, ...backendUser } : auth0User;
+    }, [auth0User, backendUser]);
+
+    return React.useMemo(() => ({
+        user,
         isLoading: auth0Loading || isSyncing,
         error,
         isAuthenticated: !!auth0User,
         login,
         logout,
-    };
+    }), [user, auth0Loading, isSyncing, error, auth0User]);
 }

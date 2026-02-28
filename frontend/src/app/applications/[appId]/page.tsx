@@ -123,13 +123,11 @@ export default function AppDetailsPage() {
         }).catch(() => setModelsLoading(false));
     }, [appId, token, router, user, isLoading]);
 
-    if (isLoading || !user) return null;
+    const [triggerAutoSend, setTriggerAutoSend] = useState(false);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isTyping]);
-
-    const [triggerAutoSend, setTriggerAutoSend] = useState(false);
 
     useEffect(() => {
         if (triggerAutoSend) {
@@ -139,6 +137,8 @@ export default function AppDetailsPage() {
             }
         }
     }, [triggerAutoSend, inputValue]);
+
+    if (isLoading || !user) return null;
 
     const toggleListening = async () => {
         if (isListening) {
