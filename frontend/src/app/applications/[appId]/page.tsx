@@ -73,11 +73,14 @@ export default function AppDetailsPage() {
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const recognitionRef = useRef<any>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
 
     // Voice State
     const [isListening, setIsListening] = useState(false);
+    const [isTranscribing, setIsTranscribing] = useState(false);
     const [voiceEnabled, setVoiceEnabled] = useState(true);
+    const [selectedVoiceId, setSelectedVoiceId] = useState('21m00Tcm4TlvDq8ikWAM'); // Rachel default
     const [currentlyPlayingAudio, setCurrentlyPlayingAudio] = useState<HTMLAudioElement | null>(null);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -118,46 +121,6 @@ export default function AppDetailsPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isTyping]);
 
-    // Initialize Speech Recognition
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                const recognition = new SpeechRecognition();
-                recognition.continuous = true; // Use continuous mode to prevent auto-stopping
-                recognition.interimResults = true;
-
-                recognition.onresult = (event: any) => {
-                    let text = '';
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        text += event.results[i][0].transcript;
-                    }
-                    // It's possible the user is still speaking; append correctly or just replace.
-                    // To keep it simple, we replace inputValue with the live transcript blob:
-                    setInputValue(prev => {
-                        // In continuous mode, the results array grows. We might want to just dump the whole transcript
-                        let fullText = '';
-                        for (let i = 0; i < event.results.length; i++) {
-                            fullText += event.results[i][0].transcript;
-                        }
-                        return fullText;
-                    });
-                };
-
-                recognition.onerror = (event: any) => {
-                    console.error("Speech Recognition Error:", event.error);
-                };
-
-                recognition.onend = () => {
-                    // Check if we manually intentionally stopped it
-                    setIsListening(false);
-                };
-
-                recognitionRef.current = recognition;
-            }
-        }
-    }, []);
-
     const [triggerAutoSend, setTriggerAutoSend] = useState(false);
 
     useEffect(() => {
@@ -169,25 +132,60 @@ export default function AppDetailsPage() {
         }
     }, [triggerAutoSend, inputValue]);
 
-    const toggleListening = () => {
-        if (!recognitionRef.current) return;
-
+    const toggleListening = async () => {
         if (isListening) {
-            recognitionRef.current.stop();
+            // STOP recording
+            mediaRecorderRef.current?.stop();
             setIsListening(false);
-
-            // Auto-send when the user toggles microphone off
-            setTimeout(() => {
-                setTriggerAutoSend(true);
-            }, 300); // small delay to allow final transcript to settle
         } else {
-            // clear before new speech and start listening
-            setInputValue('');
+            // START recording
             try {
-                recognitionRef.current.start();
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunksRef.current = [];
+
+                const mediaRecorder = new MediaRecorder(stream);
+                mediaRecorderRef.current = mediaRecorder;
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) audioChunksRef.current.push(e.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    // Stop all tracks to release the microphone
+                    stream.getTracks().forEach(t => t.stop());
+
+                    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                    if (audioBlob.size < 1000) return; // too small, probably silence
+
+                    setIsTranscribing(true);
+                    try {
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob, 'audio.webm');
+
+                        const res = await fetch('http://localhost:5000/api/voice/transcribe', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+                        const data = await res.json();
+                        if (data.text) {
+                            setInputValue(data.text);
+                            setTriggerAutoSend(true);
+                        } else {
+                            toast.error('Could not transcribe audio. Please try again.');
+                        }
+                    } catch {
+                        toast.error('Transcription failed.');
+                    }
+                    setIsTranscribing(false);
+                };
+
+                mediaRecorder.start();
                 setIsListening(true);
+                setInputValue(''); // clear old text
             } catch (err) {
-                console.error("Already listening or failed to start", err);
+                toast.error('Microphone access denied. Please allow microphone permissions.');
+                console.error(err);
             }
         }
     };
@@ -207,7 +205,7 @@ export default function AppDetailsPage() {
             const res = await fetch('http://localhost:5000/api/voice/synthesize', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text })
+                body: JSON.stringify({ text, voice_id: selectedVoiceId })
             });
 
             if (res.ok) {
@@ -648,6 +646,49 @@ export default function AppDetailsPage() {
                                                     )} />
                                                 </button>
                                             </div>
+
+                                            {/* Voice Picker */}
+                                            {voiceEnabled && (
+                                                <div className="pt-2 border-t border-white/5 space-y-2">
+                                                    <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest flex items-center gap-1.5">
+                                                        <Mic className="w-3 h-3 text-gold-base" /> Voice
+                                                    </span>
+                                                    <div className="space-y-1.5">
+                                                        {([
+                                                            { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Calm, American Female', emoji: '👩' },
+                                                            { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', desc: 'Strong, American Female', emoji: '💪' },
+                                                            { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', desc: 'Soft, American Female', emoji: '🌸' },
+                                                            { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', desc: 'Warm, American Male', emoji: '🎙️' },
+                                                            { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', desc: 'Expressive, American Female', emoji: '✨' },
+                                                            { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', desc: 'Deep, American Male', emoji: '🔊' },
+                                                            { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', desc: 'Crisp, American Male', emoji: '🎯' },
+                                                            { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', desc: 'Narration, American Male', emoji: '📖' },
+                                                            { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', desc: 'Raspy, American Male', emoji: '🎤' },
+                                                            { id: 'jBpfuIE2acCO8z3wKNLl', name: 'Freya', desc: 'British Female', emoji: '🇬🇧' },
+                                                        ] as { id: string; name: string; desc: string; emoji: string }[]).map(v => (
+                                                            <button
+                                                                key={v.id}
+                                                                onClick={() => setSelectedVoiceId(v.id)}
+                                                                className={cn(
+                                                                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-200",
+                                                                    selectedVoiceId === v.id
+                                                                        ? "bg-gold-base/15 border border-gold-base/30"
+                                                                        : "hover:bg-white/5 border border-transparent"
+                                                                )}
+                                                            >
+                                                                <span className="text-base leading-none">{v.emoji}</span>
+                                                                <div>
+                                                                    <p className={cn("text-xs font-semibold", selectedVoiceId === v.id ? "text-gold-light" : "text-white")}>{v.name}</p>
+                                                                    <p className="text-[10px] text-zinc-500">{v.desc}</p>
+                                                                </div>
+                                                                {selectedVoiceId === v.id && (
+                                                                    <Check className="w-3 h-3 text-gold-base ml-auto shrink-0" />
+                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         <Button
                                             onClick={() => setMessages([])}
@@ -791,26 +832,40 @@ export default function AppDetailsPage() {
                                             <div className="relative flex-1">
                                                 <input
                                                     type="text"
-                                                    value={inputValue}
+                                                    value={isTranscribing ? '' : inputValue}
                                                     onChange={e => setInputValue(e.target.value)}
                                                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                                                    placeholder={isListening ? "Listening..." : `Message ${chatbotName || app.app_name}...`}
+                                                    placeholder={
+                                                        isListening ? '🔴 Recording... click mic to stop' :
+                                                            isTranscribing ? '⏳ Transcribing your voice...' :
+                                                                `Message ${chatbotName || app.app_name}...`
+                                                    }
+                                                    disabled={isListening || isTranscribing}
                                                     className={cn(
                                                         "w-full bg-white/5 border rounded-2xl pl-6 pr-14 py-4 focus:outline-none transition-all font-sans text-sm",
-                                                        isListening ? "border-red-500/50 bg-red-500/5" : "border-white/10 focus:border-gold-base/50"
+                                                        isListening ? "border-red-500/70 bg-red-500/5 text-red-300" :
+                                                            isTranscribing ? "border-gold-base/50 bg-gold-base/5" :
+                                                                "border-white/10 focus:border-gold-base/50"
                                                     )}
                                                 />
                                                 {/* Microphone Button */}
                                                 <button
                                                     onClick={toggleListening}
+                                                    disabled={isTranscribing}
                                                     className={cn(
                                                         "absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                        isListening ? "text-red-400 bg-red-400/10" : "text-zinc-500 hover:text-white hover:bg-white/5"
+                                                        isListening ? "text-red-400 bg-red-400/15 border border-red-400/30" :
+                                                            isTranscribing ? "text-gold-base bg-gold-base/10 cursor-wait" :
+                                                                "text-zinc-500 hover:text-white hover:bg-white/5"
                                                     )}
                                                 >
                                                     {isListening ? (
-                                                        <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity }}>
+                                                        <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 0.8 }}>
                                                             <Mic className="w-4 h-4" />
+                                                        </motion.div>
+                                                    ) : isTranscribing ? (
+                                                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+                                                            <RefreshCw className="w-4 h-4" />
                                                         </motion.div>
                                                     ) : (
                                                         <Mic className="w-4 h-4" />
