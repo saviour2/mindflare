@@ -10,3 +10,4 @@ faiss_indices/
 mindflare.json
 venv/
 *.log
+backend/uploads/*
