@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 interface KBDoc {
     kb_id: string;
@@ -58,14 +59,31 @@ export default function KnowledgeBasePage() {
     }, [token, kbs]);
 
     const deleteKB = async (kbId: string) => {
-        if (!confirm('Are you sure you want to delete this knowledge base?')) return;
-        try {
-            await fetch(`http://localhost:5000/api/knowledge_base/${kbId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            fetchKBs();
-        } catch { }
+        toast(
+            (t) => (
+                <span className="flex items-center gap-3">
+                    Delete this knowledge base?
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await fetch(`http://localhost:5000/api/knowledge_base/${kbId}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                fetchKBs();
+                                toast.success('Knowledge base deleted');
+                            } catch {
+                                toast.error('Failed to delete knowledge base');
+                            }
+                        }}
+                        className="px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-bold"
+                    >Delete</button>
+                    <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 rounded-lg bg-white/10 text-white text-xs">Cancel</button>
+                </span>
+            ),
+            { duration: 6000 }
+        );
     };
 
     const createKB = async () => {
@@ -74,6 +92,7 @@ export default function KnowledgeBasePage() {
         if (sourceType !== 'pdf' && !sourceUrl.trim()) return;
 
         setLoading(true);
+        const tid = toast.loading('Ingesting knowledge base...');
         try {
             let options: RequestInit = {
                 method: 'POST',
@@ -91,13 +110,23 @@ export default function KnowledgeBasePage() {
                 options.body = JSON.stringify({ kb_name: kbName, source_type: sourceType, source_url: sourceUrl });
             }
 
-            await fetch('http://localhost:5000/api/knowledge_base/', options);
+            const res = await fetch('http://localhost:5000/api/knowledge_base/', options);
+            toast.dismiss(tid);
+            if (res.ok) {
+                toast.success(`"${kbName}" is being processed. This may take a moment.`);
+            } else {
+                const errData = await res.json();
+                toast.error(errData.error || 'Failed to create knowledge base');
+            }
             setShowCreate(false);
             setKbName('');
             setSourceUrl('');
             setFile(null);
             fetchKBs();
-        } catch { }
+        } catch {
+            toast.dismiss(tid);
+            toast.error('Network error. Please try again.');
+        }
         setLoading(false);
     };
 

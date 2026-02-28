@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 const MODELS = [
     { value: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B Instruct', badge: 'Fast' },
@@ -111,8 +112,9 @@ export default function AppDetailsPage() {
     const saveConfig = async () => {
         if (!token) return;
         setSaving(true);
+        const tid = toast.loading('Saving configuration...');
         try {
-            await fetch(`http://localhost:5000/api/applications/${appId}/config`, {
+            const res = await fetch(`http://localhost:5000/api/applications/${appId}/config`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -122,9 +124,18 @@ export default function AppDetailsPage() {
                     chatbot_name: chatbotName
                 })
             });
-            setSaved(true);
-            setTimeout(() => setSaved(false), 2500);
-        } catch { }
+            toast.dismiss(tid);
+            if (res.ok) {
+                toast.success('Configuration saved and deployed!');
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2500);
+            } else {
+                toast.error('Failed to save configuration.');
+            }
+        } catch {
+            toast.dismiss(tid);
+            toast.error('Network error. Please try again.');
+        }
         setSaving(false);
     };
 
@@ -144,8 +155,14 @@ export default function AppDetailsPage() {
                 body: JSON.stringify({ messages: newMessages })
             });
             const data = await res.json();
-            setMessages(prev => [...prev, { role: 'assistant', content: data.response || data.error || 'Sorry, I encountered an error.' }]);
+            if (data.error) {
+                toast.error(data.error);
+                setMessages(prev => [...prev, { role: 'assistant', content: 'Error: ' + data.error }]);
+            } else {
+                setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+            }
         } catch {
+            toast.error('Connection error. Check your backend.');
             setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please try again.' }]);
         }
         setIsTyping(false);

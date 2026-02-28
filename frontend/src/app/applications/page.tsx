@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 const MODELS = [
     { value: 'google/gemini-3.1-pro-preview-custom-tools', label: 'Google: Gemini 3.1 Pro Preview Custom Tools' },
@@ -64,6 +65,7 @@ export default function ApplicationsPage() {
     const createApp = async () => {
         if (!newAppName.trim()) return;
         setLoading(true);
+        const loadingToast = toast.loading('Initializing application...');
         try {
             const res = await fetch('http://localhost:5000/api/applications/', {
                 method: 'POST',
@@ -71,24 +73,48 @@ export default function ApplicationsPage() {
                 body: JSON.stringify({ app_name: newAppName, model_name: newModel })
             });
             const data = await res.json();
+            toast.dismiss(loadingToast);
             if (data.api_key) {
                 setCreatedKey(data.api_key);
+                toast.success('Application initialized! Save your API key.');
+            } else {
+                toast.error(data.error || 'Failed to create application');
             }
             setNewAppName('');
             fetchApps();
-        } catch { }
+        } catch {
+            toast.dismiss(loadingToast);
+            toast.error('Network error. Please try again.');
+        }
         setLoading(false);
     };
 
     const deleteApp = async (appId: string) => {
-        if (!confirm('Are you sure you want to delete this application?')) return;
-        try {
-            await fetch(`http://localhost:5000/api/applications/${appId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            fetchApps();
-        } catch { }
+        toast(
+            (t) => (
+                <span className="flex items-center gap-3">
+                    Delete this application?
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await fetch(`http://localhost:5000/api/applications/${appId}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                fetchApps();
+                                toast.success('Application deleted');
+                            } catch {
+                                toast.error('Failed to delete application');
+                            }
+                        }}
+                        className="px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-bold"
+                    >Delete</button>
+                    <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 rounded-lg bg-white/10 text-white text-xs">Cancel</button>
+                </span>
+            ),
+            { duration: 6000 }
+        );
     };
 
     const filteredApps = apps.filter(a => a.app_name.toLowerCase().includes(search.toLowerCase()));
