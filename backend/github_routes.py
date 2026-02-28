@@ -219,7 +219,7 @@ def _generate_integration_with_gemini(repo_context: str, app_id: str, api_key: s
         raise ValueError("GEMINI_API_KEY is missing in environment variables.")
         
     genai.configure(api_key=gemini_key)
-    model = genai.GenerativeModel("gemini-1.5-flash") 
+    model = genai.GenerativeModel("gemini-2.5-flash") 
     
     prompt = f"""
 You are an expert developer helping to integrate a chatbot into a repository.
