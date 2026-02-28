@@ -1,0 +1,97 @@
+import uuid
+from datetime import datetime
+from flask import Blueprint, request, jsonify
+from auth import requires_auth, _request_ctx_stack
+from database import applications_collection
+import secrets
+import hashlib
+
+applications_bp = Blueprint('applications', __name__)
+
+def encrypt_api_key(api_key):
+    # In a real scenario, use a symmetric encryption (KMS or cryptography Fernet)
+    # For now, we hash it to store securely if we only verify, but if we need to show it:
+    # the requirements state "API keys must be encrypted before storing".
+    # Since an API key is essentially a bearer token, hashing is standard.
+    # However, if we need to retrieve the key to show the user, we'd need two-way encryption.
+    # We will use hashlib.sha256 for secure verification.
+    return hashlib.sha256(api_key.encode()).hexdigest()
+
+@applications_bp.route('/', methods=['POST'])
+@requires_auth
+def create_app():
+    user = _request_ctx_stack.top.current_user
+    user_id = user['sub']
+    
+    data = request.json
+    app_name = data.get('app_name')
+    model_name = data.get('model_name', 'meta-llama/llama-3-8b-instruct')
+    
+    if not app_name:
+        return jsonify({"error": "app_name is required"}), 400
+        
+    api_key_plain = secrets.token_urlsafe(32)
+    api_key_encrypted = encrypt_api_key(api_key_plain)
+    
+    app_doc = {
+        "app_id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "app_name": app_name,
+        "api_key_hash": api_key_encrypted, 
+        # Requirement says "encrypted before storing". 
+        # If we need to send it back, we just return the plain key once upon creation.
+        "model_name": model_name,
+        "knowledge_base_ids": [],
+        "created_at": datetime.utcnow()
+    }
+    
+    applications_collection.insert_one(app_doc)
+    
+    app_doc['_id'] = str(app_doc['_id'])
+    
+    # Return plain text API key only ONCE
+    return jsonify({"app": app_doc, "api_key": api_key_plain}), 201
+
+@applications_bp.route('/', methods=['GET'])
+@requires_auth
+def get_apps():
+    user = _request_ctx_stack.top.current_user
+    user_id = user['sub']
+    
+    apps = list(applications_collection.find({"user_id": user_id}))
+    for a in apps:
+        a['_id'] = str(a['_id'])
+        
+    return jsonify({"applications": apps}), 200
+
+@applications_bp.route('/<app_id>', methods=['DELETE'])
+@requires_auth
+def delete_app(app_id):
+    user = _request_ctx_stack.top.current_user
+    user_id = user['sub']
+    
+    result = applications_collection.delete_one({"app_id": app_id, "user_id": user_id})
+    if result.deleted_count == 1:
+        return jsonify({"message": "App deleted"}), 200
+    return jsonify({"error": "App not found or unauthorized"}), 404
+
+@applications_bp.route('/<app_id>/model', methods=['PUT'])
+@requires_auth
+def update_model(app_id):
+    user = _request_ctx_stack.top.current_user
+    user_id = user['sub']
+    
+    data = request.json
+    model_name = data.get('model_name')
+    
+    if not model_name:
+        return jsonify({"error": "model_name required"}), 400
+        
+    res = applications_collection.update_one(
+        {"app_id": app_id, "user_id": user_id},
+        {"$set": {"model_name": model_name}}
+    )
+    
+    if res.matched_count == 1:
+        return jsonify({"message": "Model updated"}), 200
+    return jsonify({"error": "App not found"}), 404
