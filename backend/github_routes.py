@@ -14,6 +14,8 @@ from auth import requires_auth
 from database import users_collection
 from encryption import encrypt_symmetric, decrypt_symmetric
 from dotenv import load_dotenv
+import json
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -166,130 +168,99 @@ def list_repos():
 
 
 # ─────────────────────────────────────────────
-# Auto-PR Engine
+# Auto-PR Engine (Gemini Powered)
 # ─────────────────────────────────────────────
 
-def _detect_stack(token: str, repo_full_name: str, default_branch: str) -> str:
-    """Detect the frontend stack by examining repo file tree."""
+def get_gemini_api_key():
+    return os.getenv("GEMINI_API_KEY", "")
+
+def fetch_repo_context(token: str, repo_full_name: str, default_branch: str) -> str:
+    """Fetch file tree and key file snippets to provide to Gemini as context."""
     base_url = f"https://api.github.com/repos/{repo_full_name}"
     headers  = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
     
-    try:
-        tree = requests.get(
-            f"{base_url}/git/trees/{default_branch}?recursive=1",
-            headers=headers, timeout=10
-        ).json()
-        
-        files = {item["path"].lower() for item in tree.get("tree", []) if item["type"] == "blob"}
-    except Exception:
-        files = set()
+    tree_resp = requests.get(
+        f"{base_url}/git/trees/{default_branch}?recursive=1",
+        headers=headers, timeout=10
+    )
+    if not tree_resp.ok:
+        return "Could not fetch repository structure."
     
-    if "next.config.js" in files or "next.config.ts" in files or "next.config.mjs" in files:
-        return "nextjs"
-    if "vite.config.js" in files or "vite.config.ts" in files:
-        return "react-vite"
-    if "package.json" in files:
-        return "react"
-    if any(f.endswith(".html") for f in files):
-        return "html"
-    return "html"
+    tree_data = tree_resp.json().get("tree", [])
+    
+    # Extract file paths to show project structure
+    all_paths = [item["path"] for item in tree_data if item["type"] == "blob"]
+    
+    key_files = {}
+    important_files = ['package.json', 'next.config.js', 'next.config.ts', 'vite.config.js', 'vite.config.ts', 'index.html', 'README.md', 'app/layout.tsx', 'src/App.jsx', 'src/main.jsx', 'src/index.js']
+    
+    # Only fetch a few extremely important files to save context window and avoid github rate limits
+    for p in all_paths:
+        if p.split('/')[-1] in important_files or any(p.endswith(ext) for ext in ['config.js', 'config.ts']):
+            file_resp = requests.get(f"{base_url}/contents/{p}?ref={default_branch}", headers=headers, timeout=10)
+            if file_resp.ok:
+                try:
+                    content = base64.b64decode(file_resp.json().get("content", "")).decode("utf-8")
+                    key_files[p] = content
+                except Exception:
+                    pass
+    
+    context = "Repository File Structure:\\n" + "\\n".join(all_paths) + "\\n\\n"
+    context += "Key Config/Core Files Snippets:\\n"
+    for k, v in key_files.items():
+        context += f"--- {k} ---\\n{v[:2000]}\\n\\n"
+    return context
 
 
-def _generate_integration_code(stack: str, app_id: str, api_key: str, client_secret: str) -> dict[str, str]:
-    """
-    Generate the integration code for the detected stack.
-    Returns a dict of {relative_file_path: file_content}
-    """
-    sdk_init = f"""import {{ Mindflare }} from 'mindflare-sdk';
+def _generate_integration_with_gemini(repo_context: str, app_id: str, api_key: str, client_secret: str) -> dict:
+    """Uses Gemini 1.5 Flash to generate custom integration code."""
+    gemini_key = get_gemini_api_key()
+    if not gemini_key:
+        raise ValueError("GEMINI_API_KEY is missing in environment variables.")
+        
+    genai.configure(api_key=gemini_key)
+    model = genai.GenerativeModel("gemini-1.5-flash") 
+    
+    prompt = f"""
+You are an expert developer helping to integrate a chatbot into a repository.
+You are given the file structure and key file contents of the user's repository.
+Your task:
+1. Understand the code structure and framework (e.g., Next.js, React, plain HTML/JS).
+2. Generate the exactly needed files to inject the `mindflare-sdk` chatbot into their app.
+   The credentials they need to use are:
+   appId: '{app_id}'
+   apiKey: '{api_key}'
+   clientSecret: '{client_secret}'
+   Usually the email/password should be loadable from env variables (like process.env.MINDFLARE_EMAIL), so please create an .env.example-style file for it.
 
-const mindflare = new Mindflare({{
-  email:        process.env.MINDFLARE_EMAIL,
-  password:     process.env.MINDFLARE_PASSWORD,
-  clientSecret: process.env.MINDFLARE_CLIENT_SECRET,
-  appId:        '{app_id}',
-  apiKey:       '{api_key}',
-}});
+Please return ONLY a valid JSON object in this precise format (no markdown formatting, no codeblock tags around it, no surrounding text, just pure JSON):
+{{
+  "stack": "Name of the detected stack",
+  "files": {{
+    "path/to/file1.ext": "content of file 1",
+    "path/to/file2.ext": "content of file 2"
+  }}
+}}
 
-export default mindflare;"""
+Make sure you write robust, production-ready, bug-free integration code that works directly.
 
-    env_template = f"""# Mindflare AI Configuration (auto-generated)
-# Fill in your actual credentials below
-MINDFLARE_EMAIL=your-email@example.com
-MINDFLARE_PASSWORD=your-password
-MINDFLARE_CLIENT_SECRET={client_secret}
+Repository Context:
+{repo_context}
 """
+    response = model.generate_content(prompt)
+    try:
+        text = response.text.strip()
+        if text.startswith('```json'):
+            text = text[7:-3].strip()
+        elif text.startswith('```'):
+            text = text[3:-3].strip()
+        result = json.loads(text)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to parse Gemini response: {{e}}\\n{{response.text}}")
+        raise ValueError("Failed to parse Gemini integration code.")
 
-    if stack == "nextjs":
-        component = """'use client';
-import { useEffect } from 'react';
-import mindflare from '@/lib/mindflare';
 
-/**
- * Drop this component wherever you want the Mindflare chat widget.
- * Add <MindflareChatWidget /> to your layout.tsx or any page.
- */
-export default function MindflareChatWidget() {
-  useEffect(() => {
-    mindflare.mountChat('#mindflare-chat');
-    return () => { /* cleanup if needed */ };
-  }, []);
-
-  return <div id="mindflare-chat" />;
-}
-"""
-        return {
-            "lib/mindflare.ts":                  sdk_init,
-            "components/MindflareChatWidget.tsx": component,
-            ".env.local.example":                 env_template,
-        }
-
-    elif stack in ("react", "react-vite"):
-        component = """import { useEffect } from 'react';
-import mindflare from './lib/mindflare';
-
-/**
- * Drop this component wherever you want the Mindflare chat widget.
- */
-export default function MindflareChatWidget() {
-  useEffect(() => {
-    mindflare.mountChat('#mindflare-chat');
-  }, []);
-
-  return <div id="mindflare-chat" />;
-}
-"""
-        return {
-            "src/lib/mindflare.js":                sdk_init.replace("from 'mindflare-sdk'", "from 'mindflare-sdk'"),
-            "src/components/MindflareChatWidget.jsx": component,
-            ".env.example":                        env_template,
-        }
-
-    else:  # plain HTML
-        html_snippet = f"""<!DOCTYPE html>
-<!-- Mindflare Chatbot Widget Integration (auto-generated) -->
-<!-- Add this snippet to your HTML pages -->
-<script type="module">
-  import {{ Mindflare }} from 'https://cdn.jsdelivr.net/npm/mindflare-sdk@0.2.0/dist/index.mjs';
-  const mf = new Mindflare({{
-    email:        'YOUR_EMAIL',
-    password:     'YOUR_PASSWORD',
-    clientSecret: '{client_secret}',
-    appId:        '{app_id}',
-    apiKey:       '{api_key}',
-  }});
-  mf.mountChat('#mindflare-chat');
-</script>
-<div id="mindflare-chat"></div>
-"""
-        readme = """# Mindflare Integration
-
-Paste the contents of `mindflare-snippet.html` into your HTML page.
-Replace the placeholders with your actual credentials from the Mindflare dashboard.
-"""
-        return {
-            "mindflare-snippet.html": html_snippet,
-            "MINDFLARE_README.md":    readme,
-        }
 
 
 @github_bp.route('/auto-pr', methods=['POST'])
@@ -325,10 +296,20 @@ def auto_pr():
     headers       = {"Authorization": f"Bearer {gh_token}", "Accept": "application/vnd.github+json"}
     base_url      = f"https://api.github.com/repos/{repo_full_name}"
     
-    # 1. Detect stack
-    stack = _detect_stack(gh_token, repo_full_name, default_branch)
-    logger.info(f"Detected stack: {stack} for {repo_full_name}")
+    # 1. Fetch repo context and have Gemini generate the integration files
+    repo_context = fetch_repo_context(gh_token, repo_full_name, default_branch)
+    try:
+        gemini_result = _generate_integration_with_gemini(repo_context, app_id, api_key, client_secret)
+        stack = gemini_result.get("stack", "Unknown Framework")
+        files = gemini_result.get("files", {})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        logger.error(f"Gemini generation error: {e}")
+        return jsonify({"error": "Failed to generate integration code via Gemini."}), 500
     
+    logger.info(f"Gemini detected stack: {stack} for {repo_full_name}")
+
     # 2. Get latest commit SHA for default branch
     ref_resp = requests.get(f"{base_url}/git/ref/heads/{default_branch}", headers=headers, timeout=10)
     if not ref_resp.ok:
@@ -347,9 +328,6 @@ def auto_pr():
     # 409 = branch already exists, that's OK
     if not branch_resp.ok and branch_resp.status_code != 422:
         return jsonify({"error": "Failed to create integration branch"}), 502
-    
-    # 4. Generate and commit integration files
-    files = _generate_integration_code(stack, app_id, api_key, client_secret)
     
     for file_path, content in files.items():
         encoded = base64.b64encode(content.encode()).decode()
