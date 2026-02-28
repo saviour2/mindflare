@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
-from flask import Blueprint, request, jsonify
-from auth import requires_auth, _request_ctx_stack
+from flask import Blueprint, request, jsonify, g
+from auth import requires_auth
 from database import knowledge_base_collection, applications_collection
 
 knowledge_base_bp = Blueprint('knowledge_base', __name__)
@@ -9,7 +9,7 @@ knowledge_base_bp = Blueprint('knowledge_base', __name__)
 @knowledge_base_bp.route('/', methods=['POST'])
 @requires_auth
 def create_knowledge_base():
-    user = _request_ctx_stack.top.current_user
+    user = g.current_user
     user_id = user['sub']
     
     data = request.json
@@ -53,7 +53,7 @@ def create_knowledge_base():
 @knowledge_base_bp.route('/', methods=['GET'])
 @requires_auth
 def get_knowledge_bases():
-    user = _request_ctx_stack.top.current_user
+    user = g.current_user
     user_id = user['sub']
     
     kbs = list(knowledge_base_collection.find({"user_id": user_id}))

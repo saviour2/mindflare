@@ -8,3 +8,5 @@ dist/
 .next/
 faiss_indices/
 mindflare.json
+venv/
+*.log

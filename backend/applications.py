@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
-from flask import Blueprint, request, jsonify
-from auth import requires_auth, _request_ctx_stack
+from flask import Blueprint, request, jsonify, g
+from auth import requires_auth
 from database import applications_collection
 import secrets
 import hashlib
@@ -20,7 +20,7 @@ def encrypt_api_key(api_key):
 @applications_bp.route('/', methods=['POST'])
 @requires_auth
 def create_app():
-    user = _request_ctx_stack.top.current_user
+    user = g.current_user
     user_id = user['sub']
     
     data = request.json
@@ -55,7 +55,7 @@ def create_app():
 @applications_bp.route('/', methods=['GET'])
 @requires_auth
 def get_apps():
-    user = _request_ctx_stack.top.current_user
+    user = g.current_user
     user_id = user['sub']
     
     apps = list(applications_collection.find({"user_id": user_id}))
@@ -67,7 +67,7 @@ def get_apps():
 @applications_bp.route('/<app_id>', methods=['DELETE'])
 @requires_auth
 def delete_app(app_id):
-    user = _request_ctx_stack.top.current_user
+    user = g.current_user
     user_id = user['sub']
     
     result = applications_collection.delete_one({"app_id": app_id, "user_id": user_id})
@@ -78,7 +78,7 @@ def delete_app(app_id):
 @applications_bp.route('/<app_id>/model', methods=['PUT'])
 @requires_auth
 def update_model(app_id):
-    user = _request_ctx_stack.top.current_user
+    user = g.current_user
     user_id = user['sub']
     
     data = request.json

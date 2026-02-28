@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, jsonify, _request_ctx_stack
+from flask import request, jsonify, g
 import jwt
 import os
 from dotenv import load_dotenv
@@ -23,7 +23,7 @@ def requires_auth(f):
         token = parts[1]
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
-            _request_ctx_stack.top.current_user = payload
+            g.current_user = payload
         except jwt.ExpiredSignatureError:
             return jsonify({"error": "Token expired"}), 401
         except jwt.InvalidTokenError:
