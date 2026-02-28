@@ -1,11 +1,16 @@
+import os
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from applications import encrypt_api_key
 from database import applications_collection, knowledge_base_collection, logs_collection
 from models import generate_response
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+import faiss
 import time
 
 chat_bp = Blueprint('chat', __name__)
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 @chat_bp.route('/', methods=['POST'])
 def chat():
@@ -30,24 +35,32 @@ def chat():
     user_query = messages[-1]['content']
     
     # RAG PIPELINE
-    # 1. Embed query & get chunks (mocked)
     kb_ids = app_doc.get("knowledge_base_ids", [])
     context_chunks = []
     if kb_ids:
-        # Here we would load FAISS indices for these KBs, embed user_query
-        # and retrieve top 5 matching chunks from the combined space
-        context_chunks.append("MOCKED: Context extracted from vectorstore related to user query.")
+        # Load FAISS indices for these KBs
+        for kb_id in kb_ids:
+            index_path = f"faiss_indices/{kb_id}"
+            if os.path.exists(index_path):
+                try:
+                    vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
+                    docs = vectorstore.similarity_search(user_query, k=3)
+                    for doc in docs:
+                        context_chunks.append(doc.page_content)
+                except Exception as e:
+                    print(f"Error loading FAISS for {kb_id}: {e}")
     
     # 2. Build augmented prompt
+    new_messages = list(messages)
     if context_chunks:
-        context_text = "\n".join(context_chunks)
-        augmented_prompt = f"Context:\n{context_text}\n\nUser Question:\n{user_query}"
-        messages[-1]['content'] = augmented_prompt
+        context_text = "\n\n".join(context_chunks)
+        augmented_prompt = f"Use the following knowledge base context to answer the user's question accurately. If the context doesn't contain the answer, say you don't know.\n\nContext:\n{context_text}\n\nUser Question:\n{user_query}"
+        new_messages[-1]['content'] = augmented_prompt
         
     model_name = app_doc.get('model_name', 'meta-llama/llama-3-8b-instruct')
     
     try:
-        content, usage, provider = generate_response(model_name, messages)
+        content, usage, provider = generate_response(model_name, new_messages)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
         
@@ -55,7 +68,6 @@ def chat():
     
     # ANALYTICS LOGGING
     total_tokens = usage.get("total_tokens", 0)
-    # mock cost
     cost = total_tokens * 0.000002
     
     log_doc = {
@@ -75,4 +87,3 @@ def chat():
         "usage": usage,
         "provider": provider
     }), 200
-

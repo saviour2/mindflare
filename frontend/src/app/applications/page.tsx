@@ -6,9 +6,14 @@ import Navbar from '@/components/Navbar';
 import { Plus, AppWindow, Trash2, Copy, Check, X, Search } from 'lucide-react';
 
 const MODELS = [
+    { value: 'google/gemini-3.1-pro-preview-custom-tools', label: 'Google: Gemini 3.1 Pro Preview Custom Tools' },
     { value: 'meta-llama/llama-3-8b-instruct', label: 'Llama 3 8B Instruct' },
-    { value: 'mistralai/mistral-7b-instruct', label: 'Mistral 7B Instruct' },
+    { value: 'meta-llama/llama-3-70b-instruct', label: 'Llama 3 70B Instruct' },
+    { value: 'mistralai/mixtral-8x7b-instruct', label: 'Mixtral 8x7B Instruct' },
+    { value: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku' },
+    { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
     { value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' },
+    { value: 'llama3-70b-8192', label: 'Groq: Llama 3 70B' },
 ];
 
 interface AppDoc {

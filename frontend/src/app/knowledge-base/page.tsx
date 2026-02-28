@@ -22,6 +22,7 @@ export default function KnowledgeBasePage() {
     const [kbName, setKbName] = useState('');
     const [sourceType, setSourceType] = useState('pdf');
     const [sourceUrl, setSourceUrl] = useState('');
+    const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -44,16 +45,32 @@ export default function KnowledgeBasePage() {
 
     const createKB = async () => {
         if (!kbName.trim()) return;
+        if (sourceType === 'pdf' && !file) return;
+        if (sourceType !== 'pdf' && !sourceUrl.trim()) return;
+
         setLoading(true);
         try {
-            await fetch('http://localhost:5000/api/knowledge_base/', {
+            let options: RequestInit = {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ kb_name: kbName, source_type: sourceType, source_url: sourceUrl })
-            });
+                headers: { 'Authorization': `Bearer ${token}` }
+            };
+
+            if (sourceType === 'pdf' && file) {
+                const formData = new FormData();
+                formData.append('kb_name', kbName);
+                formData.append('source_type', sourceType);
+                formData.append('file', file);
+                options.body = formData;
+            } else {
+                options.headers = { ...options.headers, 'Content-Type': 'application/json' };
+                options.body = JSON.stringify({ kb_name: kbName, source_type: sourceType, source_url: sourceUrl });
+            }
+
+            await fetch('http://localhost:5000/api/knowledge_base/', options);
             setShowCreate(false);
             setKbName('');
             setSourceUrl('');
+            setFile(null);
             fetchKBs();
         } catch { }
         setLoading(false);
@@ -133,10 +150,11 @@ export default function KnowledgeBasePage() {
                                     </div>
                                 )}
                                 {sourceType === 'pdf' && (
-                                    <div className="border-2 border-dashed border-[var(--border-color)] rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer">
+                                    <div className="border-2 border-dashed border-[var(--border-color)] rounded-lg p-8 text-center hover:border-blue-500/50 transition-colors cursor-pointer relative">
                                         <Upload className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2" />
-                                        <p className="text-sm text-[var(--text-muted)]">Click or drag PDF file here</p>
+                                        <p className="text-sm text-[var(--text-muted)]">{file ? file.name : 'Click or drag PDF file here'}</p>
                                         <p className="text-xs text-[var(--text-muted)] mt-1">Max 10MB</p>
+                                        <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                     </div>
                                 )}
                                 <button onClick={createKB} disabled={loading} className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-500 disabled:opacity-50 text-sm">
