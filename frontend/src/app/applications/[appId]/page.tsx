@@ -137,14 +137,25 @@ export default function AppDetailsPage() {
 
                 recognition.onend = () => {
                     setIsListening(false);
-                    // Optionally auto-send when they stop speaking:
-                    // if (inputValue.trim().length > 0) sendMessage(); 
+                    // Tell the component that speech has ended, to trigger auto-send via useEffect
+                    setTriggerAutoSend(true);
                 };
 
                 recognitionRef.current = recognition;
             }
         }
     }, []);
+
+    const [triggerAutoSend, setTriggerAutoSend] = useState(false);
+
+    useEffect(() => {
+        if (triggerAutoSend) {
+            setTriggerAutoSend(false);
+            if (inputValue.trim().length > 0) {
+                sendMessage();
+            }
+        }
+    }, [triggerAutoSend, inputValue]);
 
     const toggleListening = () => {
         if (isListening) {
