@@ -27,11 +27,15 @@ app.config["MAX_CONTENT_LENGTH"] = 52 * 1024 * 1024  # 52 MB (covers 50 MB PDFs 
 app.config["JSON_SORT_KEYS"] = False
 
 # ── CORS ─────────────────────────────────────────────────────
-CORS(app, resources={r"/api/*": {"origins": [
+allowed_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    # Add your production domain here e.g. "https://app.mindflare.ai"
-]}})
+]
+# Add production frontend URL from env
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    allowed_origins.append(frontend_url)
+CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
 
 api = Api(app)
 
