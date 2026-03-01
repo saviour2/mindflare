@@ -24,80 +24,251 @@ interface KBDoc {
     source_pages?: number;
 }
 
-const SPIDER_ROUTES = [
+// --- ISOMETRIC SPIDER VISUALIZER ---
+
+interface SpiderNode {
+    id: string;
+    label: string;
+    status: 'root' | 'ok' | 'error';
+    gridX: number;
+    gridY: number;
+    parent?: string;
+}
+
+const MOCK_ROUTES = [
     '/index',
     '/getting-started',
     '/installation',
     '/quickstart',
     '/api-reference',
-    '/guides/authentication',
-    '/guides/deployment',
-    '/examples/chat-app'
+    '/guides/auth',
+    '/guides/deploy',
+    '/examples/app',
+    '/not-found-404',
+    '/pricing',
+    '/contact'
 ];
 
-function SpiderTerminal({ targetUrl, isComplete }: { targetUrl: string, isComplete: boolean }) {
-    const [lines, setLines] = useState<string[]>([]);
+function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComplete: boolean }) {
+    const [nodes, setNodes] = useState<SpiderNode[]>([]);
+    const [camera, setCamera] = useState({ x: 0, y: 0 });
+
+    // Constants for the isometric grid
+    const ISO_SCALE = 30; // Base unit sizing
+    const TILE_W = 60; // 2 * ISO_SCALE
+    const TILE_H = 30; // ISO_SCALE
+
+    // Helper: Convert grid (x,y) to screen (px, py)
+    const getScreenCoord = (gx: number, gy: number) => {
+        const px = (gx - gy) * (TILE_W / 2);
+        const py = (gx + gy) * (TILE_H / 2);
+        return { px, py };
+    };
 
     useEffect(() => {
-        setLines([
-            `[CRAWLING] ${targetUrl || 'https://domain.com'}`,
-        ]);
+        // Init Root
+        setNodes([{
+            id: 'root',
+            label: targetUrl || 'https://domain.com',
+            status: 'root',
+            gridX: 0,
+            gridY: 0
+        }]);
 
-        let currentIndex = 0;
+        let step = 0;
         const interval = setInterval(() => {
-            if (currentIndex >= SPIDER_ROUTES.length || isComplete) {
+            if (step >= Math.min(MOCK_ROUTES.length, 12) || isComplete) {
                 clearInterval(interval);
                 return;
             }
 
-            const route = SPIDER_ROUTES[currentIndex];
-            const isLast = currentIndex === SPIDER_ROUTES.length - 1;
-            const prefix = isLast ? '└── ' : '├── ';
+            setNodes(prev => {
+                // Pick a random existing node as parent
+                const parent = prev[Math.floor(Math.random() * prev.length)];
 
-            setLines(prev => [...prev, `${prefix}${route}`]);
-            currentIndex++;
-        }, 600); // 600ms stagger between discovered routes
+                // Pick a direction for the new child (expand outward)
+                const dirs = [
+                    { dx: 1, dy: 0 },
+                    { dx: 0, dy: 1 },
+                    { dx: 1, dy: 1 }, // diagonal push
+                    { dx: -1, dy: 0 }, // careful not to overlap too much, but gives organic shape
+                ];
+                // Bias heavily towards positive growth
+                const dir = dirs[Math.floor(Math.random() * 3)];
+
+                // Extremely simple collision avoidance: just keep pushing out until space is somewhat free
+                let newX = parent.gridX + dir.dx * Math.floor(Math.random() * 2 + 1);
+                let newY = parent.gridY + dir.dy * Math.floor(Math.random() * 2 + 1);
+
+                // Add some jitter so it's not a perfect grid line
+                if (Math.random() > 0.5) newX += 1;
+                else newY += 1;
+
+                const status = MOCK_ROUTES[step].includes('404') ? 'error' : 'ok';
+
+                const newNode: SpiderNode = {
+                    id: `node-${step}`,
+                    label: MOCK_ROUTES[step],
+                    status,
+                    gridX: newX,
+                    gridY: newY,
+                    parent: parent.id
+                };
+
+                // Auto-pan camera conceptually to the center of all nodes
+                const allX = [...prev, newNode].map(n => getScreenCoord(n.gridX, n.gridY).px);
+                const allY = [...prev, newNode].map(n => getScreenCoord(n.gridX, n.gridY).py);
+                const minX = Math.min(...allX);
+                const maxX = Math.max(...allX);
+                const minY = Math.min(...allY);
+                const maxY = Math.max(...allY);
+
+                // Center the bounding box (reversed because we move the group opposite)
+                setCamera({
+                    x: -((minX + maxX) / 2),
+                    y: -((minY + maxY) / 2) + 50 // offset slightly down
+                });
+
+                return [...prev, newNode];
+            });
+            step++;
+        }, 800);
 
         return () => clearInterval(interval);
     }, [targetUrl, isComplete]);
 
+    // Render helpers
+    const renderCube = (node: SpiderNode) => {
+        let topColor = '#2DD4BF'; // Cyan default
+        let leftColor = '#14b8a6';
+        let rightColor = '#0f766e';
+
+        if (node.status === 'ok') {
+            topColor = '#F2AEC0'; // Dusty Pink
+            leftColor = '#e593a8';
+            rightColor = '#be6179';
+        } else if (node.status === 'error') {
+            topColor = '#ef4444'; // Red
+            leftColor = '#dc2626';
+            rightColor = '#991b1b';
+        }
+
+        const size = node.status === 'root' ? 30 : 20;
+
+        return (
+            <div className="relative group/cube">
+                {/* Chunky Drop Shadow */}
+                <svg className="absolute top-4 left-1 opacity-60 pointer-events-none" style={{ left: -size, top: size * 0.5 }} width={size * 2} height={size * 2} viewBox="-50 -50 100 100">
+                    <path d="M 0,-15 L 25,0 L 0,15 L -25,0 Z" fill="#000" transform="translate(10, 20) scale(1.1)" />
+                </svg>
+
+                {/* 3D Pixelly Cube via SVG so we can easily draw the faces clean without CSS borders fighting */}
+                <svg className="relative z-10" width={size * 2} height={size * 2.5} viewBox="-50 -50 100 100" style={{ transform: 'translate(-50%, -50%)', overflow: 'visible' }}>
+                    {/* Top Face */}
+                    <path d="M 0,-25 L 43,0 L 0,25 L -43,0 Z" fill={topColor} stroke="#2F3947" strokeWidth="3" strokeLinejoin="miter" />
+                    {/* Left Face */}
+                    <path d="M -43,0 L 0,25 L 0,65 L -43,40 Z" fill={leftColor} stroke="#2F3947" strokeWidth="3" strokeLinejoin="miter" />
+                    {/* Right Face */}
+                    <path d="M 0,25 L 43,0 L 43,40 L 0,65 Z" fill={rightColor} stroke="#2F3947" strokeWidth="3" strokeLinejoin="miter" />
+                </svg>
+
+                {/* Label (floating above, text-shadow mapped for legibility) */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[180%] w-max text-[9px] font-mono text-retro-white font-bold opacity-0 group-hover/cube:opacity-100 transition-opacity z-20 pointer-events-none" style={{ textShadow: '2px 2px 0 #1A2B4C, -2px -2px 0 #1A2B4C, 2px -2px 0 #1A2B4C, -2px 2px 0 #1A2B4C' }}>
+                    {node.label}
+                </div>
+            </div>
+        );
+    };
+
+    // Rendering jagged branches
+    const renderBranch = (child: SpiderNode) => {
+        if (!child.parent) return null;
+        const parent = nodes.find(n => n.id === child.parent);
+        if (!parent) return null;
+
+        const pCoord = getScreenCoord(parent.gridX, parent.gridY);
+        const cCoord = getScreenCoord(child.gridX, child.gridY);
+
+        const midGridX = child.gridX;
+        const midGridY = parent.gridY;
+        const midCoord = getScreenCoord(midGridX, midGridY);
+
+        const pathData = `M ${pCoord.px} ${pCoord.py} L ${midCoord.px} ${midCoord.py} L ${cCoord.px} ${cCoord.py}`;
+
+        return (
+            <motion.path
+                key={`branch-${child.id}`}
+                d={pathData}
+                fill="none"
+                stroke="#F2AEC0"
+                strokeWidth="3"
+                strokeLinecap="square"
+                strokeLinejoin="miter"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.8, ease: "linear" }}
+                className="opacity-70"
+            />
+        );
+    };
+
     return (
-        <div className="w-full bg-retro-ink border-3 border-retro-border p-6 rounded-none font-mono text-sm shadow-pixel h-[320px] overflow-hidden flex flex-col">
-            <div className="flex gap-2 mb-4 border-b-2 border-retro-card pb-2">
-                <div className="w-3 h-3 bg-[#D88A8A] border-2 border-[#B86A6A]"></div>
-                <div className="w-3 h-3 bg-[#D8C4A8] border-2 border-[#B8A488]"></div>
-                <div className="w-3 h-3 bg-[#A8D8B0] border-2 border-[#78B080]"></div>
+        <div className="w-full h-[400px] bg-[#1A2B4C] border-l-4 border-t-4 border-r-[12px] border-b-[12px] border-retro-border overflow-hidden relative select-none">
+            {/* Background Perspective Grid */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{
+                    backgroundImage: 'linear-gradient(rgba(234, 234, 234, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(234, 234, 234, 0.2) 1px, transparent 1px)',
+                    backgroundSize: '40px 40px',
+                    transform: 'rotateX(60deg) rotateZ(45deg) scale(2)',
+                    transformOrigin: 'center center'
+                }}
+            />
+
+            {/* HUD Status */}
+            <div className="absolute top-4 left-4 z-20">
+                <p className="text-[10px] text-retro-cyan font-pixel uppercase tracking-widest animate-pulse">Scanning Grid...</p>
+                <p className="text-xs text-retro-white font-mono mt-1 opacity-70">Nodes: {nodes.length}</p>
             </div>
 
-            <div className="flex-1 overflow-y-auto retro-scrollbar space-y-1">
-                <AnimatePresence>
-                    {lines.map((line, i) => {
-                        const isCrawlingLine = i === 0;
-                        const content = isCrawlingLine ? line : line;
+            {/* Camera Mover */}
+            <motion.div
+                className="absolute top-1/2 left-1/2 origin-center"
+                animate={{ x: camera.x, y: camera.y }}
+                transition={{ type: 'spring', damping: 20, stiffness: 50 }}
+            >
+                {/* Edges layer first */}
+                <svg className="absolute overflow-visible" style={{ position: 'absolute', top: 0, left: 0 }}>
+                    {nodes.map(node => renderBranch(node))}
+                </svg>
 
-                        return (
-                            <motion.div
-                                key={`${i}-${line}`}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="flex justify-between items-center whitespace-pre text-retro-white"
-                            >
-                                <span>{content}</span>
-                                {!isCrawlingLine && (
-                                    <span className="text-retro-cyan font-bold tabular-nums">[200 OK]</span>
-                                )}
-                            </motion.div>
-                        );
-                    })}
-                </AnimatePresence>
-                {!isComplete && (
-                    <motion.div
-                        animate={{ opacity: [1, 0, 1] }}
-                        transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
-                        className="w-2.5 h-4 bg-retro-cyan mt-1"
-                    />
-                )}
-            </div>
+                {/* Nodes layer (sort by Y in screen space to fake depth if needed, roughly gridX + gridY) */}
+                {nodes.slice().sort((a, b) => (a.gridX + a.gridY) - (b.gridX + b.gridY)).map((node, i) => {
+                    const coord = getScreenCoord(node.gridX, node.gridY);
+                    return (
+                        <motion.div
+                            key={node.id}
+                            className="absolute"
+                            style={{
+                                left: coord.px,
+                                top: coord.py,
+                                zIndex: Math.floor(coord.py + 1000) // crude depth sorting
+                            }}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{
+                                type: 'spring',
+                                bounce: 0.5,
+                                duration: 0.6
+                            }}
+                        >
+                            {renderCube(node)}
+                        </motion.div>
+                    );
+                })}
+            </motion.div>
+
+            {/* Inner Shadow / Bevel */}
+            <div className="absolute inset-0 shadow-[inset_10px_10px_20px_rgba(0,0,0,0.5)] pointer-events-none" />
         </div>
     );
 }
@@ -223,7 +394,6 @@ export default function KnowledgeBasePage() {
                 const errData = await res.json();
                 toast.error(errData.error || 'Failed to create knowledge base');
             }
-
             setShowCreate(false);
             setKbName('');
             setSourceUrl('');
@@ -446,7 +616,7 @@ export default function KnowledgeBasePage() {
                                 </div>
 
                                 {loading && sourceType === 'website' ? (
-                                    <SpiderTerminal targetUrl={sourceUrl} isComplete={false} />
+                                    <SpiderVisualizer targetUrl={sourceUrl} isComplete={false} />
                                 ) : (
                                     <div className="space-y-8">
                                         <div className="space-y-3">
