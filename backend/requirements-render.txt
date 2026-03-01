@@ -35,6 +35,7 @@ pillow==12.1.1
 # Website crawling
 beautifulsoup4==4.12.3
 soupsieve==2.8.3
+crawlee[beautifulsoup]>=1.0.0
 
 # GitHub ingestion
 GitPython==3.1.43
