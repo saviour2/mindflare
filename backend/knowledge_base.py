@@ -226,6 +226,156 @@ def get_knowledge_base(kb_id):
     return jsonify({"knowledge_base": kb}), 200
 
 
+@knowledge_base_bp.route('/<kb_id>/tree', methods=['GET'])
+@requires_auth
+def get_kb_tree(kb_id):
+    """Return a tree structure of the knowledge base chunks for visualization."""
+    import os, re
+    from collections import defaultdict
+
+    user = g.current_user
+    user_id = user['sub']
+
+    kb = knowledge_base_collection.find_one(
+        {"kb_id": kb_id, "user_id": user_id},
+        {"_id": 0, "kb_name": 1, "source_type": 1, "chunks_count": 1,
+         "status": 1, "total_chars": 1, "source_pages": 1, "vector_index_path": 1}
+    )
+    if not kb:
+        return jsonify({"error": "Knowledge base not found"}), 404
+
+    if kb.get("status") != "completed":
+        return jsonify({"error": "Knowledge base not yet completed"}), 409
+
+    # Load FAISS index to read chunk texts
+    index_path = kb.get("vector_index_path") or os.path.join("faiss_indices", kb_id)
+    if not os.path.exists(index_path):
+        return jsonify({"error": "Vector index not found on disk"}), 404
+
+    try:
+        from langchain_community.vectorstores import FAISS
+        from openrouter_embeddings import OpenRouterEmbeddings
+        embeddings = OpenRouterEmbeddings()
+        vs = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
+        # Access raw docstore docs
+        docs = list(vs.docstore._dict.values())
+    except Exception as e:
+        return jsonify({"error": f"Could not load index: {str(e)}"}), 500
+
+    source_type = kb.get("source_type", "unknown")
+
+    # Build tree from chunk texts
+    # For website: group by URL path segments
+    # For github: group by file directory
+    # For pdf: group by page/section headings
+
+    def build_website_tree(docs):
+        from urllib.parse import urlparse
+        url_map = defaultdict(list)
+        for doc in docs:
+            text = doc.page_content
+            url_match = re.match(r'^URL:\s*(https?://[^\n]+)', text)
+            if url_match:
+                raw_url = url_match.group(1).strip()
+                parsed = urlparse(raw_url)
+                path = parsed.path.rstrip('/') or '/'
+                url_map[path].append(text[:120].replace('\n', ' '))
+            else:
+                url_map['/'].append(text[:120].replace('\n', ' '))
+
+        root = {"name": kb["kb_name"], "type": "root", "children": []}
+        grouped = defaultdict(lambda: defaultdict(list))
+        for path, chunks in url_map.items():
+            parts = [p for p in path.split('/') if p]
+            if not parts:
+                grouped['(root)'][''].extend(chunks)
+            elif len(parts) == 1:
+                grouped[parts[0]][''].extend(chunks)
+            else:
+                grouped[parts[0]]['/'.join(parts[1:])].extend(chunks)
+
+        for section, sub in grouped.items():
+            node = {"name": f"/{section}" if section != '(root)' else '/', "type": "section", "children": []}
+            for subpath, chunk_list in sub.items():
+                if subpath:
+                    node["children"].append({
+                        "name": f"/{subpath}",
+                        "type": "page",
+                        "chunks": len(chunk_list),
+                        "preview": chunk_list[0][:80] if chunk_list else ""
+                    })
+                else:
+                    node["chunks"] = len(chunk_list)
+                    node["preview"] = chunk_list[0][:80] if chunk_list else ""
+            root["children"].append(node)
+        return root
+
+    def build_github_tree(docs):
+        file_map = defaultdict(list)
+        for doc in docs:
+            text = doc.page_content
+            file_match = re.match(r'^File:\s*([^\n]+)', text)
+            if file_match:
+                filepath = file_match.group(1).strip()
+            else:
+                filepath = 'unknown'
+            file_map[filepath].append(text[:100].replace('\n', ' '))
+
+        root = {"name": kb["kb_name"], "type": "root", "children": []}
+        dirs = defaultdict(list)
+        for filepath, chunks in file_map.items():
+            parts = filepath.split('/')
+            if len(parts) == 1:
+                root["children"].append({"name": parts[0], "type": "file", "chunks": len(chunks), "preview": chunks[0][:80] if chunks else ""})
+            else:
+                dir_name = parts[0]
+                dirs[dir_name].append((('/').join(parts[1:]), chunks))
+
+        for dir_name, files in dirs.items():
+            node = {"name": dir_name, "type": "directory", "children": []}
+            for fname, chunks in files:
+                node["children"].append({"name": fname, "type": "file", "chunks": len(chunks), "preview": chunks[0][:80] if chunks else ""})
+            root["children"].append(node)
+        return root
+
+    def build_pdf_tree(docs):
+        root = {"name": kb["kb_name"], "type": "root", "children": []}
+        sections = defaultdict(list)
+        for doc in docs:
+            text = doc.page_content
+            heading_match = re.search(r'^(#{1,3}\s+.+|[A-Z][A-Z\s]{4,})', text, re.MULTILINE)
+            if heading_match:
+                heading = heading_match.group(0).strip()[:40]
+            else:
+                heading = "Content"
+            sections[heading].append(text[:100].replace('\n', ' '))
+
+        for heading, chunks in list(sections.items())[:30]:
+            root["children"].append({
+                "name": heading,
+                "type": "section",
+                "chunks": len(chunks),
+                "preview": chunks[0][:80] if chunks else ""
+            })
+        return root
+
+    if source_type == 'website':
+        tree = build_website_tree(docs)
+    elif source_type == 'github':
+        tree = build_github_tree(docs)
+    else:
+        tree = build_pdf_tree(docs)
+
+    tree["meta"] = {
+        "total_chunks": kb.get("chunks_count", len(docs)),
+        "total_chars": kb.get("total_chars", 0),
+        "source_pages": kb.get("source_pages", 0),
+        "source_type": source_type,
+    }
+
+    return jsonify({"tree": tree}), 200
+
+
 @knowledge_base_bp.route('/<kb_id>', methods=['DELETE'])
 @requires_auth
 def delete_kb(kb_id):

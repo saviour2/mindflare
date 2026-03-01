@@ -3,13 +3,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Plus, Database, Search, Upload, Globe, Github, X, FileText, Settings, AlertCircle, ChevronDown, Check, Trash2 } from 'lucide-react';
+import { Plus, Database, Search, Upload, Globe, Github, X, FileText, Settings, AlertCircle, ChevronDown, Check, Trash2, GitBranch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
+import KBTreeVisualization from '@/components/KBTreeVisualization';
 interface KBDoc {
     kb_id: string;
     kb_name: string;
@@ -283,6 +284,7 @@ export default function KnowledgeBasePage() {
     const [sourceUrl, setSourceUrl] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
+    const [treeKb, setTreeKb] = useState<KBDoc | null>(null);
     const { user, isLoading } = useAuth();
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -576,6 +578,16 @@ export default function KnowledgeBasePage() {
                                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-retro-border">
                                                 <span className="text-[10px] text-retro-dim font-mono italic">ID: {kb.kb_id.slice(0, 8)}...</span>
                                                 <div className="flex items-center gap-2">
+                                                    {kb.status === 'completed' && (
+                                                        <Button
+                                                            onClick={() => setTreeKb(kb)}
+                                                            variant="ghost" size="sm"
+                                                            className="h-8 px-2 text-retro-muted hover:text-retro-cyan"
+                                                            title="Visualize tree"
+                                                        >
+                                                            <GitBranch className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                    )}
                                                     <Button onClick={() => deleteKB(kb.kb_id)} variant="ghost" size="sm" className=" h-8 px-2 text-retro-muted hover:text-red-400">
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </Button>
@@ -688,6 +700,19 @@ export default function KnowledgeBasePage() {
                             </div>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* KB Tree Visualization Modal */}
+            <AnimatePresence>
+                {treeKb && token && (
+                    <KBTreeVisualization
+                        kbId={treeKb.kb_id}
+                        kbName={treeKb.kb_name}
+                        sourceType={treeKb.source_type}
+                        token={token}
+                        onClose={() => setTreeKb(null)}
+                    />
                 )}
             </AnimatePresence>
         </div>
