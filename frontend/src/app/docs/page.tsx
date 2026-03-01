@@ -65,7 +65,7 @@ const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
 );
 
 export default function DocsPage() {
-    const [activeTab, setActiveTab] = useState<'cli' | 'sdk'>('cli');
+    const [activeTab, setActiveTab] = useState<'cli' | 'sdk' | 'whatsapp'>('cli');
 
     return (
         <div className="min-h-screen bg-black text-white selection:bg-blue-base/30">
@@ -91,11 +91,11 @@ export default function DocsPage() {
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl w-fit mb-12">
+                <div className="flex flex-wrap gap-1 p-1 bg-white/5 border border-white/10 rounded-xl w-fit mb-12">
                     <button
                         onClick={() => setActiveTab('cli')}
                         className={cn(
-                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all",
+                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                             activeTab === 'cli' ? "bg-white text-black shadow-lg" : "text-zinc-400 hover:text-white"
                         )}
                     >
@@ -104,11 +104,20 @@ export default function DocsPage() {
                     <button
                         onClick={() => setActiveTab('sdk')}
                         className={cn(
-                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all",
+                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                             activeTab === 'sdk' ? "bg-white text-black shadow-lg" : "text-zinc-400 hover:text-white"
                         )}
                     >
-                        <Code className="w-4 h-4" /> TypeScript SDK
+                        <Code className="w-4 h-4" /> TS / Python SDK
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('whatsapp')}
+                        className={cn(
+                            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                            activeTab === 'whatsapp' ? "bg-white text-black shadow-lg" : "text-zinc-400 hover:text-white"
+                        )}
+                    >
+                        <Globe className="w-4 h-4" /> WhatsApp Bot
                     </button>
                 </div>
 
@@ -140,12 +149,13 @@ export default function DocsPage() {
 
                                     <section>
                                         <SectionHeader title="Authentication" icon={Shield} />
-                                        <p className="text-zinc-400 mb-6 font-sans">First, log in to your Mindflare account to sync your applications.</p>
+                                        <p className="text-zinc-400 mb-6 font-sans">
+                                            Authenticate your session using your CLI Access Token from the Mindflare dashboard (Settings {'->'} Developer API).
+                                        </p>
                                         <TerminalWindow title="mindflare-cli">
                                             mindflare login<br />
-                                            <span className="text-zinc-500">? Email:</span> you@example.com<br />
-                                            <span className="text-zinc-500">? Password:</span> ************<br /><br />
-                                            <span className="text-emerald-400">✔ Success! Authenticated as srizdebnath</span>
+                                            <span className="text-zinc-500">? Paste your CLI Token:</span> ******************************<br /><br />
+                                            <span className="text-emerald-400">✔ Success! Authenticated as srizdebnath (sriz@mindflare.ai)</span>
                                         </TerminalWindow>
                                     </section>
 
@@ -153,9 +163,15 @@ export default function DocsPage() {
                                         <SectionHeader title="Core Commands" icon={Layers} />
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {[
+                                                { cmd: 'mindflare apps create -n "My App"', desc: 'Create a new AI application' },
                                                 { cmd: 'mindflare apps list', desc: 'View all your AI applications' },
-                                                { cmd: 'mindflare kb create', desc: 'Ingest a new website or GitHub repo' },
-                                                { cmd: 'mindflare chat', desc: 'Start an interactive RAG chat session' },
+                                                { cmd: 'mindflare apps use <appId>', desc: 'Set default app for future commands' },
+                                                { cmd: 'mindflare kb list', desc: 'List all knowledge bases' },
+                                                { cmd: 'mindflare kb create -n "Docs" -t website -u URL', desc: 'Ingest a source' },
+                                                { cmd: 'mindflare kb status <kbId> --wait', desc: 'Watch ingestion progress' },
+                                                { cmd: 'mindflare chat', desc: 'Start interactive RAG chat session' },
+                                                { cmd: 'mindflare chat -m "hi"', desc: 'Single-shot message mode' },
+                                                { cmd: 'mindflare config', desc: 'View/update CLI configuration' },
                                                 { cmd: 'mindflare whoami', desc: 'Check active session status' }
                                             ].map((item, i) => (
                                                 <div key={i} className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors group">
@@ -166,7 +182,7 @@ export default function DocsPage() {
                                         </div>
                                     </section>
                                 </motion.div>
-                            ) : (
+                            ) : activeTab === 'sdk' ? (
                                 <motion.div
                                     key="sdk"
                                     initial={{ opacity: 0, x: -20 }}
@@ -221,6 +237,23 @@ export default function DocsPage() {
                                     </section>
 
                                     <section>
+                                        <SectionHeader title="Admin Management" icon={Layers} />
+                                        <p className="text-zinc-400 mb-6 font-sans">Use `MindflareAdmin` for programmatic app and knowledge base management.</p>
+                                        <TerminalWindow title="admin.ts">
+                                            <span className="text-blue-400">import</span> {"{"} MindflareAdmin {"}"} <span className="text-blue-400">from</span> <span className="text-emerald-400">"mindflare-sdk"</span>;<br /><br />
+                                            <span className="text-blue-400">const</span> admin = <span className="text-blue-400">new</span> MindflareAdmin({"{"} baseUrl: <span className="text-emerald-400">"https://api.mindflare.ai"</span> {"}"});<br /><br />
+                                            <span className="text-zinc-500">// Login to get session</span><br />
+                                            <span className="text-blue-400">await</span> admin.auth.login({"{"} email: <span className="text-emerald-400">"..."</span>, password: <span className="text-emerald-400">"..."</span> {"}"});<br /><br />
+                                            <span className="text-zinc-500">// Create a KB from website</span><br />
+                                            <span className="text-blue-400">const</span> kb = <span className="text-blue-400">await</span> admin.knowledgeBases.create({"{"}<br />
+                                            &nbsp;&nbsp;kb_name: <span className="text-emerald-400">"API Docs"</span>,<br />
+                                            &nbsp;&nbsp;source_type: <span className="text-emerald-400">"website"</span>,<br />
+                                            &nbsp;&nbsp;source_url: <span className="text-emerald-400">"https://docs.example.com"</span><br />
+                                            {"}"});
+                                        </TerminalWindow>
+                                    </section>
+
+                                    <section>
                                         <SectionHeader title="Python SDK Support" icon={Blocks} />
                                         <p className="text-zinc-400 mb-6 font-sans">
                                             Full multi-key strict authentication is also available in our official Python SDK.
@@ -238,6 +271,50 @@ export default function DocsPage() {
                                             reply = mf.ask(<span className="text-emerald-400">"What is quantum computing?"</span>)<br />
                                             print(reply)
                                         </TerminalWindow>
+                                    </section>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="whatsapp"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    className="space-y-12"
+                                >
+                                    <section>
+                                        <SectionHeader title="WhatsApp Bot Deployment" icon={Globe} />
+                                        <p className="text-zinc-400 mb-6 font-sans">
+                                            Deploy your AI assistant directly to WhatsApp with 1 command.
+                                            Your bot will answer DMs using your Knowledge Base in real-time.
+                                        </p>
+                                        <TerminalWindow title="terminal">
+                                            <span className="text-zinc-500">## Deploy app to WhatsApp</span><br />
+                                            <span className="text-blue-base">mindflare</span> whatsapp<br /><br />
+                                            <span className="text-zinc-400">? Which application do you want to run?</span> My Chatbot<br />
+                                            <span className="text-emerald-400">⠋ Initializing WhatsApp connection...</span><br /><br />
+                                            <span className="text-zinc-500">## QR code will appear below — scan it with WhatsApp</span>
+                                        </TerminalWindow>
+                                    </section>
+                                    <section>
+                                        <SectionHeader title="How it Works" icon={Blocks} />
+                                        <div className="space-y-4">
+                                            {[
+                                                { title: 'Scan & Link', desc: 'Scan the generated QR code in your terminal with WhatsApp (Linked Devices) to authorize the bot session.' },
+                                                { title: 'Background Loop', desc: 'The CLI maintains a secure WebSocket connection to WhatsApp. It listens for incoming DMs and processes them.' },
+                                                { title: 'Smart RAG Context', desc: 'Incoming messages are automatically queried against your Mindflare Knowledge Base to provide grounded answers.' },
+                                                { title: 'Conversation State', desc: 'The bot remembers the last 40 turns of the conversation for each user, ensuring natural multi-turn dialogue.' }
+                                            ].map((step, i) => (
+                                                <div key={i} className="flex gap-4 p-4 rounded-xl border border-white/5 bg-white/[0.01]">
+                                                    <div className="w-8 h-8 rounded-full bg-blue-base/10 flex items-center justify-center text-blue-base text-xs font-bold shrink-0">
+                                                        {i + 1}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-bold text-white mb-1">{step.title}</h4>
+                                                        <p className="text-sm text-zinc-500">{step.desc}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </section>
                                 </motion.div>
                             )}
