@@ -51,15 +51,11 @@ export default function AnalyticsPage() {
     }, [token, router]);
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white">
+        <div className="min-h-screen text-retro-white">
             <Navbar />
 
-            {/* Background Effects */}
-            <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-blue-base/5 rounded-full blur-[100px]" />
-            </div>
+            {/* Dark backdrop overlay */}
+            <div className="fixed inset-0 z-0 bg-[#2F3947]/60 backdrop-blur-[2px] pointer-events-none" />
 
             <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -68,17 +64,17 @@ export default function AnalyticsPage() {
                             <motion.h1
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="text-4xl font-serif font-medium"
+                                className="text-4xl font-pixel text-retro-white"
                             >
                                 Operations Analytics
                             </motion.h1>
-                            <div className="px-2 py-0.5 rounded-full bg-blue-base/10 border border-blue-base/20 text-[10px] uppercase font-bold tracking-widest text-blue-light">Live</div>
+                            <div className="px-2 py-0.5 bg-retro-panel border-3 border-retro-border text-[10px] uppercase font-bold tracking-widest text-retro-cyan">Live</div>
                         </div>
                         <motion.p
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-zinc-500"
+                            className="text-retro-muted"
                         >
                             Real-time metrics for your neural infrastructure and token economy.
                         </motion.p>
@@ -88,11 +84,11 @@ export default function AnalyticsPage() {
                         animate={{ opacity: 1, x: 0 }}
                         className="flex items-center gap-4"
                     >
-                        <Button variant="outline" className="rounded-full h-12 px-6 border-white/10 hover:bg-white/5">
-                            <Filter className="w-4 h-4 mr-2" /> Global View <ChevronDown className="w-3.5 h-3.5 ml-2 text-zinc-500" />
+                        <Button variant="outline" className=" h-12 px-6 border-retro-border hover:bg-retro-panel">
+                            <Filter className="w-4 h-4 mr-2" /> Global View <ChevronDown className="w-3.5 h-3.5 ml-2 text-retro-muted" />
                         </Button>
-                        <Button variant="outline" className="rounded-full h-12 px-6 border-white/10 hover:bg-white/5">
-                            Last 30 Days <ChevronDown className="w-3.5 h-3.5 ml-2 text-zinc-500" />
+                        <Button variant="outline" className=" h-12 px-6 border-retro-border hover:bg-retro-panel">
+                            Last 30 Days <ChevronDown className="w-3.5 h-3.5 ml-2 text-retro-muted" />
                         </Button>
                     </motion.div>
                 </div>
@@ -111,28 +107,28 @@ export default function AnalyticsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
                         >
-                            <Card className="rounded-[2rem] hover:border-white/20 transition-all group overflow-hidden relative">
+                            <Card className=" hover:border-retro-border transition-all group overflow-hidden relative">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className={cn(
-                                            "w-10 h-10 rounded-xl flex items-center justify-center",
-                                            s.color === 'blue' ? "bg-blue-500/10 text-blue-400" :
-                                                s.color === 'purple' ? "bg-purple-500/10 text-purple-400" :
-                                                    s.color === 'gold' ? "bg-blue-base/10 text-blue-base" :
-                                                        "bg-cyan-500/10 text-cyan-400"
+                                            "w-10 h-10 flex items-center justify-center border-3",
+                                            s.color === 'blue' ? "border-retro-cyan bg-retro-panel text-retro-cyan" :
+                                                s.color === 'purple' ? "border-retro-border bg-retro-panel text-retro-muted" :
+                                                    s.color === 'gold' ? "border-retro-border bg-retro-panel text-retro-cyan" :
+                                                        "border-retro-cyan bg-retro-panel text-retro-cyan"
                                         )}>
                                             {s.icon}
                                         </div>
                                         <span className={cn(
-                                            "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                                            s.trend.startsWith('+') ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                                            "text-[10px] font-pixel px-1 py-0.5 border",
+                                            s.trend.startsWith('+') ? "border-green-500 text-green-500" : "border-red-500 text-red-500"
                                         )}>
                                             {s.trend}
                                         </span>
                                     </div>
-                                    <h3 className="text-3xl font-serif font-medium mb-1">{s.value}</h3>
-                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{s.label}</p>
-                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <h3 className="text-3xl font-pixel mb-1 text-retro-white">{s.value}</h3>
+                                    <p className="text-[10px] text-retro-muted uppercase font-bold tracking-widest">{s.label}</p>
+                                    <div className="absolute bottom-0 left-0 w-full h-[2px] bg-retro-cyan opacity-0 group-hover:opacity-30 transition-none" />
                                 </CardContent>
                             </Card>
                         </motion.div>
@@ -147,13 +143,13 @@ export default function AnalyticsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                     >
-                        <Card className="rounded-[2.5rem] h-full">
+                        <Card className=" h-full">
                             <CardHeader className="flex flex-row items-center justify-between pb-8">
                                 <div>
-                                    <CardTitle className="text-xl font-serif">Neural Traffic</CardTitle>
+                                    <CardTitle className="text-xl font-pixel">Neural Traffic</CardTitle>
                                     <CardDescription>Requests and token consumption over time</CardDescription>
                                 </div>
-                                <TrendingUp className="w-5 h-5 text-blue-base opacity-50" />
+                                <TrendingUp className="w-5 h-5 text-retro-cyan opacity-50" />
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[300px] w-full">
@@ -165,24 +161,24 @@ export default function AnalyticsPage() {
                                                     <stop offset="95%" stopColor="#EAB308" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#3A4657" vertical={false} />
                                             <XAxis
                                                 dataKey="date"
-                                                tick={{ fontSize: 10, fill: '#52525b' }}
+                                                tick={{ fontSize: 10, fill: '#8A95A5' }}
                                                 axisLine={false}
                                                 tickLine={false}
                                                 dy={10}
                                             />
                                             <YAxis
-                                                tick={{ fontSize: 10, fill: '#52525b' }}
+                                                tick={{ fontSize: 10, fill: '#8A95A5' }}
                                                 axisLine={false}
                                                 tickLine={false}
                                             />
                                             <Tooltip
                                                 contentStyle={{
-                                                    background: '#0a0a0a',
-                                                    border: '1px solid #ffffff10',
-                                                    borderRadius: '16px',
+                                                    background: '#536175',
+                                                    border: '3px solid #3A4657',
+                                                    borderRadius: '0px',
                                                     fontSize: '12px'
                                                 }}
                                             />
@@ -200,9 +196,9 @@ export default function AnalyticsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
                     >
-                        <Card className="rounded-[2.5rem] h-full">
+                        <Card className=" h-full">
                             <CardHeader>
-                                <CardTitle className="text-xl font-serif">Model Allocation</CardTitle>
+                                <CardTitle className="text-xl font-pixel">Model Allocation</CardTitle>
                                 <CardDescription>Compute distribution by engine</CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -225,17 +221,17 @@ export default function AnalyticsPage() {
                                             </Pie>
                                             <Tooltip
                                                 contentStyle={{
-                                                    background: '#0a0a0a',
-                                                    border: '1px solid #ffffff10',
-                                                    borderRadius: '16px',
+                                                    background: '#536175',
+                                                    border: '3px solid #3A4657',
+                                                    borderRadius: '0px',
                                                     fontSize: '12px'
                                                 }}
                                             />
                                         </PieChart>
                                     </ResponsiveContainer>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-xs text-zinc-500 uppercase font-bold tracking-widest">Active</span>
-                                        <span className="text-2xl font-serif">{modelDist.length}</span>
+                                        <span className="text-xs text-retro-muted uppercase font-bold tracking-widest">Active</span>
+                                        <span className="text-2xl font-pixel">{modelDist.length}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-3 mt-6">
@@ -245,10 +241,10 @@ export default function AnalyticsPage() {
                                         return (
                                             <div key={i} className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                                    <span className="text-xs text-zinc-400">{m.name}</span>
+                                                    <div className="w-2 h-2 " style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                                                    <span className="text-xs text-retro-muted">{m.name}</span>
                                                 </div>
-                                                <span className="text-[10px] font-mono text-zinc-600">{percent}%</span>
+                                                <span className="text-[10px] font-mono text-retro-dim">{percent}%</span>
                                             </div>
                                         );
                                     })}
@@ -264,9 +260,9 @@ export default function AnalyticsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                 >
-                    <Card className="rounded-[2.5rem]">
+                    <Card className="">
                         <CardHeader>
-                            <CardTitle className="text-xl font-serif">Neural Latency Trend</CardTitle>
+                            <CardTitle className="text-xl font-pixel">Neural Latency Trend</CardTitle>
                             <CardDescription>Response time volatility across global nodes</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -279,14 +275,14 @@ export default function AnalyticsPage() {
                                                 <stop offset="95%" stopColor="#06B6D4" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#3A4657" vertical={false} />
                                         <XAxis dataKey="date" hide />
-                                        <YAxis tick={{ fontSize: 10, fill: '#52525b' }} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{ fontSize: 10, fill: '#8A95A5' }} axisLine={false} tickLine={false} />
                                         <Tooltip
                                             contentStyle={{
-                                                background: '#0a0a0a',
-                                                border: '1px solid #ffffff10',
-                                                borderRadius: '16px'
+                                                background: '#536175',
+                                                border: '3px solid #3A4657',
+                                                borderRadius: '0px'
                                             }}
                                         />
                                         <Area type="monotone" dataKey="latency" stroke="#06B6D4" fillOpacity={1} fill="url(#colorLat)" strokeWidth={2} />

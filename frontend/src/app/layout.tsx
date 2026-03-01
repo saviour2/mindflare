@@ -38,25 +38,25 @@ export default function RootLayout({
             position="bottom-right"
             toastOptions={{
               style: {
-                background: '#0f0f0f',
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px',
+                background: '#536175',
+                color: '#EAEAEA',
+                border: '3px solid #3A4657',
+                borderRadius: '0px',
                 fontSize: '13px',
-                fontFamily: 'var(--font-geist-sans)',
+                fontFamily: "'VT323', monospace",
                 padding: '12px 18px',
-                backdropFilter: 'blur(12px)',
+                boxShadow: '4px 4px 0px #2F3947',
               },
               success: {
-                iconTheme: { primary: '#d4af37', secondary: '#000' },
+                iconTheme: { primary: '#F2AEC0', secondary: '#2F3947' },
                 style: {
-                  border: '1px solid rgba(212,175,55,0.2)',
+                  border: '3px solid #F2AEC0',
                 },
               },
               error: {
-                iconTheme: { primary: '#ef4444', secondary: '#000' },
+                iconTheme: { primary: '#D88A8A', secondary: '#2F3947' },
                 style: {
-                  border: '1px solid rgba(239,68,68,0.2)',
+                  border: '3px solid #D88A8A',
                 },
               },
               duration: 3000,

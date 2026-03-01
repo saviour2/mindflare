@@ -93,15 +93,11 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white">
+        <div className="min-h-screen text-retro-white">
             <Navbar />
 
-            {/* Background Effects */}
-            <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-blue-base/5 rounded-full blur-[100px]" />
-            </div>
+            {/* Dark backdrop overlay */}
+            <div className="fixed inset-0 z-0 bg-[#2F3947]/60 backdrop-blur-[2px] pointer-events-none" />
 
             <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -109,7 +105,7 @@ export default function SettingsPage() {
                         <motion.h1
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="text-4xl font-serif font-medium mb-2"
+                            className="text-4xl font-pixel mb-2 text-retro-white"
                         >
                             System Configuration
                         </motion.h1>
@@ -117,7 +113,7 @@ export default function SettingsPage() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-zinc-500"
+                            className="text-retro-muted"
                         >
                             Manage your cognitive identity and security protocols.
                         </motion.p>
@@ -131,27 +127,27 @@ export default function SettingsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.15 }}
                     >
-                        <Card className="rounded-[2.5rem] overflow-hidden">
+                        <Card className=" overflow-hidden">
                             <div className="p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
-                                <div className="w-24 h-24 rounded-3xl bg-blue-base/10 border border-blue-base/20 flex items-center justify-center relative overflow-hidden group">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-base/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <span className="text-3xl font-serif text-blue-base relative z-10">{user?.email?.[0].toUpperCase()}</span>
+                                <div className="w-24 h-24 bg-retro-panel border-3 border-retro-cyan shadow-pixel-cyan flex items-center justify-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-retro-cyan/10 opacity-0 group-hover:opacity-100 transition-none" />
+                                    <span className="text-3xl font-pixel text-retro-cyan relative z-10">{user?.email?.[0].toUpperCase()}</span>
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
-                                    <h3 className="text-2xl font-serif font-medium mb-1">Neural Identity</h3>
-                                    <p className="text-zinc-400 font-sans mb-4">{user?.email}</p>
+                                    <h3 className="text-2xl font-pixel mb-1 text-retro-white">Neural Identity</h3>
+                                    <p className="text-retro-muted font-sans mb-4">{user?.email}</p>
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
-                                            <Shield className="w-3 h-3 text-blue-base" />
-                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Verified Account</span>
+                                        <div className="px-3 py-1 bg-retro-panel border-3 border-retro-border flex items-center gap-2">
+                                            <Shield className="w-3 h-3 text-retro-cyan" />
+                                            <span className="text-[10px] font-bold text-retro-muted uppercase tracking-widest">Verified Account</span>
                                         </div>
-                                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
-                                            <Fingerprint className="w-3 h-3 text-accent-cyan" />
-                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Biometric Link Active</span>
+                                        <div className="px-3 py-1 bg-retro-panel border-3 border-retro-border flex items-center gap-2">
+                                            <Fingerprint className="w-3 h-3 text-retro-cyan" />
+                                            <span className="text-[10px] font-bold text-retro-muted uppercase tracking-widest">Biometric Link Active</span>
                                         </div>
                                     </div>
                                 </div>
-                                <Button variant="outline" className="rounded-full h-12 px-8 border-white/10 hover:bg-white/5">
+                                <Button variant="outline" className=" h-12 px-8 border-retro-border hover:bg-retro-panel">
                                     Update Profile
                                 </Button>
                             </div>
@@ -164,27 +160,27 @@ export default function SettingsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                     >
-                        <Card className="rounded-[2.5rem] overflow-hidden">
+                        <Card className=" overflow-hidden">
                             <div className="p-8 md:p-10">
-                                <h3 className="text-xl font-serif font-medium mb-8">Access Infrastructure</h3>
+                                <h3 className="text-xl font-pixel mb-8 text-retro-white">Access Infrastructure</h3>
                                 <div className="space-y-4">
                                     <div
                                         onClick={keys ? undefined : handleRevealKeys}
-                                        className="flex flex-col p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer"
+                                        className="flex flex-col p-6 bg-retro-panel border-3 border-retro-border group hover:border-retro-muted transition-none cursor-pointer"
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 flex items-center justify-center border border-accent-cyan/20">
-                                                    <Key className="w-5 h-5 text-accent-cyan" />
+                                                <div className="w-10 h-10 bg-retro-card flex items-center justify-center border-3 border-retro-border">
+                                                    <Key className="w-5 h-5 text-retro-cyan" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium">Manage Global API Keys</p>
-                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">Protected Vault</p>
+                                                    <p className="text-sm font-medium text-retro-white">Manage Global API Keys</p>
+                                                    <p className="text-[10px] text-retro-muted uppercase font-bold tracking-widest mt-0.5">Protected Vault</p>
                                                 </div>
                                             </div>
                                             {!keys && (
                                                 <div className="flex items-center gap-2">
-                                                    {isRevealing ? <p className="text-xs text-blue-base">Verifying...</p> : <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />}
+                                                    {isRevealing ? <p className="text-xs text-retro-cyan">Verifying...</p> : <ChevronRight className="w-4 h-4 text-retro-dim group-hover:text-retro-white transition-none" />}
                                                 </div>
                                             )}
                                         </div>
@@ -193,84 +189,84 @@ export default function SettingsPage() {
                                             <motion.div
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
-                                                className="mt-6 pt-6 border-t border-white/10 space-y-4 cursor-default"
+                                                className="mt-6 pt-6 border-t border-retro-border space-y-4 cursor-default"
                                                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                             >
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <p className="text-xs text-zinc-400 font-sans">For strict-security APIs, provide your App ID and API Key pair.</p>
-                                                    <Button variant="outline" size="sm" onClick={() => setKeys(null)} className="h-8 text-xs border-white/10">Lock Vault</Button>
+                                                    <p className="text-xs text-retro-muted font-sans">For strict-security APIs, provide your App ID and API Key pair.</p>
+                                                    <Button variant="outline" size="sm" onClick={() => setKeys(null)} className="h-8 text-xs border-retro-border">Lock Vault</Button>
                                                 </div>
                                                 {Object.entries(keys).map(([appId, secret]) => (
-                                                    <div key={appId} className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3">
+                                                    <div key={appId} className="p-4 bg-retro-card border-3 border-retro-border space-y-3">
                                                         <div className="flex items-center justify-between gap-4">
                                                             <div className="flex-1">
-                                                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">App ID</p>
-                                                                <code className="text-xs text-zinc-300 font-mono select-all bg-white/5 px-2 py-1 rounded inline-block">{appId}</code>
+                                                                <p className="text-[10px] uppercase tracking-widest text-retro-muted font-bold mb-1">App ID</p>
+                                                                <code className="text-xs text-retro-white font-mono select-all bg-retro-panel px-2 py-1 inline-block">{appId}</code>
                                                             </div>
-                                                            <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(appId)} className="h-8 hover:bg-white/5">Copy ID</Button>
+                                                            <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(appId)} className="h-8 hover:bg-retro-panel">Copy ID</Button>
                                                         </div>
                                                         <div className="flex items-center justify-between gap-4">
                                                             <div className="flex-1">
-                                                                <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-1">API Key</p>
-                                                                <code className="text-xs text-emerald-400 font-mono select-all bg-emerald-400/10 px-2 py-1 rounded inline-block">{secret}</code>
+                                                                <p className="text-[10px] uppercase tracking-widest text-retro-muted font-bold mb-1">API Key</p>
+                                                                <code className="text-xs text-emerald-400 font-mono select-all bg-emerald-400/10 px-2 py-1 inline-block">{secret}</code>
                                                             </div>
-                                                            <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(secret)} className="h-8 hover:bg-white/5">Copy Key</Button>
+                                                            <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(secret)} className="h-8 hover:bg-retro-panel">Copy Key</Button>
                                                         </div>
                                                     </div>
                                                 ))}
                                                 {Object.keys(keys).length === 0 && (
-                                                    <p className="text-center text-sm text-zinc-500 py-4">No applications registered yet.</p>
+                                                    <p className="text-center text-sm text-retro-muted py-4">No applications registered yet.</p>
                                                 )}
                                             </motion.div>
                                         )}
                                     </div>
-                                    <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all cursor-pointer">
+                                    <div className="flex items-center justify-between p-6 bg-retro-panel border-3 border-retro-border group hover:border-retro-muted transition-none cursor-pointer">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-blue-base/10 flex items-center justify-center border border-blue-base/20">
-                                                <ChevronRight className="w-5 h-5 text-blue-base" />
+                                            <div className="w-10 h-10 bg-retro-card flex items-center justify-center border-3 border-retro-border">
+                                                <ChevronRight className="w-5 h-5 text-retro-cyan" />
                                             </div>
                                             <Link href="/applications">
                                                 <div>
-                                                    <p className="text-sm font-medium">Link Applications</p>
-                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">Manage connections</p>
+                                                    <p className="text-sm font-medium text-retro-white">Link Applications</p>
+                                                    <p className="text-[10px] text-retro-muted uppercase font-bold tracking-widest mt-0.5">Manage connections</p>
                                                 </div>
                                             </Link>
                                         </div>
-                                        <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />
+                                        <ChevronRight className="w-4 h-4 text-retro-dim group-hover:text-retro-white transition-none" />
                                     </div>
 
                                     {/* CLI Access Token */}
-                                    <div className="flex flex-col p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all">
+                                    <div className="flex flex-col p-6 bg-retro-panel border-3 border-retro-border group hover:border-retro-muted transition-none">
                                         <div className="flex items-center justify-between mb-4">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                                                    <code className="text-purple-400 font-bold text-xs">CLI</code>
+                                                <div className="w-10 h-10 bg-retro-card flex items-center justify-center border-3 border-retro-border">
+                                                    <code className="text-retro-muted font-bold text-xs">CLI</code>
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium">CLI Access Token</p>
-                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">For Terminal Login</p>
+                                                    <p className="text-sm font-medium text-retro-white">CLI Access Token</p>
+                                                    <p className="text-[10px] text-retro-muted uppercase font-bold tracking-widest mt-0.5">For Terminal Login</p>
                                                 </div>
                                             </div>
                                             <Button
                                                 onClick={handleGenerateCliToken}
                                                 disabled={generatingToken}
-                                                variant="outline" size="sm" className="h-8 border-white/10 hover:bg-white/5"
+                                                variant="outline" size="sm" className="h-8 border-retro-border hover:bg-retro-panel"
                                             >
                                                 {generatingToken ? 'Generating...' : 'Generate Token'}
                                             </Button>
                                         </div>
 
                                         {cliToken && (
-                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-4 border-t border-white/10 space-y-3">
-                                                <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-                                                    Run <code className="text-purple-300">mindflare login --token YOUR_TOKEN</code> in your terminal to authenticate without a password.
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-4 border-t border-retro-border space-y-3">
+                                                <p className="text-xs text-retro-muted font-sans leading-relaxed">
+                                                    Run <code className="text-retro-cyan">mindflare login --token YOUR_TOKEN</code> in your terminal to authenticate without a password.
                                                 </p>
-                                                <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-black/40 border border-white/5">
-                                                    <code className="flex-1 text-xs text-emerald-400 font-mono select-all truncate bg-emerald-400/10 px-3 py-2 rounded-lg">{cliToken}</code>
+                                                <div className="flex items-center justify-between gap-4 p-4 bg-retro-card border-3 border-retro-border">
+                                                    <code className="flex-1 text-xs text-emerald-400 font-mono select-all truncate bg-emerald-400/10 px-3 py-2 ">{cliToken}</code>
                                                     <Button
                                                         variant="ghost" size="sm"
                                                         onClick={() => { navigator.clipboard.writeText(cliToken); setCopiedToken(true); setTimeout(() => setCopiedToken(false), 2000); }}
-                                                        className="h-8 hover:bg-white/5 shrink-0"
+                                                        className="h-8 hover:bg-retro-panel shrink-0"
                                                     >
                                                         {copiedToken ? 'Copied!' : 'Copy'}
                                                     </Button>
@@ -290,21 +286,21 @@ export default function SettingsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
                     >
-                        <Card className="rounded-[2.5rem] border-red-500/20 bg-red-500/[0.02] overflow-hidden">
+                        <Card className="border-3 border-red-500 shadow-[4px_4px_0px_#7f1d1d] overflow-hidden">
                             <div className="p-8 md:p-10">
                                 <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                                    <div className="w-12 h-12 bg-retro-card flex items-center justify-center border-3 border-red-500">
                                         <Trash2 className="w-6 h-6 text-red-500" />
                                     </div>
-                                    <h3 className="text-xl font-serif text-red-500">Decommission Infrastructure</h3>
+                                    <h3 className="text-xl font-pixel text-red-500">Decommission Infrastructure</h3>
                                 </div>
-                                <p className="text-zinc-500 text-sm font-sans mb-8 max-w-2xl leading-relaxed">
+                                <p className="text-retro-muted text-sm font-sans mb-8 max-w-2xl leading-relaxed">
                                     Executing this command will permanently purge all neural applications, knowledge bases, and architectural data associated with this identity. This operation is irreversible.
                                 </p>
                                 <Button
                                     onClick={handlePurge}
                                     variant="outline"
-                                    className="rounded-full h-12 border-red-500/20 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 px-8 transition-all"
+                                    className="h-12 border-3 border-red-500 text-red-500 hover:bg-red-500/10 shadow-[4px_4px_0px_#7f1d1d] px-8 font-pixel"
                                 >
                                     Initiate Purge Sequence
                                 </Button>

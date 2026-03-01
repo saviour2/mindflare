@@ -91,9 +91,9 @@ export default function KnowledgeBasePage() {
                                 toast.error('Failed to delete knowledge base');
                             }
                         }}
-                        className="px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-bold"
+                        className="px-3 py-1 bg-red-500 text-white text-xs font-bold"
                     >Delete</button>
-                    <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 rounded-lg bg-white/10 text-white text-xs">Cancel</button>
+                    <button onClick={() => toast.dismiss(t.id)} className="px-3 py-1 bg-white/10 text-white text-xs">Cancel</button>
                 </span>
             ),
             { duration: 6000 }
@@ -151,20 +151,16 @@ export default function KnowledgeBasePage() {
             case 'pdf': return <FileText className="w-5 h-5 text-orange-400" />;
             case 'website': return <Globe className="w-5 h-5 text-blue-400" />;
             case 'github': return <Github className="w-5 h-5 text-green-400" />;
-            default: return <Database className="w-5 h-5 text-zinc-400" />;
+            default: return <Database className="w-5 h-5 text-retro-muted" />;
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white">
+        <div className="min-h-screen text-retro-white">
             <Navbar />
 
-            {/* Background Effects */}
-            <div className="fixed inset-0 z-0 bg-organic-grid opacity-20 pointer-events-none" />
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[30%] left-[-10%] w-[50vw] h-[50vw] bg-accent-cyan/5 rounded-full blur-[140px]" />
-                <div className="absolute bottom-[20%] right-[-10%] w-[40vw] h-[40vw] bg-blue-base/5 rounded-full blur-[100px]" />
-            </div>
+            {/* Dark backdrop overlay */}
+            <div className="fixed inset-0 z-0 bg-[#2F3947]/60 backdrop-blur-[2px] pointer-events-none" />
 
             <main className="relative z-10 pt-28 pb-20 px-6 max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -173,17 +169,17 @@ export default function KnowledgeBasePage() {
                             <motion.h1
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="text-4xl font-serif font-medium"
+                                className="text-4xl font-pixel text-retro-white"
                             >
                                 Knowledge Bases
                             </motion.h1>
-                            <div className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase font-bold tracking-widest text-zinc-500">Beta</div>
+                            <div className="px-2 py-0.5 bg-retro-panel border-3 border-retro-border text-[10px] uppercase font-bold tracking-widest text-retro-muted">Beta</div>
                         </div>
                         <motion.p
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-zinc-500"
+                            className="text-retro-muted"
                         >
                             Train your AI models on custom datasets and live data sources.
                         </motion.p>
@@ -194,16 +190,16 @@ export default function KnowledgeBasePage() {
                         className="flex items-center gap-4"
                     >
                         <div className="relative group">
-                            <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-white transition-colors" />
+                            <Search className="w-4 h-4 text-retro-muted absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-white transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Search datasets..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-11 pr-4 py-2.5 w-64 bg-white/5 border border-white/10 rounded-full text-sm focus:outline-none focus:border-white/20 transition-all"
+                                className="pl-11 pr-4 py-2.5 w-64 bg-retro-panel border-3 border-retro-border text-sm text-retro-white focus:outline-none focus:border-retro-border transition-none font-mono"
                             />
                         </div>
-                        <Button onClick={() => setShowCreate(true)} className="rounded-full h-12 px-6">
+                        <Button onClick={() => setShowCreate(true)} className=" h-12 px-6">
                             <Plus className="w-4 h-4 mr-2" /> Connect Data
                         </Button>
                     </motion.div>
@@ -213,16 +209,16 @@ export default function KnowledgeBasePage() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="rounded-[2.5rem] border border-white/10 bg-white/[0.02] backdrop-blur-xl p-24 text-center border-dashed"
+                        className="border-3 border-retro-border bg-retro-panel p-24 text-center border-dashed"
                     >
-                        <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
-                            <Database className="w-10 h-10 text-zinc-500" />
+                        <div className="w-20 h-20 bg-retro-card border-3 border-retro-border flex items-center justify-center mx-auto mb-6">
+                            <Database className="w-10 h-10 text-retro-muted" />
                         </div>
-                        <h2 className="text-2xl font-serif font-medium mb-3">No knowledge bases yet</h2>
-                        <p className="text-zinc-500 mb-10 max-w-sm mx-auto font-sans leading-relaxed">
+                        <h2 className="text-2xl font-pixel mb-3 text-retro-white">No knowledge bases yet</h2>
+                        <p className="text-retro-muted mb-10 max-w-sm mx-auto font-sans leading-relaxed">
                             Upload PDFs, crawl websites, or ingest GitHub repositories to give your AI context.
                         </p>
-                        <Button onClick={() => setShowCreate(true)} variant="outline" className="rounded-full h-12 px-8">
+                        <Button onClick={() => setShowCreate(true)} variant="outline" className=" h-12 px-8">
                             Initialize Store <Plus className="w-4 h-4 ml-2" />
                         </Button>
                     </motion.div>
@@ -238,12 +234,12 @@ export default function KnowledgeBasePage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.05 }}
                                 >
-                                    <Card className="group hover:border-white/20 transition-all duration-300 relative overflow-hidden">
+                                    <Card className="group hover:border-retro-border transition-all duration-300 relative overflow-hidden">
                                         <CardContent className="p-6">
                                             {/* Header */}
                                             <div className="flex items-start justify-between mb-4">
                                                 <div className={cn(
-                                                    "w-12 h-12 rounded-2xl flex items-center justify-center border",
+                                                    "w-12 h-12  flex items-center justify-center border",
                                                     kb.source_type === 'pdf' ? "bg-orange-500/10 border-orange-500/20" :
                                                         kb.source_type === 'website' ? "bg-blue-500/10 border-blue-500/20" :
                                                             "bg-green-500/10 border-green-500/20"
@@ -261,20 +257,20 @@ export default function KnowledgeBasePage() {
                                             </div>
 
                                             {/* Name */}
-                                            <h3 className="text-xl font-medium mb-3 group-hover:text-blue-light transition-colors">{kb.kb_name}</h3>
+                                            <h3 className="text-xl font-medium mb-3 text-retro-white group-hover:text-retro-cyan transition-none">{kb.kb_name}</h3>
 
                                             {/* Progress bar — shown while processing */}
                                             {isProcessing && (
                                                 <div className="mb-4">
                                                     <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-[10px] text-zinc-500 font-mono">
+                                                        <span className="text-[10px] text-retro-muted font-mono">
                                                             {kb.progress_message || 'Initializing...'}
                                                         </span>
                                                         <span className="text-[11px] font-bold text-amber-400 tabular-nums">{progress}%</span>
                                                     </div>
-                                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                    <div className="h-1.5 w-full bg-retro-panel overflow-hidden">
                                                         <motion.div
-                                                            className="h-full rounded-full"
+                                                            className="h-full "
                                                             style={{
                                                                 background: 'linear-gradient(90deg, #f59e0b, #fcd34d)',
                                                             }}
@@ -290,17 +286,17 @@ export default function KnowledgeBasePage() {
                                             {!isProcessing && kb.status === 'completed' && (
                                                 <div className="flex gap-4 mb-4">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Type</span>
-                                                        <span className="text-sm font-medium text-zinc-400">{kb.source_type.toUpperCase()}</span>
+                                                        <span className="text-[10px] text-retro-muted uppercase font-bold tracking-widest">Type</span>
+                                                        <span className="text-sm font-medium text-retro-muted">{kb.source_type.toUpperCase()}</span>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Chunks</span>
-                                                        <span className="text-sm font-medium text-zinc-400">{kb.chunks_count.toLocaleString()}</span>
+                                                        <span className="text-[10px] text-retro-muted uppercase font-bold tracking-widest">Chunks</span>
+                                                        <span className="text-sm font-medium text-retro-muted">{kb.chunks_count.toLocaleString()}</span>
                                                     </div>
                                                     {kb.total_chars && (
                                                         <div className="flex flex-col">
-                                                            <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Chars</span>
-                                                            <span className="text-sm font-medium text-zinc-400">{(kb.total_chars / 1000).toFixed(0)}k</span>
+                                                            <span className="text-[10px] text-retro-muted uppercase font-bold tracking-widest">Chars</span>
+                                                            <span className="text-sm font-medium text-retro-muted">{(kb.total_chars / 1000).toFixed(0)}k</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -308,20 +304,20 @@ export default function KnowledgeBasePage() {
 
                                             {/* Error message */}
                                             {kb.status === 'failed' && kb.error && (
-                                                <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/10 flex items-start gap-2 mb-3">
+                                                <div className="p-3 bg-red-500/5 border border-red-500/10 flex items-start gap-2 mb-3">
                                                     <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
                                                     <p className="text-[11px] text-red-400/80 leading-relaxed italic">{kb.error}</p>
                                                 </div>
                                             )}
 
                                             {/* Footer */}
-                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
-                                                <span className="text-[10px] text-zinc-600 font-mono italic">ID: {kb.kb_id.slice(0, 8)}...</span>
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-retro-border">
+                                                <span className="text-[10px] text-retro-dim font-mono italic">ID: {kb.kb_id.slice(0, 8)}...</span>
                                                 <div className="flex items-center gap-2">
-                                                    <Button onClick={() => deleteKB(kb.kb_id)} variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-red-400">
+                                                    <Button onClick={() => deleteKB(kb.kb_id)} variant="ghost" size="sm" className=" h-8 px-2 text-retro-muted hover:text-red-400">
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </Button>
-                                                    <Button variant="ghost" size="sm" className="rounded-lg h-8 px-2 text-zinc-500 hover:text-white">
+                                                    <Button variant="ghost" size="sm" className=" h-8 px-2 text-retro-muted hover:text-retro-white">
                                                         <Settings className="w-3.5 h-3.5" />
                                                     </Button>
                                                 </div>
@@ -339,38 +335,38 @@ export default function KnowledgeBasePage() {
             <AnimatePresence>
                 {showCreate && (
                     <div className="fixed inset-0 flex items-center justify-center z-[100] px-6">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreate(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreate(false)} className="absolute inset-0 bg-[#2F3947]/80 backdrop-blur-sm" />
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-lg bg-zinc-950 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl"
+                            className="relative w-full max-w-lg bg-retro-panel border-3 border-retro-border overflow-hidden shadow-pixel"
                         >
                             <div className="p-10">
                                 <div className="flex items-center justify-between mb-8">
                                     <div>
-                                        <h3 className="text-2xl font-serif font-medium">Connect Data</h3>
-                                        <p className="text-zinc-500 text-sm mt-1">Ground your AI in your reality.</p>
+                                        <h3 className="text-2xl font-pixel text-retro-white">Connect Data</h3>
+                                        <p className="text-retro-muted text-sm mt-1">Ground your AI in your reality.</p>
                                     </div>
-                                    <button onClick={() => setShowCreate(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                                        <X className="w-5 h-5 text-zinc-500" />
+                                    <button onClick={() => setShowCreate(false)} className="p-2 hover:bg-retro-panel transition-colors">
+                                        <X className="w-5 h-5 text-retro-muted" />
                                     </button>
                                 </div>
 
                                 <div className="space-y-8">
                                     <div className="space-y-3">
-                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Database Name</label>
+                                        <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">Database Name</label>
                                         <input
                                             type="text"
                                             value={kbName}
                                             onChange={(e) => setKbName(e.target.value)}
                                             placeholder="e.g. Project Archive"
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-blue-base/50 transition-all font-sans"
+                                            className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white focus:outline-none focus:border-retro-cyan/50 transition-none font-mono"
                                         />
                                     </div>
 
                                     <div className="space-y-3">
-                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Source Pipeline</label>
+                                        <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">Source Pipeline</label>
                                         <div className="grid grid-cols-3 gap-3">
                                             {[
                                                 { val: 'pdf', lbl: 'PDF', ic: <Upload className="w-4 h-4" /> },
@@ -381,8 +377,8 @@ export default function KnowledgeBasePage() {
                                                     key={s.val}
                                                     onClick={() => setSourceType(s.val)}
                                                     className={cn(
-                                                        "flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all duration-300",
-                                                        sourceType === s.val ? "bg-blue-base/10 border-blue-base/40 text-blue-light" : "bg-white/5 border-white/5 text-zinc-500 hover:bg-white/[0.07]"
+                                                        "flex flex-col items-center justify-center gap-2 p-4  border transition-all duration-300",
+                                                        sourceType === s.val ? "bg-retro-panel border-retro-cyan text-retro-cyan" : "bg-retro-panel border-retro-border text-retro-muted hover:bg-retro-card"
                                                     )}
                                                 >
                                                     {s.ic}
@@ -395,14 +391,14 @@ export default function KnowledgeBasePage() {
 
                                     {sourceType !== 'pdf' && (
                                         <div className="space-y-3">
-                                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">{sourceType === 'website' ? 'Target URL' : 'Repository URL'}</label>
+                                            <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">{sourceType === 'website' ? 'Target URL' : 'Repository URL'}</label>
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     value={sourceUrl}
                                                     onChange={(e) => setSourceUrl(e.target.value)}
                                                     placeholder={sourceType === 'website' ? 'https://docs.myproduct.com' : 'https://github.com/org/repo'}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-blue-base/50 transition-all font-sans text-sm"
+                                                    className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white focus:outline-none focus:border-retro-cyan/50 transition-none font-mono text-sm"
                                                 />
                                             </div>
                                         </div>
@@ -410,16 +406,16 @@ export default function KnowledgeBasePage() {
 
                                     {sourceType === 'pdf' && (
                                         <div className="relative">
-                                            <div className="border-2 border-dashed border-white/10 rounded-[1.5rem] p-10 text-center hover:bg-white/[0.02] transition-colors cursor-pointer group">
-                                                <Upload className="w-8 h-8 text-zinc-600 mx-auto mb-4 group-hover:text-blue-light transition-colors" />
-                                                <p className="text-sm text-zinc-400 font-medium mb-1 truncate px-4">{file ? file.name : 'Drop architectural PDF here'}</p>
-                                                <p className="text-[10px] text-zinc-600 uppercase tracking-widest">Supports up to 50MB</p>
+                                            <div className="border-3 border-dashed border-retro-border p-10 text-center hover:bg-retro-card transition-none cursor-pointer group">
+                                                <Upload className="w-8 h-8 text-retro-dim mx-auto mb-4 group-hover:text-retro-cyan transition-colors" />
+                                                <p className="text-sm text-retro-muted font-medium mb-1 truncate px-4">{file ? file.name : 'Drop architectural PDF here'}</p>
+                                                <p className="text-[10px] text-retro-dim uppercase tracking-widest">Supports up to 50MB</p>
                                                 <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                             </div>
                                         </div>
                                     )}
 
-                                    <Button onClick={createKB} disabled={loading || !kbName.trim()} className="w-full h-14 rounded-2xl bg-blue-base text-black hover:bg-blue-light mt-4 shadow-lg shadow-blue-base/20 transition-all">
+                                    <Button onClick={createKB} disabled={loading || !kbName.trim()} className="w-full h-14 bg-retro-cyan text-retro-ink hover:bg-retro-cyan/80 mt-4 shadow-pixel font-pixel transition-none">
                                         {loading ? 'Ingesting Pipeline...' : 'Initialize Ingestion'}
                                     </Button>
                                 </div>

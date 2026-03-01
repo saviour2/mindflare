@@ -11,3 +11,6 @@ mindflare.json
 venv/
 *.log
 backend/uploads/*
+
+# Private codebase reference (not for version control)
+context.md
