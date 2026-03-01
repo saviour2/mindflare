@@ -14,6 +14,10 @@ from langchain_community.vectorstores import FAISS
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
+# Absolute path to the backend directory (avoids CWD issues)
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+FAISS_ROOT  = os.path.join(BACKEND_DIR, "faiss_indices")
+
 # ─────────────────────────────────────────────
 # Celery
 # ─────────────────────────────────────────────
@@ -330,8 +334,8 @@ def run_ingestion_pipeline(kb_id: str, source_type: str, source_url: str, celery
         _progress(60, f"Created {len(chunk_texts)} chunks \u2014 generating embeddings...")
 
         # ── Stage 3: Embed + FAISS (60 → 90%) ───────────
-        index_path = os.path.join("faiss_indices", kb_id)
-        os.makedirs("faiss_indices", exist_ok=True)
+        index_path = os.path.join(FAISS_ROOT, kb_id)
+        os.makedirs(FAISS_ROOT, exist_ok=True)
 
         try:
             _progress(65, f"Embedding {len(chunk_texts)} chunks (this may take a moment)...")

@@ -17,8 +17,11 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 EMBEDDING_MODEL = "nvidia/llama-nemotron-embed-vl-1b-v2:free"
 
 
-def _call_openrouter_embeddings(texts: List[str]) -> List[List[float]]:
-    """Call OpenRouter embeddings API with a batch of texts."""
+def _call_openrouter_embeddings(texts: List[str], max_retries: int = 3) -> List[List[float]]:
+    """Call OpenRouter embeddings API with a batch of texts.
+    Includes retry logic for transient failures."""
+    import time as _time
+
     if not OPENROUTER_API_KEY:
         raise ValueError("OPENROUTER_API_KEY is not set in environment")
 
@@ -33,12 +36,22 @@ def _call_openrouter_embeddings(texts: List[str]) -> List[List[float]]:
         "encoding_format": "float",
     }
 
-    response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=60)
-    response.raise_for_status()
-    data = response.json()
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=60)
+            response.raise_for_status()
+            data = response.json()
 
-    embeddings = sorted(data["data"], key=lambda x: x["index"])
-    return [e["embedding"] for e in embeddings]
+            embeddings = sorted(data["data"], key=lambda x: x["index"])
+            return [e["embedding"] for e in embeddings]
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Embedding API attempt {attempt}/{max_retries} failed: {e}")
+            if attempt < max_retries:
+                _time.sleep(1.5 * attempt)  # backoff: 1.5s, 3s
+
+    raise last_error
 
 
 class OpenRouterEmbeddings(Embeddings):

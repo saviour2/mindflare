@@ -63,6 +63,13 @@ async function startWhatsAppBot(appId: string) {
     // Conversation memory — persists across reconnections
     const memory = new ConversationMemory();
 
+    // Deduplication — track processed message IDs to avoid double-replies
+    const processedMsgIds = new Set<string>();
+    const MAX_PROCESSED_CACHE = 500;
+
+    // Lock per conversation to prevent concurrent replies to the same chat
+    const activeLocks = new Set<string>();
+
     // Silent logger to suppress all Baileys internal logging
     const silentLogger = {
         info: () => {},
@@ -142,10 +149,25 @@ async function startWhatsAppBot(appId: string) {
         sock.ev.on('creds.update', saveCreds);
 
         sock.ev.on('messages.upsert', async (m: any) => {
-            const msg = m.messages[0];
+            // Only process genuinely new incoming messages (type 'notify')
+            if (m.type !== 'notify') return;
 
+            for (const msg of m.messages) {
             // Skip our own messages and status updates
             if (!msg.message || msg.key.fromMe || msg.key.remoteJid === 'status@broadcast') return;
+
+            // Only respond to personal (DM) messages — ignore groups
+            if (msg.key.remoteJid.endsWith('@g.us')) return;
+
+            // Deduplicate: skip if we already processed this exact message
+            const msgId = msg.key.id;
+            if (!msgId || processedMsgIds.has(msgId)) return;
+            processedMsgIds.add(msgId);
+            // Evict old entries to avoid unbounded memory growth
+            if (processedMsgIds.size > MAX_PROCESSED_CACHE) {
+                const first = processedMsgIds.values().next().value;
+                if (first) processedMsgIds.delete(first);
+            }
 
             // Extract text message
             const messageType = Object.keys(msg.message)[0];
@@ -159,17 +181,22 @@ async function startWhatsAppBot(appId: string) {
 
             if (!textContent) return;
 
+            // Prevent concurrent processing for the same chat
+            const jid = msg.key.remoteJid;
+            if (activeLocks.has(jid)) return;
+            activeLocks.add(jid);
+
             console.log(chalk.cyan(`\n[User] `) + textContent);
 
             // Let user know we are typing
-            await sock.sendPresenceUpdate('composing', msg.key.remoteJid);
+            await sock.sendPresenceUpdate('composing', jid);
 
             try {
                 const token = requireToken();
                 const clientSecret = config.get("clientSecret") as string;
 
                 // Format phone number to use as conversation ID
-                const convId = `whatsapp-${msg.key.remoteJid.split('@')[0]}`;
+                const convId = `whatsapp-${jid.split('@')[0]}`;
 
                 // Add user message to conversation memory
                 memory.addMessage(convId, "user", textContent);
@@ -197,11 +224,14 @@ async function startWhatsAppBot(appId: string) {
                 console.log(chalk.green(`[Bot]  `) + (reply.length > 80 ? reply.substring(0, 80) + "..." : reply));
                 console.log(chalk.dim(`  (${memory.size} active chats, ${conversationHistory.length + 1} messages in this thread)`));
 
-                await sock.sendMessage(msg.key.remoteJid, { text: reply });
+                await sock.sendMessage(jid, { text: reply });
             } catch (error: any) {
                 console.error(chalk.red(`Error processing message: ${error.message}`));
-                await sock.sendMessage(msg.key.remoteJid, { text: "Sorry, I am currently unavailable based on a server error." });
+                // Don't send error text to user — it can trigger echo loops
+            } finally {
+                activeLocks.delete(jid);
             }
+            } // end for
         });
     }
 

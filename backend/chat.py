@@ -16,6 +16,10 @@ chat_bp = Blueprint('chat', __name__)
 # Loaded once at module level
 embeddings = OpenRouterEmbeddings()
 
+# Absolute path to the backend directory (avoids CWD issues)
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+FAISS_ROOT  = os.path.join(BACKEND_DIR, "faiss_indices")
+
 MAX_CONTEXT_CHUNKS = 5          # Max retrieved chunks per query
 MAX_CONTEXT_CHARS  = 8000       # Hard cap on total context injected
 MAX_MESSAGE_LENGTH = 4000       # Max length of a single user message
@@ -28,29 +32,46 @@ MAX_CONVERSATION_TURNS = 20     # Max messages in history sent to LLM
 def _retrieve_context(kb_ids: list, user_query: str) -> str:
     """Query FAISS indices for the given KB IDs and return merged context."""
     if not kb_ids or not user_query.strip():
+        print(f"[RAG] Skipped — kb_ids={kb_ids}, query_empty={not user_query.strip()}", flush=True)
         return ""
 
+    print(f"[RAG] Retrieving context for {len(kb_ids)} KB(s): {kb_ids}", flush=True)
+    print(f"[RAG] Query: {user_query[:120]}", flush=True)
     context_chunks: list[str] = []
 
     for kb_id in kb_ids:
-        index_path = os.path.join("faiss_indices", kb_id)
+        index_path = os.path.join(FAISS_ROOT, kb_id)
+        print(f"[RAG]   KB {kb_id} → path={index_path}, exists={os.path.exists(index_path)}", flush=True)
         if not os.path.exists(index_path):
-            logger.warning(f"FAISS index missing for kb_id={kb_id}")
+            logger.warning(f"FAISS index missing for kb_id={kb_id} at {index_path}")
             continue
+
+        # Verify both index files exist
+        faiss_file = os.path.join(index_path, "index.faiss")
+        pkl_file = os.path.join(index_path, "index.pkl")
+        if not os.path.exists(faiss_file) or not os.path.exists(pkl_file):
+            logger.error(f"FAISS index incomplete for kb_id={kb_id}: "
+                         f"faiss={os.path.exists(faiss_file)}, pkl={os.path.exists(pkl_file)}")
+            continue
+
         try:
             vs = FAISS.load_local(
                 index_path, embeddings,
                 allow_dangerous_deserialization=True
             )
+            print(f"[RAG]   Loaded FAISS index, searching...", flush=True)
             docs = vs.similarity_search(user_query, k=MAX_CONTEXT_CHUNKS)
+            print(f"[RAG]   Found {len(docs)} documents", flush=True)
             for doc in docs:
                 chunk = doc.page_content.strip()
                 if chunk:
                     context_chunks.append(chunk)
         except Exception as e:
-            logger.error(f"FAISS load/search error for kb_id={kb_id}: {e}")
+            logger.error(f"FAISS load/search error for kb_id={kb_id}: {e}", exc_info=True)
+            print(f"[RAG]   ERROR for kb_id={kb_id}: {e}", flush=True)
 
     if not context_chunks:
+        print(f"[RAG] No context chunks retrieved from any KB", flush=True)
         return ""
 
     # Merge and truncate to stay within context budget
@@ -58,6 +79,7 @@ def _retrieve_context(kb_ids: list, user_query: str) -> str:
     if len(merged) > MAX_CONTEXT_CHARS:
         merged = merged[:MAX_CONTEXT_CHARS] + "\n\n[Context truncated for length]"
 
+    print(f"[RAG] Returning {len(context_chunks)} chunks ({len(merged)} chars)", flush=True)
     return merged
 
 
@@ -89,10 +111,12 @@ def _build_augmented_messages(
     if context:
         system_content = (
             f"{base_system}\n\n"
-            "You have access to the following knowledge base context. "
-            "Use it when it is relevant to the user's question. "
-            "You may also draw on the full conversation history above when answering.\n\n"
-            f"Knowledge Base Context:\n{context}"
+            "--- IMPORTANT INSTRUCTIONS ---\n"
+            "You have been provided with knowledge base context below. "
+            "You MUST use this context as your PRIMARY source of information when answering the user's question. "
+            "Base your answers on the knowledge base content. Do NOT make up information that is not in the context. "
+            "If the context does not contain relevant information, say so clearly.\n\n"
+            f"=== Knowledge Base Context ===\n{context}\n=== End of Context ==="
         )
     else:
         system_content = base_system
@@ -302,7 +326,11 @@ def playground_chat(app_id):
 
         # ── RAG ──────────────────────────────────
         kb_ids = app_doc.get("knowledge_base_ids", [])
+        print(f"[Playground] App {app_id} | KB IDs: {kb_ids}", flush=True)
         context = _retrieve_context(kb_ids, user_query)
+        print(f"[Playground] Context retrieved: {len(context)} chars | has_context={bool(context)}", flush=True)
+        if context:
+            print(f"[Playground] Context preview: {context[:200]}...", flush=True)
         system_prompt = app_doc.get("system_prompt", "You are a helpful assistant.")
         augmented_msgs = _build_augmented_messages(messages, context, system_prompt)
 
