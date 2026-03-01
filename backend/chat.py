@@ -66,36 +66,38 @@ def _build_augmented_messages(
     context: str,
     system_prompt: str = ""
 ) -> list:
-    """Inject retrieved context into the conversation messages."""
+    """Build the final message list for the LLM with system prompt and optional RAG context.
+
+    Structure:
+      [system]   → system_prompt  (+ KB context if available)
+      [user]     → original messages (history preserved)
+      [assistant]
+      ...
+      [user]     → latest user message (unchanged)
+    
+    By keeping context in the system message and the user message untouched,
+    the LLM can freely reference both KB context AND conversation history.
+    """
     # Trim to last N turns to avoid token overrun
     trimmed = messages[-MAX_CONVERSATION_TURNS:]
 
     if not trimmed:
         return trimmed
 
-    user_query = trimmed[-1].get("content", "")
+    base_system = system_prompt.strip() if system_prompt else "You are a helpful assistant."
 
     if context:
-        augmented_content = (
-            f"{system_prompt}\n\n"
-            if system_prompt else ""
-        ) + (
-            "Use the following knowledge base context to answer the user's question. "
-            "Be concise and direct — answer in 2-4 short paragraphs max. "
-            "Do not repeat the entire context back. Only include the most relevant information. "
-            "If the answer is not in the context, say you don't know.\n\n"
-            f"Context:\n{context}\n\n"
-            f"User Question:\n{user_query}"
+        system_content = (
+            f"{base_system}\n\n"
+            "You have access to the following knowledge base context. "
+            "Use it when it is relevant to the user's question. "
+            "You may also draw on the full conversation history above when answering.\n\n"
+            f"Knowledge Base Context:\n{context}"
         )
-        result = list(trimmed)
-        result[-1] = {**result[-1], "content": augmented_content}
-        return result
+    else:
+        system_content = base_system
 
-    # No context — just inject system prompt as a system message
-    if system_prompt:
-        return [{"role": "system", "content": system_prompt}] + list(trimmed)
-
-    return list(trimmed)
+    return [{"role": "system", "content": system_content}] + list(trimmed)
 
 
 def _log_interaction(user_id, app_id, model_name, provider, usage, latency, is_playground=False):
