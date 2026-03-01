@@ -209,6 +209,32 @@ def me():
     return _handle()
 
 
+@auth_bp.route('/cli-token', methods=['POST'])
+def generate_cli_token():
+    """Generate a long-lived token for CLI / SDK usage (bypasses password requirement)"""
+    from auth import requires_auth
+    from flask import g
+
+    @requires_auth
+    def _handle():
+        user_id = g.current_user['sub']
+        user = users_collection.find_one({"user_id": user_id})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Generate a 1-year token for CLI usage
+        token = jwt.encode({
+            'sub': user['user_id'],
+            'email': user['email'],
+            'name': user['name'],
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=365)
+        }, JWT_SECRET, algorithm="HS256")
+
+        return jsonify({"cli_token": token}), 200
+
+    return _handle()
+
+
 @auth_bp.route('/purge', methods=['DELETE'])
 def purge():
     """Delete ALL data for the authenticated user — irreversible."""

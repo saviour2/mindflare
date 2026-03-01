@@ -17,6 +17,10 @@ export default function SettingsPage() {
     const [revealError, setRevealError] = useState('');
     const [isRevealing, setIsRevealing] = useState(false);
 
+    const [cliToken, setCliToken] = useState('');
+    const [generatingToken, setGeneratingToken] = useState(false);
+    const [copiedToken, setCopiedToken] = useState(false);
+
     useEffect(() => {
         if (!isLoading && !user) { router.push('/'); return; }
     }, [user, isLoading, router]);
@@ -67,6 +71,25 @@ export default function SettingsPage() {
         } finally {
             setIsRevealing(false);
         }
+    };
+
+    const handleGenerateCliToken = async () => {
+        setGeneratingToken(true);
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/cli-token', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            const data = await res.json();
+            if (res.ok && data.cli_token) {
+                setCliToken(data.cli_token);
+            } else {
+                alert('Failed to generate token');
+            }
+        } catch {
+            alert('Network error');
+        }
+        setGeneratingToken(false);
     };
 
     return (
@@ -215,6 +238,47 @@ export default function SettingsPage() {
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white transition-colors" />
                                     </div>
+
+                                    {/* CLI Access Token */}
+                                    <div className="flex flex-col p-6 rounded-3xl bg-white/[0.02] border border-white/5 group hover:border-white/10 transition-all">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                                                    <code className="text-purple-400 font-bold text-xs">CLI</code>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">CLI Access Token</p>
+                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">For Terminal Login</p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                onClick={handleGenerateCliToken}
+                                                disabled={generatingToken}
+                                                variant="outline" size="sm" className="h-8 border-white/10 hover:bg-white/5"
+                                            >
+                                                {generatingToken ? 'Generating...' : 'Generate Token'}
+                                            </Button>
+                                        </div>
+
+                                        {cliToken && (
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-4 border-t border-white/10 space-y-3">
+                                                <p className="text-xs text-zinc-400 font-sans leading-relaxed">
+                                                    Run <code className="text-purple-300">mindflare login --token YOUR_TOKEN</code> in your terminal to authenticate without a password.
+                                                </p>
+                                                <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-black/40 border border-white/5">
+                                                    <code className="flex-1 text-xs text-emerald-400 font-mono select-all truncate bg-emerald-400/10 px-3 py-2 rounded-lg">{cliToken}</code>
+                                                    <Button
+                                                        variant="ghost" size="sm"
+                                                        onClick={() => { navigator.clipboard.writeText(cliToken); setCopiedToken(true); setTimeout(() => setCopiedToken(false), 2000); }}
+                                                        className="h-8 hover:bg-white/5 shrink-0"
+                                                    >
+                                                        {copiedToken ? 'Copied!' : 'Copy'}
+                                                    </Button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </div>
+
                                 </div>
                             </div>
                         </Card>

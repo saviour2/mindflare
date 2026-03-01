@@ -15,7 +15,7 @@ GROQ_MODEL_IDS = {
     "allam-2-7b",
 }
 
-def call_openrouter(model_name, messages):
+def call_openrouter(model_name, messages, max_tokens=1024, temperature=0.7):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -23,7 +23,12 @@ def call_openrouter(model_name, messages):
         "HTTP-Referer": "https://mindflare.ai",
         "X-Title": "Mindflare AI"
     }
-    payload = {"model": model_name, "messages": messages}
+    payload = {
+        "model": model_name, 
+        "messages": messages, 
+        "max_tokens": int(max_tokens), 
+        "temperature": float(temperature)
+    }
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     if resp.status_code == 200:
         data = resp.json()
@@ -33,13 +38,18 @@ def call_openrouter(model_name, messages):
     else:
         raise Exception(f"OpenRouter Error {resp.status_code}: {resp.text}")
 
-def call_groq(model_name, messages):
+def call_groq(model_name, messages, max_tokens=1024, temperature=0.7):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
-    payload = {"model": model_name, "messages": messages}
+    payload = {
+        "model": model_name, 
+        "messages": messages, 
+        "max_tokens": int(max_tokens), 
+        "temperature": float(temperature)
+    }
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     if resp.status_code == 200:
         data = resp.json()
@@ -49,24 +59,24 @@ def call_groq(model_name, messages):
     else:
         raise Exception(f"Groq Error {resp.status_code}: {resp.text}")
 
-def generate_response(model_name, messages):
+def generate_response(model_name, messages, max_tokens=1024, temperature=0.7):
     """Route to the correct provider based on model ID."""
     if model_name in GROQ_MODEL_IDS:
         try:
-            content, usage = call_groq(model_name, messages)
+            content, usage = call_groq(model_name, messages, max_tokens, temperature)
             return content, usage, "groq"
         except Exception as e:
             print(f"Groq failed for {model_name}: {e}, falling back to OpenRouter")
-            content, usage = call_openrouter(model_name, messages)
+            content, usage = call_openrouter(model_name, messages, max_tokens, temperature)
             return content, usage, "openrouter"
 
     try:
-        content, usage = call_openrouter(model_name, messages)
+        content, usage = call_openrouter(model_name, messages, max_tokens, temperature)
         return content, usage, "openrouter"
     except Exception as e:
         print(f"OpenRouter failed for {model_name}: {e}, falling back to Groq")
         fallback = "llama-3.1-8b-instant"
-        content, usage = call_groq(fallback, messages)
+        content, usage = call_groq(fallback, messages, max_tokens, temperature)
         return content, usage, "groq-fallback"
 
 

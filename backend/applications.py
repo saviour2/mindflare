@@ -181,6 +181,10 @@ def update_config(app_id):
         update_fields['chatbot_name'] = data['chatbot_name']
     if 'chatbot_icon' in data:
         update_fields['chatbot_icon'] = data['chatbot_icon']
+    if 'temperature' in data:
+        update_fields['temperature'] = max(0, min(2, float(data['temperature'])))
+    if 'max_tokens' in data:
+        update_fields['max_tokens'] = max(64, min(4096, int(data['max_tokens'])))
         
     if not update_fields:
         return jsonify({"error": "No fields to update"}), 400

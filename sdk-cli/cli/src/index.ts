@@ -17,6 +17,7 @@ import { registerAuthCommands } from "./commands/auth.js";
 import { registerAppsCommands } from "./commands/apps.js";
 import { registerKBCommands } from "./commands/kb.js";
 import { registerChatCommands } from "./commands/chat.js";
+import { registerWhatsappCommands } from "./commands/whatsapp.js";
 
 const VERSION = "0.1.0";
 
@@ -35,6 +36,7 @@ registerAuthCommands(program);
 registerAppsCommands(program);
 registerKBCommands(program);
 registerChatCommands(program);
+registerWhatsappCommands(program);
 
 // ── Config command ──────────────────────────────
 

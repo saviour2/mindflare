@@ -81,6 +81,8 @@ def _build_augmented_messages(
             if system_prompt else ""
         ) + (
             "Use the following knowledge base context to answer the user's question. "
+            "Be concise and direct — answer in 2-4 short paragraphs max. "
+            "Do not repeat the entire context back. Only include the most relevant information. "
             "If the answer is not in the context, say you don't know.\n\n"
             f"Context:\n{context}\n\n"
             f"User Question:\n{user_query}"
@@ -222,8 +224,10 @@ def chat():
 
     # ── LLM call ────────────────────────────────
     model_name = app_doc.get("model_name", "llama-3.1-8b-instant")
+    max_tokens = app_doc.get("max_tokens", 1024)
+    temperature = app_doc.get("temperature", 0.7)
     try:
-        content, usage, provider = generate_response(model_name, augmented_msgs)
+        content, usage, provider = generate_response(model_name, augmented_msgs, max_tokens, temperature)
     except Exception as e:
         logger.error(f"LLM error for app {app_doc['app_id']}: {e}")
         return jsonify({"error": "The AI model is temporarily unavailable. Please try again."}), 503
@@ -302,8 +306,11 @@ def playground_chat(app_id):
 
         # ── LLM call ─────────────────────────────
         model_name = app_doc.get("model_name", "llama-3.1-8b-instant")
+        max_tokens = app_doc.get("max_tokens", 1024)
+        temperature = app_doc.get("temperature", 0.7)
+        print(f"[Playground] Calling {model_name} | max_tokens={max_tokens} | temperature={temperature}", flush=True)
         try:
-            content, usage, provider = generate_response(model_name, augmented_msgs)
+            content, usage, provider = generate_response(model_name, augmented_msgs, max_tokens, temperature)
         except Exception as e:
             logger.error(f"[Playground] LLM error for app {app_id}: {e}")
             return jsonify({"error": "The AI model is temporarily unavailable. Please try again."}), 503

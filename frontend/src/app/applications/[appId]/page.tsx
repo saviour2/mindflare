@@ -69,6 +69,8 @@ export default function AppDetailsPage() {
     const [selectedModel, setSelectedModel] = useState('meta-llama/llama-3-8b-instruct');
     const [systemPrompt, setSystemPrompt] = useState('You are a helpful assistant.');
     const [chatbotName, setChatbotName] = useState('');
+    const [temperature, setTemperature] = useState(0.7);
+    const [maxTokens, setMaxTokens] = useState(1024);
 
     // Playground state
     const [messages, setMessages] = useState<Message[]>([]);
@@ -105,6 +107,8 @@ export default function AppDetailsPage() {
                 setSelectedModel(a.model_name || 'meta-llama/llama-3.2-3b-instruct:free');
                 setSystemPrompt(a.system_prompt || 'You are a helpful assistant.');
                 setChatbotName(a.chatbot_name || a.app_name);
+                setTemperature(a.temperature ?? 0.7);
+                setMaxTokens(a.max_tokens ?? 1024);
             }
         }).catch(() => router.push('/applications'));
 
@@ -252,7 +256,9 @@ export default function AppDetailsPage() {
                     knowledge_base_ids: selectedKbIds,
                     model_name: selectedModel,
                     system_prompt: systemPrompt,
-                    chatbot_name: chatbotName
+                    chatbot_name: chatbotName,
+                    temperature,
+                    max_tokens: maxTokens
                 })
             });
             toast.dismiss(tid);
@@ -614,6 +620,63 @@ export default function AppDetailsPage() {
                                         <div className="flex items-start gap-3 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10">
                                             <Sparkles className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
                                             <p className="text-xs text-zinc-500 leading-relaxed">Type a short description of your chatbot, then click <span className="text-purple-400 font-semibold">AI Assist</span> to auto-generate a detailed system prompt.</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Model Parameters */}
+                                <Card className="rounded-[2rem]">
+                                    <CardHeader className="pb-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                                                <Settings2 className="w-5 h-5 text-orange-400" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xl font-serif">Model Parameters</CardTitle>
+                                                <CardDescription>Fine-tune response behavior</CardDescription>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pt-6 space-y-6">
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Temperature</label>
+                                                <span className="text-sm font-mono text-orange-400 font-bold">{temperature.toFixed(1)}</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="2"
+                                                step="0.1"
+                                                value={temperature}
+                                                onChange={e => setTemperature(parseFloat(e.target.value))}
+                                                className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-orange-400"
+                                            />
+                                            <div className="flex justify-between text-[9px] text-zinc-600 font-mono">
+                                                <span>0.0 Precise</span>
+                                                <span>1.0 Balanced</span>
+                                                <span>2.0 Creative</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Max Tokens</label>
+                                                <span className="text-sm font-mono text-orange-400 font-bold">{maxTokens}</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="64"
+                                                max="4096"
+                                                step="64"
+                                                value={maxTokens}
+                                                onChange={e => setMaxTokens(parseInt(e.target.value))}
+                                                className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-orange-400"
+                                            />
+                                            <div className="flex justify-between text-[9px] text-zinc-600 font-mono">
+                                                <span>64 Short</span>
+                                                <span>1024 Medium</span>
+                                                <span>4096 Long</span>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>

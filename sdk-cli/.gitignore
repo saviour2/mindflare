@@ -1,3 +1,6 @@
 node_modules/
 dist/
 *.tsbuildinfo
+baileys_auth_info_*/
+package-lock.json
+.env

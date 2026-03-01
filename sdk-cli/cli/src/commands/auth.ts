@@ -12,51 +12,54 @@ export function registerAuthCommands(program: Command) {
     // ── Login ──────────────────────────────────────
     program
         .command("login")
-        .description("Authenticate with the Mindflare platform")
-        .option("-e, --email <email>", "Account email")
-        .option("-p, --password <password>", "Account password")
+        .description("Authenticate with a CLI token from the Mindflare dashboard")
+        .option("-t, --token <token>", "CLI Access Token")
         .option("--api-url <url>", "API base URL", config.get("baseUrl"))
         .action(async (opts) => {
             const baseUrl = opts.apiUrl;
             config.set("baseUrl", baseUrl);
 
-            let email = opts.email;
-            let password = opts.password;
+            let token = opts.token;
 
-            if (!email || !password) {
-                const questions: any[] = [];
-                if (!email) {
-                    questions.push({ type: "input", name: "email", message: "Email:" });
-                }
-                if (!password) {
-                    questions.push({
+            if (!token) {
+                console.log(chalk.cyan("\n🔑 To get your CLI token:"));
+                console.log(chalk.dim("   1. Go to your Mindflare dashboard"));
+                console.log(chalk.dim("   2. Navigate to Settings"));
+                console.log(chalk.dim("   3. Copy your CLI Access Token\n"));
+
+                const answers = await inquirer.prompt([
+                    {
                         type: "password",
-                        name: "password",
-                        message: "Password:",
+                        name: "token",
+                        message: "Paste your CLI Token:",
                         mask: "*",
-                    });
-                }
-
-                const answers = await inquirer.prompt(questions);
-                email = email || (answers as any).email;
-                password = password || (answers as any).password;
+                    },
+                ]);
+                token = (answers as any).token;
             }
 
+            if (!token || !token.trim()) {
+                fatal("No token provided. Login cancelled.");
+                return;
+            }
+
+            token = token.trim();
+            config.set("token", token);
+
             try {
+                // Verify token works and fetch user details
                 const data = await api<{
-                    token: string;
                     user: { id: string; name: string; email: string; client_secret: string };
                 }>({
-                    method: "POST",
-                    url: `${baseUrl}/api/auth/login`,
-                    body: { email, password },
+                    method: "GET",
+                    url: `${baseUrl}/api/auth/me`,
+                    token,
                 });
-
-                config.set("token", data.token);
                 config.set("clientSecret", data.user.client_secret);
                 success(`Logged in as ${chalk.bold(data.user.name)} (${data.user.email})`);
             } catch (e) {
-                fatal((e as Error).message);
+                config.set("token", ""); // Invalid token, clear it
+                fatal("Invalid CLI token. Please check and try again.");
             }
         });
 
