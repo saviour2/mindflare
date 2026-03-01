@@ -24,6 +24,84 @@ interface KBDoc {
     source_pages?: number;
 }
 
+const SPIDER_ROUTES = [
+    '/index',
+    '/getting-started',
+    '/installation',
+    '/quickstart',
+    '/api-reference',
+    '/guides/authentication',
+    '/guides/deployment',
+    '/examples/chat-app'
+];
+
+function SpiderTerminal({ targetUrl, isComplete }: { targetUrl: string, isComplete: boolean }) {
+    const [lines, setLines] = useState<string[]>([]);
+
+    useEffect(() => {
+        setLines([
+            `[CRAWLING] ${targetUrl || 'https://domain.com'}`,
+        ]);
+
+        let currentIndex = 0;
+        const interval = setInterval(() => {
+            if (currentIndex >= SPIDER_ROUTES.length || isComplete) {
+                clearInterval(interval);
+                return;
+            }
+
+            const route = SPIDER_ROUTES[currentIndex];
+            const isLast = currentIndex === SPIDER_ROUTES.length - 1;
+            const prefix = isLast ? '└── ' : '├── ';
+
+            setLines(prev => [...prev, `${prefix}${route}`]);
+            currentIndex++;
+        }, 600); // 600ms stagger between discovered routes
+
+        return () => clearInterval(interval);
+    }, [targetUrl, isComplete]);
+
+    return (
+        <div className="w-full bg-retro-ink border-3 border-retro-border p-6 rounded-none font-mono text-sm shadow-pixel h-[320px] overflow-hidden flex flex-col">
+            <div className="flex gap-2 mb-4 border-b-2 border-retro-card pb-2">
+                <div className="w-3 h-3 bg-[#D88A8A] border-2 border-[#B86A6A]"></div>
+                <div className="w-3 h-3 bg-[#D8C4A8] border-2 border-[#B8A488]"></div>
+                <div className="w-3 h-3 bg-[#A8D8B0] border-2 border-[#78B080]"></div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto retro-scrollbar space-y-1">
+                <AnimatePresence>
+                    {lines.map((line, i) => {
+                        const isCrawlingLine = i === 0;
+                        const content = isCrawlingLine ? line : line;
+
+                        return (
+                            <motion.div
+                                key={`${i}-${line}`}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex justify-between items-center whitespace-pre text-retro-white"
+                            >
+                                <span>{content}</span>
+                                {!isCrawlingLine && (
+                                    <span className="text-retro-cyan font-bold tabular-nums">[200 OK]</span>
+                                )}
+                            </motion.div>
+                        );
+                    })}
+                </AnimatePresence>
+                {!isComplete && (
+                    <motion.div
+                        animate={{ opacity: [1, 0, 1] }}
+                        transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+                        className="w-2.5 h-4 bg-retro-cyan mt-1"
+                    />
+                )}
+            </div>
+        </div>
+    );
+}
+
 export default function KnowledgeBasePage() {
     const router = useRouter();
     const [kbs, setKbs] = useState<KBDoc[]>([]);
@@ -128,10 +206,24 @@ export default function KnowledgeBasePage() {
             toast.dismiss(tid);
             if (res.ok) {
                 toast.success(`"${kbName}" is being processed. This may take a moment.`);
+                fetchKBs(); // Fetch immediately so it shows up in the background list
+
+                // If it's a spider ingestion, let the terminal animation play out for 5 seconds
+                if (sourceType === 'website') {
+                    setTimeout(() => {
+                        setShowCreate(false);
+                        setKbName('');
+                        setSourceUrl('');
+                        setFile(null);
+                        setLoading(false);
+                    }, 5000);
+                    return; // exit early, let timeout handle cleanup
+                }
             } else {
                 const errData = await res.json();
                 toast.error(errData.error || 'Failed to create knowledge base');
             }
+
             setShowCreate(false);
             setKbName('');
             setSourceUrl('');
@@ -353,72 +445,76 @@ export default function KnowledgeBasePage() {
                                     </button>
                                 </div>
 
-                                <div className="space-y-8">
-                                    <div className="space-y-3">
-                                        <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">Database Name</label>
-                                        <input
-                                            type="text"
-                                            value={kbName}
-                                            onChange={(e) => setKbName(e.target.value)}
-                                            placeholder="e.g. Project Archive"
-                                            className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white placeholder:text-retro-muted focus:outline-none focus:border-retro-cyan/50 transition-none font-mono"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">Source Pipeline</label>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {[
-                                                { val: 'pdf', lbl: 'PDF', ic: <Upload className="w-4 h-4" /> },
-                                                { val: 'website', lbl: 'Spider', ic: <Globe className="w-4 h-4" /> },
-                                                { val: 'github', lbl: 'Git', ic: <Github className="w-4 h-4" /> },
-                                            ].map(s => (
-                                                <button
-                                                    key={s.val}
-                                                    onClick={() => setSourceType(s.val)}
-                                                    className={cn(
-                                                        "flex flex-col items-center justify-center gap-2 p-4  border transition-all duration-300",
-                                                        sourceType === s.val ? "bg-retro-panel border-retro-cyan text-retro-cyan" : "bg-retro-panel border-retro-border text-retro-white hover:bg-retro-card"
-                                                    )}
-                                                >
-                                                    {s.ic}
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest">{s.lbl}</span>
-                                                    {sourceType === s.val && <motion.div layoutId="srcCheck" className="absolute top-2 right-2"><Check className="w-3 h-3" /></motion.div>}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {sourceType !== 'pdf' && (
+                                {loading && sourceType === 'website' ? (
+                                    <SpiderTerminal targetUrl={sourceUrl} isComplete={false} />
+                                ) : (
+                                    <div className="space-y-8">
                                         <div className="space-y-3">
-                                            <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">{sourceType === 'website' ? 'Target URL' : 'Repository URL'}</label>
+                                            <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">Database Name</label>
+                                            <input
+                                                type="text"
+                                                value={kbName}
+                                                onChange={(e) => setKbName(e.target.value)}
+                                                placeholder="e.g. Project Archive"
+                                                className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white placeholder:text-retro-muted focus:outline-none focus:border-retro-cyan/50 transition-none font-mono"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">Source Pipeline</label>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {[
+                                                    { val: 'pdf', lbl: 'PDF', ic: <Upload className="w-4 h-4" /> },
+                                                    { val: 'website', lbl: 'Spider', ic: <Globe className="w-4 h-4" /> },
+                                                    { val: 'github', lbl: 'Git', ic: <Github className="w-4 h-4" /> },
+                                                ].map(s => (
+                                                    <button
+                                                        key={s.val}
+                                                        onClick={() => setSourceType(s.val)}
+                                                        className={cn(
+                                                            "flex flex-col items-center justify-center gap-2 p-4  border transition-all duration-300",
+                                                            sourceType === s.val ? "bg-retro-panel border-retro-cyan text-retro-cyan" : "bg-retro-panel border-retro-border text-retro-white hover:bg-retro-card"
+                                                        )}
+                                                    >
+                                                        {s.ic}
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest">{s.lbl}</span>
+                                                        {sourceType === s.val && <motion.div layoutId="srcCheck" className="absolute top-2 right-2"><Check className="w-3 h-3" /></motion.div>}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {sourceType !== 'pdf' && (
+                                            <div className="space-y-3">
+                                                <label className="text-xs font-bold text-retro-muted uppercase tracking-widest ml-1">{sourceType === 'website' ? 'Target URL' : 'Repository URL'}</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={sourceUrl}
+                                                        onChange={(e) => setSourceUrl(e.target.value)}
+                                                        placeholder={sourceType === 'website' ? 'https://docs.myproduct.com' : 'https://github.com/org/repo'}
+                                                        className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white placeholder:text-retro-muted focus:outline-none focus:border-retro-cyan/50 transition-none font-mono text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {sourceType === 'pdf' && (
                                             <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    value={sourceUrl}
-                                                    onChange={(e) => setSourceUrl(e.target.value)}
-                                                    placeholder={sourceType === 'website' ? 'https://docs.myproduct.com' : 'https://github.com/org/repo'}
-                                                    className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white placeholder:text-retro-muted focus:outline-none focus:border-retro-cyan/50 transition-none font-mono text-sm"
-                                                />
+                                                <div className="border-3 border-dashed border-retro-border p-10 text-center hover:bg-retro-card transition-none cursor-pointer group">
+                                                    <Upload className="w-8 h-8 text-retro-dim mx-auto mb-4 group-hover:text-retro-cyan transition-colors" />
+                                                    <p className="text-sm text-retro-muted font-medium mb-1 truncate px-4">{file ? file.name : 'Drop architectural PDF here'}</p>
+                                                    <p className="text-[10px] text-retro-dim uppercase tracking-widest">Supports up to 50MB</p>
+                                                    <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {sourceType === 'pdf' && (
-                                        <div className="relative">
-                                            <div className="border-3 border-dashed border-retro-border p-10 text-center hover:bg-retro-card transition-none cursor-pointer group">
-                                                <Upload className="w-8 h-8 text-retro-dim mx-auto mb-4 group-hover:text-retro-cyan transition-colors" />
-                                                <p className="text-sm text-retro-muted font-medium mb-1 truncate px-4">{file ? file.name : 'Drop architectural PDF here'}</p>
-                                                <p className="text-[10px] text-retro-dim uppercase tracking-widest">Supports up to 50MB</p>
-                                                <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <Button onClick={createKB} disabled={loading || !kbName.trim()} className="w-full h-14 bg-retro-cyan text-retro-ink hover:bg-retro-cyan/80 mt-4 shadow-pixel font-pixel transition-none">
-                                        {loading ? 'Ingesting Pipeline...' : 'Initialize Ingestion'}
-                                    </Button>
-                                </div>
+                                        <Button onClick={createKB} disabled={loading || !kbName.trim()} className="w-full h-14 bg-retro-cyan text-retro-ink hover:bg-retro-cyan/80 mt-4 shadow-pixel font-pixel transition-none">
+                                            {loading ? 'Ingesting Pipeline...' : 'Initialize Ingestion'}
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     </div>
