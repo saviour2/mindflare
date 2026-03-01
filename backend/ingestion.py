@@ -105,16 +105,51 @@ def extract_from_pdf(file_path: str) -> list[str]:
 
 
 # ─────────────────────────────────────────────
-# Website Crawling
+# Website Crawling — Firecrawl powered
 # ─────────────────────────────────────────────
-def extract_from_website(url: str, max_pages: int = 25) -> list[str]:
-    """Crawl a website, staying within the same domain, up to max_pages."""
-    from urllib.parse import urljoin, urlparse
-
+def extract_from_website(url: str, max_pages: int = 500) -> list[str]:
+    """Crawl a website using Firecrawl (if API key is set) or fallback BFS scraper."""
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
+    firecrawl_key = os.getenv("FIRECRAWL_API_KEY", "")
+
+    # ── Firecrawl path ──────────────────────────────────────────────────────
+    if firecrawl_key:
+        try:
+            from firecrawl import FirecrawlApp
+            logger.info(f"Using Firecrawl to crawl: {url} (limit={max_pages})")
+            app = FirecrawlApp(api_key=firecrawl_key)
+
+            result = app.crawl_url(
+                url,
+                params={
+                    "limit": max_pages,
+                    "scrapeOptions": {
+                        "formats": ["markdown"],
+                    }
+                }
+            )
+
+            all_texts: list[str] = []
+            pages = result.get("data", []) if isinstance(result, dict) else []
+            for page in pages:
+                source_url = page.get("metadata", {}).get("sourceURL", "")
+                markdown = page.get("markdown", "").strip()
+                if markdown and len(markdown) > 200:
+                    all_texts.append(f"URL: {source_url}\n\n{markdown}")
+
+            logger.info(f"Firecrawl: crawled {len(pages)} pages, extracted {len(all_texts)} blocks")
+            return all_texts
+
+        except Exception as e:
+            logger.warning(f"Firecrawl failed ({e}), falling back to BFS scraper")
+
+    # ── Fallback: BFS BeautifulSoup scraper ────────────────────────────────
+    from urllib.parse import urljoin, urlparse
+
     domain = urlparse(url).netloc
+    base_domain = domain.replace("www.", "")
     to_visit: set[str] = {url}
     visited: set[str] = set()
     all_texts: list[str] = []
@@ -124,13 +159,17 @@ def extract_from_website(url: str, max_pages: int = 25) -> list[str]:
         "User-Agent": "MindflareBot/1.0 (+https://mindflare.ai/bot)"
     })
 
-    logger.info(f"Crawling website: {url} (max {max_pages} pages)")
+    logger.info(f"BFS crawling website: {url} (max {max_pages} pages)")
 
     while to_visit and len(visited) < max_pages:
         current_url = to_visit.pop()
-        if current_url in visited:
+
+        normalized_url = current_url.rstrip("/")
+        if normalized_url in visited or current_url in visited:
             continue
+
         visited.add(current_url)
+        visited.add(normalized_url)
 
         try:
             resp = session.get(current_url, timeout=12, allow_redirects=True)
@@ -143,33 +182,27 @@ def extract_from_website(url: str, max_pages: int = 25) -> list[str]:
 
             soup = BeautifulSoup(resp.text, "html.parser")
 
-            # Strip noise elements
             for tag in soup(["script", "style", "nav", "footer",
                               "header", "aside", "noscript", "svg",
                               "iframe", "form"]):
                 tag.decompose()
 
-            # Extract main content
             main = soup.find("main") or soup.find("article") or soup.body
-            if main:
-                text = main.get_text(separator="\n", strip=True)
-            else:
-                text = soup.get_text(separator="\n", strip=True)
+            text = (main or soup).get_text(separator="\n", strip=True)
 
-            # Skip very short pages (likely nav-only pages)
             if len(text) > 200:
                 all_texts.append(f"URL: {current_url}\n\n{text}")
 
-            # Discover more links on the same domain
             for a in soup.find_all("a", href=True):
                 href = a["href"].strip()
-                if href.startswith("#") or href.startswith("mailto:"):
+                if href.startswith(("#", "mailto:", "tel:", "javascript:")):
                     continue
-                abs_link = urljoin(current_url, href)
+                abs_link = urljoin(current_url, href).split("#")[0]
                 parsed = urlparse(abs_link)
-                if (parsed.netloc == domain
+                if (base_domain in parsed.netloc
                         and parsed.scheme in ("http", "https")
-                        and abs_link not in visited):
+                        and abs_link not in visited
+                        and abs_link.rstrip("/") not in visited):
                     to_visit.add(abs_link)
 
         except requests.exceptions.Timeout:
@@ -177,7 +210,7 @@ def extract_from_website(url: str, max_pages: int = 25) -> list[str]:
         except Exception as e:
             logger.warning(f"Error crawling {current_url}: {e}")
 
-    logger.info(f"Crawled {len(visited)} pages, extracted {len(all_texts)} text blocks")
+    logger.info(f"BFS crawled {len(visited)} pages, extracted {len(all_texts)} text blocks")
     return all_texts
 
 
