@@ -108,27 +108,13 @@ function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComp
                 const status = MOCK_ROUTES[step].includes('404') ? 'error' : 'ok';
 
                 const newNode: SpiderNode = {
-                    id: `node-${step}`,
+                    id: `node-${step}-${Math.random().toString(36).slice(2, 9)}`,
                     label: MOCK_ROUTES[step],
                     status,
                     gridX: newX,
                     gridY: newY,
                     parent: parent.id
                 };
-
-                // Auto-pan camera conceptually to the center of all nodes
-                const allX = [...prev, newNode].map(n => getScreenCoord(n.gridX, n.gridY).px);
-                const allY = [...prev, newNode].map(n => getScreenCoord(n.gridX, n.gridY).py);
-                const minX = Math.min(...allX);
-                const maxX = Math.max(...allX);
-                const minY = Math.min(...allY);
-                const maxY = Math.max(...allY);
-
-                // Center the bounding box (reversed because we move the group opposite)
-                setCamera({
-                    x: -((minX + maxX) / 2),
-                    y: -((minY + maxY) / 2) + 50 // offset slightly down
-                });
 
                 return [...prev, newNode];
             });
@@ -137,6 +123,23 @@ function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComp
 
         return () => clearInterval(interval);
     }, [targetUrl, isComplete]);
+
+    useEffect(() => {
+        if (nodes.length === 0) return;
+        // Auto-pan camera conceptually to the center of all nodes
+        const allX = nodes.map(n => getScreenCoord(n.gridX, n.gridY).px);
+        const allY = nodes.map(n => getScreenCoord(n.gridX, n.gridY).py);
+        const minX = Math.min(...allX);
+        const maxX = Math.max(...allX);
+        const minY = Math.min(...allY);
+        const maxY = Math.max(...allY);
+
+        // Center the bounding box (reversed because we move the group opposite)
+        setCamera({
+            x: -((minX + maxX) / 2),
+            y: -((minY + maxY) / 2) + 50 // offset slightly down
+        });
+    }, [nodes]);
 
     // Render helpers
     const renderCube = (node: SpiderNode) => {
@@ -182,7 +185,7 @@ function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComp
     };
 
     // Rendering jagged branches
-    const renderBranch = (child: SpiderNode) => {
+    const renderBranch = (child: SpiderNode, index: number) => {
         if (!child.parent) return null;
         const parent = nodes.find(n => n.id === child.parent);
         if (!parent) return null;
@@ -198,7 +201,7 @@ function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComp
 
         return (
             <motion.path
-                key={`branch-${child.id}`}
+                key={`branch-${child.id}-${index}`}
                 d={pathData}
                 fill="none"
                 stroke="#F2AEC0"
@@ -239,7 +242,7 @@ function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComp
             >
                 {/* Edges layer first */}
                 <svg className="absolute overflow-visible" style={{ position: 'absolute', top: 0, left: 0 }}>
-                    {nodes.map(node => renderBranch(node))}
+                    {nodes.map((node, i) => renderBranch(node, i))}
                 </svg>
 
                 {/* Nodes layer (sort by Y in screen space to fake depth if needed, roughly gridX + gridY) */}
@@ -247,7 +250,7 @@ function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComp
                     const coord = getScreenCoord(node.gridX, node.gridY);
                     return (
                         <motion.div
-                            key={node.id}
+                            key={`cube-${node.id}-${i}`}
                             className="absolute"
                             style={{
                                 left: coord.px,
