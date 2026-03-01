@@ -94,97 +94,25 @@ export default function Home() {
       title: "Knowledge Bases",
       description: "Upload documents, crawl websites, or sync with GitHub to ground your AI in your own data.",
       icon: BookOpen,
-      visual: (
-        <RetroWindow title="index_workspace.exe" className="h-full">
-          <div className="p-4 font-mono text-sm text-retro-cyan">
-            <div className="mb-3 text-retro-muted text-xs">{"C:\\MINDFLARE> list sources"}</div>
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col gap-2">
-                {["docs/", "src/", "README.md"].map((item, i) => (
-                  <div key={i} className="px-3 py-1.5 bg-retro-card border-3 border-retro-border text-retro-white text-xs flex items-center gap-2 shadow-pixel-sm">
-                    <span className="text-retro-cyan">▸</span> {item}
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <div className="w-px h-8 bg-retro-border" />
-                <motion.span animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="font-pixel text-retro-cyan text-xs">→→</motion.span>
-                <div className="w-px h-8 bg-retro-border" />
-              </div>
-              <div className="w-16 h-16 bg-retro-card border-3 border-retro-cyan shadow-pixel-cyan flex items-center justify-center">
-                <Cpu className="text-retro-cyan w-8 h-8" />
-              </div>
-            </div>
-            <div className="mt-3 text-xs text-retro-muted animate-pixel-blink">█</div>
-          </div>
-        </RetroWindow>
-      ),
+      videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4", // Placeholder for Animation
     },
     {
       title: "SDK Integration",
       description: "Connect your application with our powerful JS SDK in just a few lines of code.",
       icon: Blocks,
-      visual: (
-        <RetroWindow title="mindflare.js — EDITOR" className="h-full">
-          <div className="p-4 font-code text-sm text-retro-cyan leading-relaxed">
-            <span className="text-[#7B9EC4]">import</span> Mindflare <span className="text-[#7B9EC4]">from</span> <span className="text-[#A8D8B0]">&apos;mindflare-sdk&apos;</span>;<br /><br />
-            <span className="text-[#7B9EC4]">const</span> mf = <span className="text-[#7B9EC4]">new</span> Mindflare(<span className="text-[#A8D8B0]">&apos;YOUR_API_KEY&apos;</span>);<br /><br />
-            <span className="text-retro-muted">{"// Connect to your knowledge base"}</span><br />
-            <span className="text-[#7B9EC4]">const</span> response = <span className="text-[#7B9EC4]">await</span> mf.chat(<span className="text-[#A8D8B0]">&quot;What is RAG?&quot;</span>);<br /><br />
-            console.log(response.response);
-          </div>
-        </RetroWindow>
-      ),
+      videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4", // Placeholder for SDK
     },
     {
       title: "Multi-channel",
       description: "Deploy your AI models across WhatsApp, Telegram, or any custom platform using our robust backend.",
       icon: Share2,
-      visual: (
-        <RetroWindow title="webhook_endpoints.sys" className="h-full">
-          <div className="p-4 flex flex-col gap-2">
-            <div className="text-xs font-mono text-retro-muted mb-2">{"[WEBHOOK REGISTRY]"}</div>
-            {["WhatsApp (Prod)", "Slack (Internal)", "Telegram (Beta)"].map((channel, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-retro-card border-3 border-retro-border shadow-pixel-sm font-mono text-sm">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-3 h-3 text-retro-cyan" />
-                  <span className="text-retro-white text-xs">{channel}</span>
-                </div>
-                <div className="flex flex-col items-end gap-0.5">
-                  <span className="text-retro-cyan text-xs font-pixel">OK</span>
-                  <span className="text-retro-muted text-[10px]">~120ms</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </RetroWindow>
-      ),
+      videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4", // Placeholder for WhatsApp Integration
     },
     {
       title: "Analytics",
       description: "Track usage, monitor costs, and gain insights into how users interact with your AI apps.",
       icon: LineChart,
-      visual: (
-        <RetroWindow title="analytics.dat" className="h-full">
-          <div className="p-4 flex flex-col h-full">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-retro-card border-3 border-retro-border p-3">
-                <div className="font-pixel text-[10px] text-retro-muted mb-1">TOKENS</div>
-                <div className="font-pixel text-3xl text-retro-cyan">1.2M</div>
-              </div>
-              <div className="bg-retro-card border-3 border-retro-border p-3">
-                <div className="font-pixel text-[10px] text-retro-muted mb-1">LATENCY</div>
-                <div className="font-pixel text-3xl text-retro-cyan">0.8s</div>
-              </div>
-            </div>
-            <div className="flex items-end gap-1 h-24 border-3 border-retro-border bg-retro-card p-2">
-              {[40, 70, 45, 90, 65, 100, 80].map((h, i) => (
-                <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ type: "tween", ease: "linear", duration: 0.5, delay: i * 0.08 }} className={`flex-1 ${i === 5 ? "bg-retro-cyan" : "bg-retro-border"}`} />
-              ))}
-            </div>
-          </div>
-        </RetroWindow>
-      ),
+      videoSrc: "https://www.w3schools.com/html/mov_bbb.mp4", // Placeholder for Analytics
     },
   ];
 
@@ -352,8 +280,15 @@ export default function Home() {
             <div className="lg:col-span-8 relative min-h-[400px] flex items-center">
               <div className="w-full h-full border-3 border-retro-border shadow-pixel-lg bg-retro-panel overflow-hidden">
                 <AnimatePresence mode="wait">
-                  <motion.div key={activeFeature} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.1, ease: "linear" }} className="w-full h-full p-6 min-h-[400px]">
-                    {features[activeFeature].visual}
+                  <motion.div key={activeFeature} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.1, ease: "linear" }} className="w-full h-full p-2 min-h-[400px]">
+                    <video
+                      src={features[activeFeature].videoSrc}
+                      autoPlay
+                      muted
+                      playsInline
+                      onEnded={() => setActiveFeature((prev) => (prev + 1) % features.length)}
+                      className="w-full h-full object-cover border-3 border-retro-border shadow-pixel-sm"
+                    />
                   </motion.div>
                 </AnimatePresence>
               </div>

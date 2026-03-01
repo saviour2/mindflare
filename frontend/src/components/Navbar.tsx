@@ -44,9 +44,9 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="w-8 h-8 bg-retro-cyan border-3 border-retro-cyan-dark flex items-center justify-center shadow-pixel-sm
+                    <div className="w-8 h-8 bg-retro-cyan border-3 border-retro-cyan-dark flex items-center justify-center shadow-pixel-sm overflow-hidden
                                     group-hover:translate-x-[1px] group-hover:translate-y-[1px] group-hover:shadow-none transition-none">
-                        <Terminal className="w-4 h-4 text-retro-ink" />
+                        <img src="/MindFlare_2.jpg" alt="Mindflare" className="w-full h-full object-cover" />
                     </div>
                     <span className="font-pixel text-2xl text-retro-white tracking-wide">
                         Mindflare<span className="text-retro-cyan">AI</span>
