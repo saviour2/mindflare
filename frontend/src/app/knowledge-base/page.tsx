@@ -116,6 +116,7 @@ function SpiderVisualizer({ targetUrl, isComplete }: { targetUrl: string, isComp
                     parent: parent.id
                 };
 
+
                 return [...prev, newNode];
             });
             step++;
