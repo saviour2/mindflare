@@ -361,7 +361,7 @@ export default function KnowledgeBasePage() {
                                             value={kbName}
                                             onChange={(e) => setKbName(e.target.value)}
                                             placeholder="e.g. Project Archive"
-                                            className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white focus:outline-none focus:border-retro-cyan/50 transition-none font-mono"
+                                            className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white placeholder:text-retro-muted focus:outline-none focus:border-retro-cyan/50 transition-none font-mono"
                                         />
                                     </div>
 
@@ -378,7 +378,7 @@ export default function KnowledgeBasePage() {
                                                     onClick={() => setSourceType(s.val)}
                                                     className={cn(
                                                         "flex flex-col items-center justify-center gap-2 p-4  border transition-all duration-300",
-                                                        sourceType === s.val ? "bg-retro-panel border-retro-cyan text-retro-cyan" : "bg-retro-panel border-retro-border text-retro-muted hover:bg-retro-card"
+                                                        sourceType === s.val ? "bg-retro-panel border-retro-cyan text-retro-cyan" : "bg-retro-panel border-retro-border text-retro-white hover:bg-retro-card"
                                                     )}
                                                 >
                                                     {s.ic}
@@ -398,7 +398,7 @@ export default function KnowledgeBasePage() {
                                                     value={sourceUrl}
                                                     onChange={(e) => setSourceUrl(e.target.value)}
                                                     placeholder={sourceType === 'website' ? 'https://docs.myproduct.com' : 'https://github.com/org/repo'}
-                                                    className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white focus:outline-none focus:border-retro-cyan/50 transition-none font-mono text-sm"
+                                                    className="w-full bg-retro-card border-3 border-retro-border px-5 py-3.5 text-retro-white placeholder:text-retro-muted focus:outline-none focus:border-retro-cyan/50 transition-none font-mono text-sm"
                                                 />
                                             </div>
                                         </div>

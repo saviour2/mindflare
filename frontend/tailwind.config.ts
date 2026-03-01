@@ -24,8 +24,8 @@ const config: Config = {
           "pink-dark": "#D68FA3",
           sky: "#C4A8D8",
           white: "#EAEAEA",
-          muted: "#B0B8C6",
-          dim: "#8A95A5",
+          muted: "#E2E8F0",
+          dim: "#CBD5E1",
           ink: "#2F3947",
         },
         // Legacy compat — map to new accent

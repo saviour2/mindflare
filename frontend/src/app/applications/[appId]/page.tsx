@@ -432,7 +432,7 @@ export default function AppDetailsPage() {
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="font-pixel text-sm text-retro-white truncate">{kb.kb_name}</p>
-                                                        <p className="text-[10px] text-retro-dim uppercase font-pixel tracking-widest mt-0.5">
+                                                        <p className="text-[10px] text-retro-muted uppercase font-pixel tracking-widest mt-0.5">
                                                             {kb.source_type} · {kb.chunks_count} chunks · {kb.status}
                                                         </p>
                                                     </div>
@@ -479,7 +479,7 @@ export default function AppDetailsPage() {
                                                             <span className="text-[10px] font-pixel uppercase tracking-widest text-retro-muted">
                                                                 {provider === 'groq' ? '⚡ Groq — Ultra Fast' : '🔮 OpenRouter — Free Tier'}
                                                             </span>
-                                                            <span className="text-[10px] text-retro-dim font-mono">({group.length})</span>
+                                                            <span className="text-[10px] text-retro-muted font-mono">({group.length})</span>
                                                         </div>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                             {group.map((model: ModelDoc) => (
@@ -500,7 +500,7 @@ export default function AppDetailsPage() {
                                                                                 ? "text-retro-cyan"
                                                                                 : "text-retro-white"
                                                                         )}>{model.name}</p>
-                                                                        <p className="text-[9px] text-retro-dim font-mono mt-1">{(model.context_length / 1000).toFixed(0)}k ctx</p>
+                                                                        <p className="text-[9px] text-retro-muted font-mono mt-1">{(model.context_length / 1000).toFixed(0)}k ctx</p>
                                                                     </div>
                                                                     {selectedModel === model.id && (
                                                                         <div className="w-4 h-4 bg-retro-cyan flex items-center justify-center shrink-0 mt-0.5">
@@ -523,18 +523,18 @@ export default function AppDetailsPage() {
                                 <RetroPanel title="PERSONALITY" icon={Wand2}>
                                     <div className="space-y-5">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-pixel text-retro-dim uppercase tracking-widest">Chatbot Name</label>
+                                            <label className="text-[10px] font-pixel text-retro-muted uppercase tracking-widest">Chatbot Name</label>
                                             <input
                                                 type="text"
                                                 value={chatbotName}
                                                 onChange={e => setChatbotName(e.target.value)}
                                                 placeholder="e.g. Aria"
-                                                className="w-full bg-retro-card border-3 border-retro-border px-4 py-3 focus:outline-none focus:border-retro-cyan transition-all font-mono text-sm text-retro-white placeholder:text-retro-dim"
+                                                className="w-full bg-retro-card border-3 border-retro-border px-4 py-3 focus:outline-none focus:border-retro-cyan transition-all font-mono text-sm text-retro-white placeholder:text-retro-muted"
                                             />
                                         </div>
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-[10px] font-pixel text-retro-dim uppercase tracking-widest">System Prompt</label>
+                                                <label className="text-[10px] font-pixel text-retro-muted uppercase tracking-widest">System Prompt</label>
                                                 <button
                                                     onClick={async () => {
                                                         if (!systemPrompt.trim() || generatingPrompt) return;
@@ -580,7 +580,7 @@ export default function AppDetailsPage() {
                                                 onChange={e => setSystemPrompt(e.target.value)}
                                                 rows={6}
                                                 placeholder="Type a short description like 'customer support bot for an e-commerce store' then click AI Assist..."
-                                                className="w-full bg-retro-card border-3 border-retro-border px-4 py-3 focus:outline-none focus:border-retro-cyan transition-all font-mono text-sm text-retro-white resize-none leading-relaxed placeholder:text-retro-dim"
+                                                className="w-full bg-retro-card border-3 border-retro-border px-4 py-3 focus:outline-none focus:border-retro-cyan transition-all font-mono text-sm text-retro-white resize-none leading-relaxed placeholder:text-retro-muted"
                                             />
                                         </div>
                                         <div className="flex items-start gap-3 p-3 bg-[#C4A8D8]/10 border-3 border-[#C4A8D8]/20">
@@ -595,7 +595,7 @@ export default function AppDetailsPage() {
                                     <div className="space-y-6">
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-[10px] font-pixel text-retro-dim uppercase tracking-widest">Temperature</label>
+                                                <label className="text-[10px] font-pixel text-retro-muted uppercase tracking-widest">Temperature</label>
                                                 <span className="text-sm font-pixel text-retro-cyan font-bold">{temperature.toFixed(1)}</span>
                                             </div>
                                             <input
@@ -607,7 +607,7 @@ export default function AppDetailsPage() {
                                                 onChange={e => setTemperature(parseFloat(e.target.value))}
                                                 className="retro-slider"
                                             />
-                                            <div className="flex justify-between text-[9px] text-retro-dim font-pixel">
+                                            <div className="flex justify-between text-[9px] text-retro-muted font-pixel">
                                                 <span>0.0 Precise</span>
                                                 <span>1.0 Balanced</span>
                                                 <span>2.0 Creative</span>
@@ -615,7 +615,7 @@ export default function AppDetailsPage() {
                                         </div>
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-[10px] font-pixel text-retro-dim uppercase tracking-widest">Max Tokens</label>
+                                                <label className="text-[10px] font-pixel text-retro-muted uppercase tracking-widest">Max Tokens</label>
                                                 <span className="text-sm font-pixel text-retro-cyan font-bold">{maxTokens}</span>
                                             </div>
                                             <input
@@ -627,7 +627,7 @@ export default function AppDetailsPage() {
                                                 onChange={e => setMaxTokens(parseInt(e.target.value))}
                                                 className="retro-slider"
                                             />
-                                            <div className="flex justify-between text-[9px] text-retro-dim font-pixel">
+                                            <div className="flex justify-between text-[9px] text-retro-muted font-pixel">
                                                 <span>64 Short</span>
                                                 <span>1024 Medium</span>
                                                 <span>4096 Long</span>
